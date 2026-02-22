@@ -1,11 +1,14 @@
 spring:
     application:
-        name:auth-service
+        name: auth-service
     liquibase:
         change-log: classpath:/db/changelog/db.changelog-master.xml
+
 server:
     port: 8081
-    jwt: secret:${JWT_SECRET:bento-dev-secret-key-that-is-at-least-256-bits-long-for-hs256}
+
+jwt:
+    secret: ${JWT_SECRET:bento-dev-secret-key-that-is-at-least-256-bits-long-for-hs256}
     access-token-expiration: 900000       # 15 minutes
     refresh-token-expiration: 604800000   # 7 days
 
@@ -18,16 +21,16 @@ spring:
         activate:
             on-profile: dev
     datasource:
-        url: jdbc:postgresql://localhost:5432/auth-db
+        url: jdbc:postgresql://localhost:5433/auth-db
         username: root
         password: root
     jpa:
         hibernate:
             ddl-auto: validate
         show-sql: true
-    properties:
-        hibernate:
-            format_sql: true
+        properties:
+            hibernate:
+                format_sql: true
 ---
 spring:
     config:

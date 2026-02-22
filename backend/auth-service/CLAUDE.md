@@ -5,11 +5,24 @@ Bento authentication and user management service.
 ## Responsibility
 
 - User registration and login
-- JWT access token generation
+- JWT access token **generation** (NOT validation — validation is in api-gateway)
 - Refresh token management
 - Password reset
 - User profile management
 - Publish user events to Kafka
+
+## Security Architecture
+
+**JWT validation is exclusively in the api-gateway.** The auth-service never parses incoming JWTs.
+
+For protected endpoints (`/logout`, `/switch-org`, `/users/me`), the gateway:
+1. Validates the JWT signature and expiry
+2. Extracts `userId` from the token claims
+3. Forwards it as `X-User-Id` header to the auth-service
+
+`JwtAuthenticationFilter` in this service only reads the `X-User-Id` header and populates the Spring `SecurityContext`. It does **not** do any JWT parsing.
+
+`JwtService` only generates access tokens — it has no parse/validate methods.
 
 ## Tech Stack
 

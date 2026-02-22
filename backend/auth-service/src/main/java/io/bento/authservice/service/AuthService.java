@@ -131,7 +131,7 @@ public class AuthService {
                 .orElse(null);
 
         String accessToken = jwtService.generateAccessToken(user, targetOrg);
-        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user, null, null);
+        RefreshToken refreshToken = refreshTokenService.getOrCreateActiveToken(user);
 
         return new TokenResponse(accessToken, refreshToken.getToken());
     }

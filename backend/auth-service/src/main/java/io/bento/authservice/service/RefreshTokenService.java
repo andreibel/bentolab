@@ -58,6 +58,13 @@ public class RefreshTokenService {
     }
 
     @Transactional
+    public RefreshToken getOrCreateActiveToken(User user) {
+        return refreshTokenRepository
+                .findLatestActiveByUserId(user.getId(), Instant.now())
+                .orElseGet(() -> createRefreshToken(user, null, null));
+    }
+
+    @Transactional
     public void revokeAllUserTokens(UUID userId) {
         refreshTokenRepository.revokeAllByUserId(userId);
     }
