@@ -2,7 +2,7 @@ spring:
     application:
         name:auth-service
     liquibase:
-        change-log:classpath:/db/changelog/db.changelog-master.xml
+        change-log: classpath:/db/changelog/db.changelog-master.xml
 server:
     port: 8081
     jwt: secret:${JWT_SECRET:bento-dev-secret-key-that-is-at-least-256-bits-long-for-hs256}
