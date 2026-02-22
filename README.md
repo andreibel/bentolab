@@ -1,93 +1,310 @@
-# bento
+# 🍱 Bento
 
+**Open-source project management for teams who want control.**
 
+Self-hosted or cloud. Scrum or Kanban. Your data, your rules.
 
-## Getting started
+[![License](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
+[![Java](https://img.shields.io/badge/Java-25-orange.svg)](https://openjdk.org/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0-green.svg)](https://spring.io/projects/spring-boot)
+[![React](https://img.shields.io/badge/React-19-blue.svg)](https://react.dev/)
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+---
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+## ✨ Features
 
-## Add your files
+- **🏢 Multi-tenant** — Organizations, teams, and role-based access
+- **📋 Scrum & Kanban** — Sprints, backlogs, and customizable boards
+- **🔍 Powerful search** — Find anything instantly
+- **📊 Analytics** — Velocity, burndown, and team insights
+- **🔔 Notifications** — Email, in-app, and Discord
+- **🐳 Self-hosted** — Run on a Raspberry Pi or your own servers
+- **☁️ Cloud-ready** — Kubernetes, Terraform, full CI/CD
 
-* [Create](https://docs.gitlab.com/user/project/repository/web_editor/#create-a-file) or [upload](https://docs.gitlab.com/user/project/repository/web_editor/#upload-a-file) files
-* [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+---
 
+## 🏗️ Architecture
 ```
-cd existing_repo
-git remote add origin http://192.168.1.45/bento/bento.git
-git branch -M main
-git push -uf origin main
+┌─────────────────────────────────────────────────────────────────┐
+│                          Clients                                 │
+│                    (Web / Mobile / Desktop)                      │
+└─────────────────────────────┬───────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                        API Gateway                               │
+│                   (JWT validation, routing)                      │
+└─────────────────────────────┬───────────────────────────────────┘
+                              │
+        ┌─────────┬───────────┼───────────┬─────────┐
+        ▼         ▼           ▼           ▼         ▼
+    ┌───────┐ ┌───────┐ ┌───────┐ ┌───────┐ ┌───────┐
+    │ Auth  │ │  Org  │ │ Board │ │ Task  │ │Notif. │
+    │Service│ │Service│ │Service│ │Service│ │Service│
+    └───┬───┘ └───┬───┘ └───┬───┘ └───┬───┘ └───┬───┘
+        │         │         │         │         │
+        ▼         ▼         ▼         ▼         ▼
+    ┌───────┐ ┌───────┐ ┌───────┐ ┌───────┐ ┌───────┐
+    │Postgres│ │Postgres│ │Postgres│ │MongoDB│ │MongoDB│
+    └───────┘ └───────┘ └───────┘ └───────┘ └───────┘
+                              │
+                              ▼
+                    ┌─────────────────┐
+                    │   Apache Kafka  │
+                    └─────────────────┘
 ```
 
-## Integrate with your tools
+---
 
-* [Set up project integrations](http://192.168.1.45/bento/bento/-/settings/integrations)
+## 🚀 Quick Start
 
-## Collaborate with your team
+### Prerequisites
 
-* [Invite team members and collaborators](https://docs.gitlab.com/user/project/members/)
-* [Create a new merge request](https://docs.gitlab.com/user/project/merge_requests/creating_merge_requests/)
-* [Automatically close issues from merge requests](https://docs.gitlab.com/user/project/issues/managing_issues/#closing-issues-automatically)
-* [Enable merge request approvals](https://docs.gitlab.com/user/project/merge_requests/approvals/)
-* [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+- Docker & Docker Compose
+- Java 25 (for development)
+- Node.js 20+ (for frontend)
 
-## Test and Deploy
+### One-Command Deploy (Self-Hosted)
+```bash
+curl -fsSL https://get.bento.dev | bash
+```
 
-Use the built-in continuous integration in GitLab.
+Or manually:
+```bash
+git clone https://github.com/yourusername/bento.git
+cd bento
+docker compose up -d
+```
 
-* [Get started with GitLab CI/CD](https://docs.gitlab.com/ci/quick_start/)
-* [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/user/application_security/sast/)
-* [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/topics/autodevops/requirements/)
-* [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/user/clusters/agent/)
-* [Set up protected environments](https://docs.gitlab.com/ci/environments/protected_environments/)
+Open [http://localhost:8080](http://localhost:8080) 🎉
 
-***
+### Development Setup
+```bash
+# Clone
+git clone https://github.com/yourusername/bento.git
+cd bento
 
-# Editing this README
+# Start infrastructure
+cd backend/services/auth-service
+docker compose -f docker-compose.infra.yml up -d
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+# Run backend (from backend/)
+cd ../../
+./gradlew :services:auth-service:bootRun --args='--spring.profiles.active=dev'
 
-## Suggestions for a good README
+# Run frontend (new terminal)
+cd frontend
+npm install
+npm run dev
+```
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+---
 
-## Name
-Choose a self-explaining name for your project.
+## 📦 Deployment Options
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+| Mode | RAM | Use Case |
+|------|-----|----------|
+| **Minimal** | ~2.5GB | Raspberry Pi, small teams |
+| **Standard** | ~3.5GB | Self-hosted, medium teams |
+| **Cloud** | ~4GB+ | Kubernetes, enterprise |
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+### Minimal (Raspberry Pi / Low Resources)
+```bash
+docker compose -f docker-compose.minimal.yml up -d
+```
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+- SQLite instead of PostgreSQL
+- No Redis (in-memory caching)
+- 7 containers total
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+### Standard (Self-Hosted)
+```bash
+docker compose up -d
+```
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+### Cloud (Kubernetes)
+```bash
+# With Terraform
+cd infra/terraform/environments/prod
+terraform apply
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+# Deploy to K8S
+kubectl apply -k infra/k8s/overlays/prod
+```
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+---
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+## 🛠️ Tech Stack
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+### Backend
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| Java | 25 | Language |
+| Spring Boot | 4.0.2 | Framework |
+| Spring Cloud | 2025.1.0 | Gateway, config |
+| PostgreSQL | 17 | Relational data |
+| MongoDB | 7 | Document data |
+| Redis | 7 | Caching |
+| Kafka | 3.9 | Event streaming |
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+### Frontend
+| Technology | Purpose |
+|------------|---------|
+| React 19 | UI framework |
+| Vite | Build tool |
+| TypeScript | Type safety |
+| TailwindCSS | Styling |
+| React Query | Data fetching |
+| Zustand | State management |
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+### Infrastructure
+| Technology | Purpose |
+|------------|---------|
+| Docker | Containerization |
+| Kubernetes | Orchestration |
+| Terraform | Infrastructure as code |
+| Ansible | Configuration management |
+| GitHub Actions | CI/CD |
+| Prometheus + Grafana | Monitoring |
 
-## License
-For open source projects, say how it is licensed.
+---
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+## 📁 Project Structure
+```
+bento/
+├── backend/
+│   ├── services/
+│   │   ├── api-gateway/
+│   │   ├── auth-service/
+│   │   ├── org-service/
+│   │   ├── board-service/
+│   │   ├── task-service/
+│   │   └── notification-service/
+│   ├── libs/
+│   │   ├── common/
+│   │   ├── security-common/
+│   │   └── kafka-events/
+│   ├── build.gradle
+│   └── settings.gradle
+├── frontend/
+│   ├── src/
+│   └── package.json
+├── infra/
+│   ├── docker/
+│   ├── k8s/
+│   ├── terraform/
+│   └── ansible/
+├── docs/
+├── CLAUDE.md
+└── README.md
+```
+
+---
+
+## 🔐 Services Overview
+
+| Service | Port | Database | Responsibility |
+|---------|------|----------|----------------|
+| **api-gateway** | 8080 | — | Routing, JWT validation |
+| **auth-service** | 8081 | PostgreSQL | Users, authentication, tokens |
+| **org-service** | 8082 | PostgreSQL | Organizations, members, invites |
+| **board-service** | 8083 | PostgreSQL | Boards, columns, labels |
+| **task-service** | 8084 | MongoDB | Issues, sprints, comments |
+| **notification-service** | 8085 | MongoDB | Alerts, email, Discord |
+
+---
+
+## 🗄️ Database Schema
+
+See [docs/ENTITIES.md](docs/ENTITIES.md) for complete entity documentation.
+
+### Summary
+
+| Service | Entities |
+|---------|----------|
+| Auth | User, RefreshToken |
+| Org | Organization, OrganizationMember, OrgInvitation |
+| Board | Board, BoardColumn, BoardMember, Label |
+| Task | Issue, Sprint, Comment, TimeLog, Activity |
+| Notification | Notification, NotificationPreference |
+
+---
+
+## 🔌 API Documentation
+
+API documentation is available at:
+
+- **Swagger UI**: `http://localhost:8080/swagger-ui.html`
+- **OpenAPI JSON**: `http://localhost:8080/v3/api-docs`
+
+### Authentication
+```bash
+# Register
+curl -X POST http://localhost:8080/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","password":"secret123","firstName":"John","lastName":"Doe"}'
+
+# Login
+curl -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","password":"secret123"}'
+
+# Use token
+curl http://localhost:8080/api/boards \
+  -H "Authorization: Bearer <access_token>"
+```
+
+---
+
+## 🧪 Testing
+```bash
+# All tests
+./gradlew test
+
+# Specific service
+./gradlew :services:auth-service:test
+
+# With coverage
+./gradlew test jacocoTestReport
+```
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+---
+
+## 📄 License
+
+This project is licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0)**.
+
+This means:
+- ✅ You can use, modify, and distribute this software
+- ✅ You can use it for commercial purposes
+- ⚠️ If you modify and host it as a service, you **must** release your source code
+- ⚠️ Derivative works must use the same license
+
+See the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🙏 Acknowledgments
+
+- Inspired by Jira, Linear, and Plane
+- Built with Spring Boot, React, and ❤️
+
+---
+
+<p align="center">
+  <img src="docs/assets/logo.svg" alt="Bento Logo" width="80">
+  <br>
+  <strong>Bento</strong> — Organize your work, one box at a time.
+</p>
