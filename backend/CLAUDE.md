@@ -3,13 +3,12 @@
 ## Structure
 ```
 backend/
-├── services/
-│   ├── api-gateway/       # Spring Cloud Gateway
-│   ├── auth-service/      # Authentication & users
-│   ├── org-service/       # Organizations & members
-│   ├── board-service/     # Boards, columns, labels
-│   ├── task-service/      # Issues, sprints, comments
-│   └── notification-service/
+├── api-gateway/       # Spring Cloud Gateway
+├── auth-service/      # Authentication & users
+├── org-service/       # Organizations & members
+├── board-service/     # Boards, columns, labels
+├── task-service/      # Issues, sprints, comments
+├── notification-service/
 ├── libs/
 │   ├── common/            # Shared DTOs, exceptions
 │   ├── security-common/   # JWT utilities
