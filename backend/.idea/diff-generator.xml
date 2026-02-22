@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DiffGenerationConfig">
+    <option name="snapshotDb" value="false" />
+    <option name="snapshotModelValue" value="auth-service.main:auth-service.main" />
+    <option name="updateDbConnectionName" value="dbbe2ea2-81f4-4f73-ad82-6a2e415ca4ae" />
+  </component>
+</project>

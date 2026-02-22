@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AmplicodeJpaIdeaProjectConfig">
+    <option name="defaultUnitInitialized" value="true" />
+    <option name="renamerInitialized" value="true" />
+    <option name="sourceModelValue" value="Default" />
+    <option name="targetDbValue" value="dbbe2ea2-81f4-4f73-ad82-6a2e415ca4ae" />
+    <option name="snapshotDbValue" value="7d6700e5-2eba-4ef5-9a08-75a65974f0fa" />
+    <option name="newEntityIdType" value="UUID" />
+    <option name="newEntityIdStrategy" value="UUID" />
+  </component>
+</project>
