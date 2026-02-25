@@ -3,7 +3,7 @@ services:
     image: postgres:18.2
     restart: "no"
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql
     environment:

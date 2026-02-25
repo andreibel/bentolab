@@ -8,9 +8,12 @@ server:
     port: 8081
 
 jwt:
-    secret: ${JWT_SECRET:bento-dev-secret-key-that-is-at-least-256-bits-long-for-hs256}
+    secret: ${JWT_SECRET:PKr8VmsFMreD//KrCWf+kINmoKwKaSoptbNJ7D+H/eU=}
     access-token-expiration: 900000       # 15 minutes
     refresh-token-expiration: 604800000   # 7 days
+
+auth:
+    pepper: ${AUTH_PEPPER:bento-dev-pepper-change-in-production}
 
 
 
@@ -21,7 +24,7 @@ spring:
         activate:
             on-profile: dev
     datasource:
-        url: jdbc:postgresql://localhost:5433/auth-db
+        url: jdbc:postgresql://localhost:5433/authdb
         username: root
         password: root
     jpa:
@@ -37,7 +40,7 @@ spring:
         activate:
             on-profile: docker
     datasource:
-        url: jdbc:postgresql://postgres:5432/auth-db
+        url: jdbc:postgresql://postgres:5432/authdb
         username: ${DB_USERNAME:admin}
         password: ${DB_PASSWORD:admin}
     jpa:
@@ -49,7 +52,7 @@ spring:
         activate:
             on-profile: selfhost
     datasource:
-        url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:auth-db}
+        url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:authdb}
         username: ${DB_USERNAME:admin}
         password: ${DB_PASSWORD}
     jpa:

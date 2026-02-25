@@ -1,5 +1,6 @@
 package io.bento.authservice.service;
 
+import io.bento.authservice.config.AuthProperties;
 import io.bento.authservice.dto.request.LoginRequest;
 import io.bento.authservice.dto.request.RegisterRequest;
 import io.bento.authservice.dto.response.*;
@@ -30,16 +31,19 @@ public class AuthService {
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
     private final UserMapper userMapper;
+    private final AuthProperties authProperties;
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
+        // Check if email already exists before creating user to avoid unnecessary work and potential conflicts
         if (userRepository.existsByEmail(request.email())) {
             throw new EmailAlreadyExistsException(request.email());
         }
 
+        // Create new user with default values and hashed password
         User user = User.builder()
                 .email(request.email())
-                .password(passwordEncoder.encode(request.password()))
+                .password(passwordEncoder.encode(request.password() + authProperties.pepper()))
                 .firstName(request.firstName())
                 .lastName(request.lastName())
                 .systemRole(SystemRole.USER)
@@ -69,7 +73,7 @@ public class AuthService {
         User user = userRepository.findByEmail(request.email())
                 .orElseThrow(() -> new BadCredentialsException("Invalid email or password"));
 
-        if (!passwordEncoder.matches(request.password(), user.getPassword())) {
+        if (!passwordEncoder.matches(request.password() + authProperties.pepper(), user.getPassword())) {
             throw new BadCredentialsException("Invalid email or password");
         }
 
