@@ -7,6 +7,11 @@
           <package value="io.bento.authservice" />
         </packages>
       </persistence-unit>
+      <persistence-unit moduleName="org-service.main" name="Default">
+        <packages>
+          <package value="io.bento.orgservice" />
+        </packages>
+      </persistence-unit>
     </persistence-units>
   </component>
 </project>
