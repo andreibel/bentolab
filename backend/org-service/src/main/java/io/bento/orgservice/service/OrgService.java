@@ -2,6 +2,7 @@ package io.bento.orgservice.service;
 
 import io.bento.orgservice.dto.request.CreateOrgRequest;
 import io.bento.orgservice.dto.request.UpdateOrgRequest;
+import io.bento.orgservice.dto.request.UpdateOrgSettingsRequest;
 import io.bento.orgservice.dto.response.OrgResponse;
 import io.bento.orgservice.entity.Organization;
 import io.bento.orgservice.entity.OrganizationMember;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -87,7 +89,41 @@ public class OrgService {
         }
         Organization updatedOrg = organizationRepository.save(organization);
         return orgMapper.toResponse(updatedOrg);
+    }
 
-
+    @Transactional
+    public OrgResponse updateOrgSettings(UUID userid, UUID orgId, UpdateOrgSettingsRequest request) {
+        Organization organization = organizationRepository.findById(orgId)
+                .orElseThrow(() -> new OrgNotFoundException("Organization not found with id: " + orgId));
+        OrganizationMember orgMember = organizationMemberRepository.findAllByOrganization_IdAndUserId(orgId, userid)
+                .orElseThrow(() -> new OrgAccessDeniedException("Access denied. not a member of the organization"));
+        if (!orgMember.getOrgRole().isAtLeast(OrgRoles.ORG_ADMIN)) {
+            throw new OrgAccessDeniedException("Insufficient permissions");
+        }
+        Map<String , Object> settings =  organization.getSettings();
+        if (request.maxUsers() != null) {
+            settings.put("maxUsers", request.maxUsers());
+        }
+        if (request.maxBoards() != null) {
+            settings.put("maxBoards", request.maxBoards());
+        }
+        if (request.maxStorageGB() != null) {
+            settings.put("maxStorageGB", request.maxStorageGB());
+        }
+        if(request.allowDiscord() != null) {
+            settings.put("allowDiscord", request.allowDiscord());
+        }
+        if(request.allowExport() != null) {
+            settings.put("allowExport", request.allowExport());
+        }
+        if(request.customBranding() != null) {
+            settings.put("customBranding", request.customBranding());
+        }
+        if(request.ssoEnabled() != null) {
+            settings.put("ssoEnabled", request.ssoEnabled());
+        }
+        organization.setSettings(settings);
+        Organization updatedOrg = organizationRepository.save(organization);
+        return orgMapper.toResponse(updatedOrg);
     }
 }
