@@ -39,6 +39,14 @@ public class OrgController {
         return ResponseEntity.ok(orgService.getMyOrgs(userid));
     }
 
+    @GetMapping("/{orgId}")
+    public ResponseEntity<OrgResponse> getOrganizationById(
+            @RequestHeader("X-User-Id") UUID userid,
+            @PathVariable UUID orgId
+    ) {
+        return ResponseEntity.ok(orgService.getOrgById(userid, orgId));
+    }
+
 
 
 }
