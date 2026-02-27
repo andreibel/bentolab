@@ -152,4 +152,16 @@ public class OrgService {
         organizationMemberRepository.save(currentOwnerMember);
         organizationMemberRepository.save(newOwnerMember);
     }
+
+    @Transactional
+    public void deleteOrg(UUID userid, UUID orgId) {
+        Organization organization = organizationRepository.findById(orgId)
+                .orElseThrow(() -> new OrgNotFoundException("Organization not found with id: " + orgId));
+        OrganizationMember orgMember = organizationMemberRepository.findAllByOrganization_IdAndUserId(orgId, userid)
+                .orElseThrow(() -> new OrgAccessDeniedException("Access denied. not a member of the organization"));
+        if (orgMember.getOrgRole() != OrgRoles.ORG_OWNER) {
+            throw new OrgAccessDeniedException("Only the organization owner can delete the organization");
+        }
+        organizationRepository.delete(organization);
+    }
 }
