@@ -32,6 +32,14 @@ public class OrgController {
                 .body(orgService.createOrg(userid, request));
     }
 
+    @GetMapping("/me")
+    public ResponseEntity<List<OrgResponse>> getMyOrganizations(
+            @RequestHeader("X-User-Id") UUID userid
+    ) {
+        return ResponseEntity.ok(orgService.getMyOrgs(userid));
+    }
+
+
 
 }
 
