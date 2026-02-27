@@ -4,23 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="242fe9c8-0771-468f-8000-d952334ad469" name="Changes" comment="feat(org-service): add OrgInvitation entity and database changelog">
+    <list default="true" id="242fe9c8-0771-468f-8000-d952334ad469" name="Changes" comment=" feat(org-service): add OrgMapper to map DTOs to Entities and back">
       <change afterPath="$PROJECT_DIR$/org-service/src/main/java/io/bento/orgservice/controller/OrgController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/org-service/src/main/java/io/bento/orgservice/dto/request/CreateOrgRequest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/org-service/src/main/java/io/bento/orgservice/dto/request/TransferOrgOwnershipRequest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/org-service/src/main/java/io/bento/orgservice/dto/request/UpdateOrgRequest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/org-service/src/main/java/io/bento/orgservice/dto/request/UpdateOrgSettingsRequest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/org-service/src/main/java/io/bento/orgservice/dto/response/OrgResponse.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/org-service/src/main/java/io/bento/orgservice/exception/OrgAccessDeniedException.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/org-service/src/main/java/io/bento/orgservice/exception/OrgNotFoundException.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/org-service/src/main/java/io/bento/orgservice/exception/SlugAlreadyExistsException.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/org-service/src/main/java/io/bento/orgservice/mapper/OrgMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/org-service/src/main/java/io/bento/orgservice/repository/OrganizationMemberRepository.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/org-service/src/main/java/io/bento/orgservice/repository/OrganizationRepository.java" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/org-service/src/main/java/io/bento/orgservice/service/OrgService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/amplicode-jpa.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/amplicode-jpa.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -154,7 +140,39 @@
       <option name="project" value="LOCAL" />
       <updated>1772203560465</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary=" feat(org-service): add custom exception classes for org domain                             Add OrgNotFoundException (404), SlugAlreadyExistsException (409) and OrgAccessDeniedException (403).">
+      <option name="closed" value="true" />
+      <created>1772227366046</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1772227366046</updated>
+    </task>
+    <task id="LOCAL-00003" summary="feat(org-service): add request and response DTOs for org endpoints Add CreateOrgRequest, UpdateOrgRequest, UpdateOrgSettingsRequest, TransferOrgOwnershipRequest and OrgResponse records with validation constraints.">
+      <option name="closed" value="true" />
+      <created>1772227418856</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1772227418856</updated>
+    </task>
+    <task id="LOCAL-00004" summary=" feat(org-service): add OrganizationRepository and OrganizationMemberRepository">
+      <option name="closed" value="true" />
+      <created>1772227461837</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1772227461837</updated>
+    </task>
+    <task id="LOCAL-00005" summary=" feat(org-service): add OrgMapper to map DTOs to Entities and back">
+      <option name="closed" value="true" />
+      <created>1772227501121</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1772227501121</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -162,7 +180,11 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="feat(org-service): add OrgInvitation entity and database changelog" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(org-service): add OrgInvitation entity and database changelog" />
+    <MESSAGE value=" feat(org-service): add custom exception classes for org domain                             Add OrgNotFoundException (404), SlugAlreadyExistsException (409) and OrgAccessDeniedException (403)." />
+    <MESSAGE value="feat(org-service): add request and response DTOs for org endpoints Add CreateOrgRequest, UpdateOrgRequest, UpdateOrgSettingsRequest, TransferOrgOwnershipRequest and OrgResponse records with validation constraints." />
+    <MESSAGE value=" feat(org-service): add OrganizationRepository and OrganizationMemberRepository" />
+    <MESSAGE value=" feat(org-service): add OrgMapper to map DTOs to Entities and back" />
+    <option name="LAST_COMMIT_MESSAGE" value=" feat(org-service): add OrgMapper to map DTOs to Entities and back" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>
