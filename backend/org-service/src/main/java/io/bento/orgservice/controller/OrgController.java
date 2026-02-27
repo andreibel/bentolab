@@ -63,6 +63,15 @@ public class OrgController {
         return ResponseEntity.ok(orgService.updateOrgSettings(userid, orgId, request));
     }
 
+    @PostMapping("/{orgId}/transfer")
+    public ResponseEntity<Void> transferOrganizationOwnership(
+            @RequestHeader("X-User-Id") UUID userid,
+            @PathVariable UUID orgId,
+            @Valid @RequestBody TransferOrgOwnershipRequest request) {
+        orgService.transferOrgOwnership(userid, orgId, request);
+        return ResponseEntity.noContent().build();
+    }
+
 
 
 }
