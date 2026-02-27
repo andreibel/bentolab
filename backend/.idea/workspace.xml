@@ -4,10 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="242fe9c8-0771-468f-8000-d952334ad469" name="Changes" comment=" feat(org-service): add OrgMapper to map DTOs to Entities and back">
-      <change afterPath="$PROJECT_DIR$/org-service/src/main/java/io/bento/orgservice/controller/OrgController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/org-service/src/main/java/io/bento/orgservice/service/OrgService.java" afterDir="false" />
+    <list default="true" id="242fe9c8-0771-468f-8000-d952334ad469" name="Changes" comment="feat(org-service): add transferOrganizationOwnership method for transferring organization ownership">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/org-service/src/main/java/io/bento/orgservice/controller/OrgController.java" beforeDir="false" afterPath="$PROJECT_DIR$/org-service/src/main/java/io/bento/orgservice/controller/OrgController.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -172,7 +171,111 @@
       <option name="project" value="LOCAL" />
       <updated>1772227501121</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="feat(org-service): implement OrgService for organization creation with slug validation">
+      <option name="closed" value="true" />
+      <created>1772228218529</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1772228218529</updated>
+    </task>
+    <task id="LOCAL-00007" summary="feat(org-service): add method to retrieve organizations by member user ID and create costume SQL to avoid an N + 1 problem based on join">
+      <option name="closed" value="true" />
+      <created>1772229124894</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1772229124894</updated>
+    </task>
+    <task id="LOCAL-00008" summary="feat(org-service): add method to retrieve organization by ID with access control and improve slug exception message">
+      <option name="closed" value="true" />
+      <created>1772229406822</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1772229406822</updated>
+    </task>
+    <task id="LOCAL-00009" summary="feat(org-service): add updateOrg method for organization updates with role-based access control">
+      <option name="closed" value="true" />
+      <created>1772230287016</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1772230287016</updated>
+    </task>
+    <task id="LOCAL-00010" summary="feat(org-service): add updateOrgSettings method for updating organization settings with access control">
+      <option name="closed" value="true" />
+      <created>1772230650928</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1772230650928</updated>
+    </task>
+    <task id="LOCAL-00011" summary="feat(org-service): add transferOrgOwnership method for transferring organization ownership with access control">
+      <option name="closed" value="true" />
+      <created>1772230878551</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1772230878551</updated>
+    </task>
+    <task id="LOCAL-00012" summary="feat(org-service): add deleteOrg method for organization deletion with access control">
+      <option name="closed" value="true" />
+      <created>1772230975653</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1772230975653</updated>
+    </task>
+    <task id="LOCAL-00013" summary="feat(org-service): add createOrganization method for organization creation with user ID validation in controller">
+      <option name="closed" value="true" />
+      <created>1772231019189</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1772231019189</updated>
+    </task>
+    <task id="LOCAL-00014" summary="feat(org-service): add getMyOrganizations method for retrieving user's organizations">
+      <option name="closed" value="true" />
+      <created>1772231044626</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1772231044626</updated>
+    </task>
+    <task id="LOCAL-00015" summary="feat(org-service): add getOrganizationById method for retrieving organization details by ID">
+      <option name="closed" value="true" />
+      <created>1772231062865</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1772231062865</updated>
+    </task>
+    <task id="LOCAL-00016" summary="feat(org-service): add updateOrganization method for updating organization details">
+      <option name="closed" value="true" />
+      <created>1772231079545</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1772231079545</updated>
+    </task>
+    <task id="LOCAL-00017" summary="feat(org-service): add updateOrganizationSettings method for updating organization settings">
+      <option name="closed" value="true" />
+      <created>1772231092978</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1772231092978</updated>
+    </task>
+    <task id="LOCAL-00018" summary="feat(org-service): add transferOrganizationOwnership method for transferring organization ownership">
+      <option name="closed" value="true" />
+      <created>1772231108505</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1772231108505</updated>
+    </task>
+    <option name="localTasksCounter" value="19" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -184,7 +287,20 @@
     <MESSAGE value="feat(org-service): add request and response DTOs for org endpoints Add CreateOrgRequest, UpdateOrgRequest, UpdateOrgSettingsRequest, TransferOrgOwnershipRequest and OrgResponse records with validation constraints." />
     <MESSAGE value=" feat(org-service): add OrganizationRepository and OrganizationMemberRepository" />
     <MESSAGE value=" feat(org-service): add OrgMapper to map DTOs to Entities and back" />
-    <option name="LAST_COMMIT_MESSAGE" value=" feat(org-service): add OrgMapper to map DTOs to Entities and back" />
+    <MESSAGE value="feat(org-service): implement OrgService for organization creation with slug validation" />
+    <MESSAGE value="feat(org-service): add method to retrieve organizations by member user ID and create costume SQL to avoid an N + 1 problem based on join" />
+    <MESSAGE value="feat(org-service): add method to retrieve organization by ID with access control and improve slug exception message" />
+    <MESSAGE value="feat(org-service): add updateOrg method for organization updates with role-based access control" />
+    <MESSAGE value="feat(org-service): add updateOrgSettings method for updating organization settings with access control" />
+    <MESSAGE value="feat(org-service): add transferOrgOwnership method for transferring organization ownership with access control" />
+    <MESSAGE value="feat(org-service): add deleteOrg method for organization deletion with access control" />
+    <MESSAGE value="feat(org-service): add createOrganization method for organization creation with user ID validation in controller" />
+    <MESSAGE value="feat(org-service): add getMyOrganizations method for retrieving user's organizations" />
+    <MESSAGE value="feat(org-service): add getOrganizationById method for retrieving organization details by ID" />
+    <MESSAGE value="feat(org-service): add updateOrganization method for updating organization details" />
+    <MESSAGE value="feat(org-service): add updateOrganizationSettings method for updating organization settings" />
+    <MESSAGE value="feat(org-service): add transferOrganizationOwnership method for transferring organization ownership" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(org-service): add transferOrganizationOwnership method for transferring organization ownership" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>

@@ -72,7 +72,14 @@ public class OrgController {
         return ResponseEntity.noContent().build();
     }
 
-
+    @DeleteMapping("/{orgId}")
+    public ResponseEntity<Void> deleteOrganization(
+            @RequestHeader("X-User-Id") UUID userid,
+            @PathVariable UUID orgId
+    ) {
+        orgService.deleteOrg(userid, orgId);
+        return ResponseEntity.noContent().build();
+    }
 
 }
 
