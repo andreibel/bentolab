@@ -1,7 +1,9 @@
 package io.bento.orgservice.repository;
 
+import io.bento.orgservice.entity.Organization;
 import io.bento.orgservice.entity.OrganizationMember;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 import java.util.Optional;

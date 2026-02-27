@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -40,5 +41,12 @@ public class OrgService {
         Organization savedOrg = organizationRepository.save(organization);
         organizationMemberRepository.save(ownerMember);
         return orgMapper.toResponse(savedOrg);
+    }
+
+
+    public List<OrgResponse> getMyOrgs(UUID userid) {
+       return organizationRepository.findAllByMemberUserId(userid).stream()
+               .map(orgMapper::toResponse)
+               .toList();
     }
 }
