@@ -4,32 +4,24 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="242fe9c8-0771-468f-8000-d952334ad469" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/modules/auth-service.main.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/org-service/amplicode.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/org-service/src/main/java/io/bento/orgservice/entity/OrganizationMember.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/org-service/src/main/java/io/bento/orgservice/enums/OrgRoles.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/org-service/src/main/resources/db/changelog/2026/02/27-01-changelog.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/org-service/src/main/resources/db/changelog/26-01-changelog.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/org-service/src/main/resources/db/changelog/db.changelog-master.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.name" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/amplicode-datasource.xml" beforeDir="false" />
+    <list default="true" id="242fe9c8-0771-468f-8000-d952334ad469" name="Changes" comment="feat(org-service): add OrgInvitation entity and database changelog">
+      <change afterPath="$PROJECT_DIR$/org-service/src/main/java/io/bento/orgservice/controller/OrgController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/org-service/src/main/java/io/bento/orgservice/dto/request/CreateOrgRequest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/org-service/src/main/java/io/bento/orgservice/dto/request/TransferOrgOwnershipRequest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/org-service/src/main/java/io/bento/orgservice/dto/request/UpdateOrgRequest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/org-service/src/main/java/io/bento/orgservice/dto/request/UpdateOrgSettingsRequest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/org-service/src/main/java/io/bento/orgservice/dto/response/OrgResponse.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/org-service/src/main/java/io/bento/orgservice/exception/OrgAccessDeniedException.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/org-service/src/main/java/io/bento/orgservice/exception/OrgNotFoundException.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/org-service/src/main/java/io/bento/orgservice/exception/SlugAlreadyExistsException.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/org-service/src/main/java/io/bento/orgservice/mapper/OrgMapper.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/org-service/src/main/java/io/bento/orgservice/repository/OrganizationMemberRepository.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/org-service/src/main/java/io/bento/orgservice/repository/OrganizationRepository.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/org-service/src/main/java/io/bento/orgservice/service/OrgService.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/amplicode-jpa.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/amplicode-jpa.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/backend.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/backend.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/copilot.data.migration.agent.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/copilot.data.migration.ask.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/copilot.data.migration.edit.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/diff-generator.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/gradle.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/gradle.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/amplicode.xml" beforeDir="false" afterPath="$PROJECT_DIR$/amplicode.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/org-service/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/org-service/build.gradle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/org-service/src/main/java/io/bento/orgservice/entity/Organization.java" beforeDir="false" afterPath="$PROJECT_DIR$/org-service/src/main/java/io/bento/orgservice/entity/Organization.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/org-service/src/main/resources/application.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/org-service/src/main/resources/application.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -49,6 +41,20 @@
       <ProjectState />
     </projectState>
   </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="" />
+        <option value="Spring Service" />
+        <option value="Record" />
+        <option value="com.haulmont.ampjpb.NewRecord" />
+        <option value="Exception" />
+        <option value="com.intellij.jpb.JpaRepository" />
+        <option value="com.haulmont.ampjpb.JpaRepository" />
+        <option value="com.haulmont.ampsbb.Component" />
+      </list>
+    </option>
+  </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
   </component>
@@ -60,10 +66,10 @@
       </map>
     </option>
   </component>
-  <component name="KubernetesApiPersistence"><![CDATA[{}]]></component>
-  <component name="KubernetesApiProvider"><![CDATA[{
-  "isMigrated": true
-}]]></component>
+  <component name="KubernetesApiPersistence">{}</component>
+  <component name="KubernetesApiProvider">{
+  &quot;isMigrated&quot;: true
+}</component>
   <component name="MavenImportPreferences">
     <option name="importingSettings">
       <MavenImportingSettings>
@@ -71,9 +77,9 @@
       </MavenImportingSettings>
     </option>
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 8
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 8
+}</component>
   <component name="ProjectId" id="3AFwPJGfccv11qnmVBZYza8aUmo" />
   <component name="ProjectViewState">
     <option name="showLibraryContents" value="true" />
@@ -81,6 +87,8 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
+    "DtoCreateDialog.USE_JAVA_RECORDS_INITIAL_PROP_KEY": "true",
+    "Gradle.Download Sources.executor": "Run",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
@@ -93,6 +101,11 @@
     "settings.editor.selected.configurable": "preferences.sourceCode.Groovy"
   }
 }]]></component>
+  <component name="RecentsManager">
+    <key name="MoveClassesOrPackagesDialog.RECENTS_KEY">
+      <recent name="io.bento.orgservice.service" />
+    </key>
+  </component>
   <component name="RunManager" selected="Spring Boot.OrgServiceApplication">
     <configuration name="AuthServiceApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
       <option name="FRAME_DEACTIVATION_UPDATE_POLICY" value="UpdateClassesAndResources" />
@@ -119,6 +132,9 @@
       </set>
     </attachedChunks>
   </component>
+  <component name="StructureViewState">
+    <option name="selectedTab" value="Physical" />
+  </component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
       <changelist id="242fe9c8-0771-468f-8000-d952334ad469" name="Changes" comment="" />
@@ -130,10 +146,23 @@
       <workItem from="1764439145188" duration="148000" />
       <workItem from="1772201602195" duration="50000" />
     </task>
+    <task id="LOCAL-00001" summary="feat(org-service): add OrgInvitation entity and database changelog">
+      <option name="closed" value="true" />
+      <created>1772203560465</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1772203560465</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="feat(org-service): add OrgInvitation entity and database changelog" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(org-service): add OrgInvitation entity and database changelog" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>
