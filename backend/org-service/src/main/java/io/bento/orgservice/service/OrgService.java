@@ -1,6 +1,7 @@
 package io.bento.orgservice.service;
 
 import io.bento.orgservice.dto.request.CreateOrgRequest;
+import io.bento.orgservice.dto.request.TransferOrgOwnershipRequest;
 import io.bento.orgservice.dto.request.UpdateOrgRequest;
 import io.bento.orgservice.dto.request.UpdateOrgSettingsRequest;
 import io.bento.orgservice.dto.response.OrgResponse;
@@ -100,7 +101,7 @@ public class OrgService {
         if (!orgMember.getOrgRole().isAtLeast(OrgRoles.ORG_ADMIN)) {
             throw new OrgAccessDeniedException("Insufficient permissions");
         }
-        Map<String , Object> settings =  organization.getSettings();
+        Map<String, Object> settings = organization.getSettings();
         if (request.maxUsers() != null) {
             settings.put("maxUsers", request.maxUsers());
         }
@@ -110,20 +111,45 @@ public class OrgService {
         if (request.maxStorageGB() != null) {
             settings.put("maxStorageGB", request.maxStorageGB());
         }
-        if(request.allowDiscord() != null) {
+        if (request.allowDiscord() != null) {
             settings.put("allowDiscord", request.allowDiscord());
         }
-        if(request.allowExport() != null) {
+        if (request.allowExport() != null) {
             settings.put("allowExport", request.allowExport());
         }
-        if(request.customBranding() != null) {
+        if (request.customBranding() != null) {
             settings.put("customBranding", request.customBranding());
         }
-        if(request.ssoEnabled() != null) {
+        if (request.ssoEnabled() != null) {
             settings.put("ssoEnabled", request.ssoEnabled());
         }
         organization.setSettings(settings);
         Organization updatedOrg = organizationRepository.save(organization);
         return orgMapper.toResponse(updatedOrg);
+    }
+
+    @Transactional
+    public void transferOrgOwnership(UUID userid, UUID orgId, TransferOrgOwnershipRequest request) {
+        if (request.newOwnerId().equals(userid)) {
+            throw new OrgAccessDeniedException("Cannot transfer ownership to yourself");
+        }
+        Organization organization = organizationRepository.findById(orgId)
+                .orElseThrow(() -> new OrgNotFoundException("Organization not found with id: " + orgId));
+        OrganizationMember currentOwnerMember = organizationMemberRepository.findAllByOrganization_IdAndUserId(orgId, userid)
+                .orElseThrow(() -> new OrgAccessDeniedException("Access denied. not a member of the organization"));
+        if (currentOwnerMember.getOrgRole() != OrgRoles.ORG_OWNER) {
+            throw new OrgAccessDeniedException("Only the organization owner can transfer ownership");
+        }
+
+        OrganizationMember newOwnerMember = organizationMemberRepository.findAllByOrganization_IdAndUserId(orgId,
+                request.newOwnerId())
+                .orElseThrow(() -> new OrgAccessDeniedException("The new owner must be a member of the organization"));
+
+        currentOwnerMember.setOrgRole(OrgRoles.ORG_ADMIN);
+        newOwnerMember.setOrgRole(OrgRoles.ORG_OWNER);
+        organization.setOwnerId(request.newOwnerId());
+        organizationRepository.save(organization);
+        organizationMemberRepository.save(currentOwnerMember);
+        organizationMemberRepository.save(newOwnerMember);
     }
 }
