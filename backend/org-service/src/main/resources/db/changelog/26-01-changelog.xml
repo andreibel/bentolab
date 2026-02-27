@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-5.0.xsd"
+        objectQuotingStrategy="QUOTE_ONLY_RESERVED_WORDS">
+    <changeSet id="1772106662769-3" author="andreibeloziorove">
+        <dropForeignKeyConstraint baseTableName="refresh_tokens" constraintName="fk_refresh_tokens_on_user"/>
+    </changeSet>
+    <changeSet id="1772106662769-1" author="andreibeloziorove">
+        <createTable tableName="organizations">
+            <column name="id" type="UUID">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_organizations"/>
+            </column>
+            <column name="name" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="slug" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="domain" type="VARCHAR(200)"/>
+            <column name="logo_url" type="VARCHAR(500)"/>
+            <column name="description" type="TEXT"/>
+            <column name="plan" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="settings" type="jsonb">
+                <constraints nullable="false"/>
+            </column>
+            <column name="owner_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_active" type="BOOLEAN">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_default" type="BOOLEAN">
+                <constraints nullable="false"/>
+            </column>
+            <column name="setup_completed" type="BOOLEAN">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet id="1772106662769-2" author="andreibeloziorove">
+        <addUniqueConstraint columnNames="slug" constraintName="uc_organizations_slug" tableName="organizations"/>
+    </changeSet>
+    <changeSet id="1772106662769-6" author="andreibeloziorove">
+        <dropTable cascadeConstraints="true" tableName="refresh_tokens"/>
+    </changeSet>
+    <changeSet id="1772106662769-7" author="andreibeloziorove">
+        <dropTable cascadeConstraints="true" tableName="users"/>
+    </changeSet>
+
+</databaseChangeLog>

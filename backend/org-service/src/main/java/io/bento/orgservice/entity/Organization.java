@@ -7,6 +7,8 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -63,7 +65,11 @@ public class Organization {
     @Column(name = "setup_completed", nullable = false)
     private boolean setupCompleted = false;
 
-    @Column(nullable = false, updatable = false)
+    @OneToMany(mappedBy = "organization", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<OrganizationMember> members = new ArrayList<>();
+
+    @Column(name = "created_at",nullable = false, updatable = false)
     @Builder.Default
     private Instant createdAt = Instant.now();
 
@@ -75,5 +81,7 @@ public class Organization {
     protected void onUpdate() {
         this.updatedAt = Instant.now();
     }
+
+
 
 }

@@ -1,15 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="AmplicodeJpaPluginProjectSettings">
+    <option name="entityNameTemplate" />
+    <option name="isLombokBuilder" value="true" />
+    <option name="isLombokAllArgsConstructor" value="true" />
+    <option name="isLombokNoArgsConstructor" value="true" />
+    <option name="scaffoldingLanguage" />
+  </component>
   <component name="AmplicodePersistenceUnitSettings">
     <persistence-units>
-      <persistence-unit moduleName="auth-service.main" name="Default">
-        <packages>
-          <package value="io.bento.authservice" />
-        </packages>
-      </persistence-unit>
       <persistence-unit moduleName="org-service.main" name="Default">
         <packages>
           <package value="io.bento.orgservice" />
+        </packages>
+      </persistence-unit>
+      <persistence-unit moduleName="auth-service.main" name="Default">
+        <packages>
+          <package value="io.bento.authservice" />
         </packages>
       </persistence-unit>
     </persistence-units>
