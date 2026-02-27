@@ -55,6 +55,14 @@ public class OrgController {
         return ResponseEntity.ok(orgService.updateOrg(userid, orgId, request));
     }
 
+    @PatchMapping("/{orgId}/settings")
+    public ResponseEntity<OrgResponse> updateOrganizationSettings(
+            @RequestHeader("X-User-Id") UUID userid,
+            @PathVariable UUID orgId,
+            @Valid @RequestBody UpdateOrgSettingsRequest request) {
+        return ResponseEntity.ok(orgService.updateOrgSettings(userid, orgId, request));
+    }
+
 
 
 }
