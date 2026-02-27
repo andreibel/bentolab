@@ -1,6 +1,7 @@
 package io.bento.orgservice.service;
 
 import io.bento.orgservice.dto.request.CreateOrgRequest;
+import io.bento.orgservice.dto.request.UpdateOrgRequest;
 import io.bento.orgservice.dto.response.OrgResponse;
 import io.bento.orgservice.entity.Organization;
 import io.bento.orgservice.entity.OrganizationMember;
@@ -11,9 +12,9 @@ import io.bento.orgservice.exception.SlugAlreadyExistsException;
 import io.bento.orgservice.mapper.OrgMapper;
 import io.bento.orgservice.repository.OrganizationMemberRepository;
 import io.bento.orgservice.repository.OrganizationRepository;
-import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -47,9 +48,9 @@ public class OrgService {
 
 
     public List<OrgResponse> getMyOrgs(UUID userid) {
-       return organizationRepository.findAllByMemberUserId(userid).stream()
-               .map(orgMapper::toResponse)
-               .toList();
+        return organizationRepository.findAllByMemberUserId(userid).stream()
+                .map(orgMapper::toResponse)
+                .toList();
     }
 
     public OrgResponse getOrgById(UUID userid, UUID orgId) {
@@ -60,5 +61,33 @@ public class OrgService {
             throw new OrgAccessDeniedException("Access denied. not a member of the organization");
         }
         return orgMapper.toResponse(organization);
+    }
+
+    @Transactional
+    public OrgResponse updateOrg(UUID userid, UUID orgId, UpdateOrgRequest request) {
+        Organization organization = organizationRepository.findById(orgId)
+                .orElseThrow(() -> new OrgNotFoundException("Organization not found with id: " + orgId));
+        OrganizationMember orgMember = organizationMemberRepository.findAllByOrganization_IdAndUserId(orgId, userid)
+                .orElseThrow(() -> new OrgAccessDeniedException("Access denied. not a member of the organization"));
+        if (!orgMember.getOrgRole().isAtLeast(OrgRoles.ORG_ADMIN)) {
+            throw new OrgAccessDeniedException("Insufficient permissions");
+        }
+        if (request.name() != null && !request.name().isBlank()) {
+            organization.setName(request.name());
+        }
+
+        if (request.domain() != null && !request.domain().isBlank()) {
+            organization.setDomain(request.domain());
+        }
+        if (request.logoUrl() != null && !request.logoUrl().isBlank()) {
+            organization.setLogoUrl(request.logoUrl());
+        }
+        if (request.description() != null) {
+            organization.setDescription(request.description());
+        }
+        Organization updatedOrg = organizationRepository.save(organization);
+        return orgMapper.toResponse(updatedOrg);
+
+
     }
 }
