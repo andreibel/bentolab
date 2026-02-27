@@ -5,6 +5,8 @@ import io.bento.orgservice.dto.response.OrgResponse;
 import io.bento.orgservice.entity.Organization;
 import io.bento.orgservice.entity.OrganizationMember;
 import io.bento.orgservice.enums.OrgRoles;
+import io.bento.orgservice.exception.OrgAccessDeniedException;
+import io.bento.orgservice.exception.OrgNotFoundException;
 import io.bento.orgservice.exception.SlugAlreadyExistsException;
 import io.bento.orgservice.mapper.OrgMapper;
 import io.bento.orgservice.repository.OrganizationMemberRepository;
@@ -29,16 +31,16 @@ public class OrgService {
     @Transactional
     public OrgResponse createOrg(UUID userid, CreateOrgRequest request) {
         if (organizationRepository.existsBySlug(request.slug())) {
-            throw new SlugAlreadyExistsException(request.slug());
+            throw new SlugAlreadyExistsException("Organization slug already exists: " + request.slug());
         }
 
         Organization organization = orgMapper.toEntity(request, userid);
+        Organization savedOrg = organizationRepository.save(organization);
         OrganizationMember ownerMember = OrganizationMember.builder()
-                .organization(organization)
+                .organization(savedOrg)
                 .userId(userid)
                 .orgRole(OrgRoles.ORG_OWNER)
                 .build();
-        Organization savedOrg = organizationRepository.save(organization);
         organizationMemberRepository.save(ownerMember);
         return orgMapper.toResponse(savedOrg);
     }
@@ -48,5 +50,15 @@ public class OrgService {
        return organizationRepository.findAllByMemberUserId(userid).stream()
                .map(orgMapper::toResponse)
                .toList();
+    }
+
+    public OrgResponse getOrgById(UUID userid, UUID orgId) {
+        Organization organization = organizationRepository.findById(orgId)
+                .orElseThrow(() -> new OrgNotFoundException("Organization not found with id: " + orgId));
+        boolean isMember = organizationMemberRepository.existsByOrganization_IdAndUserId(orgId, userid);
+        if (!isMember) {
+            throw new OrgAccessDeniedException("Access denied. not a member of the organization");
+        }
+        return orgMapper.toResponse(organization);
     }
 }
