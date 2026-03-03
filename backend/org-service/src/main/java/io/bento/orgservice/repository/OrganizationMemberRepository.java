@@ -15,4 +15,6 @@ public interface OrganizationMemberRepository extends JpaRepository<Organization
     Optional<OrganizationMember> findAllByOrganization_IdAndUserId(UUID organizationId, UUID userId);
 
     boolean existsByOrganization_IdAndUserId(UUID organizationId, UUID userId);
+
+    List<OrganizationMember> findAllByOrganization_Id(UUID id);
 }
