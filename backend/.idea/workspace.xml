@@ -4,9 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="242fe9c8-0771-468f-8000-d952334ad469" name="Changes" comment="feat(org-service): add transferOrganizationOwnership method for transferring organization ownership">
+    <list default="true" id="242fe9c8-0771-468f-8000-d952334ad469" name="Changes" comment="feat(org-service): add deleteOrganization method for organization deletion">
+      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/org-service/src/main/java/io/bento/orgservice/controller/OrgController.java" beforeDir="false" afterPath="$PROJECT_DIR$/org-service/src/main/java/io/bento/orgservice/controller/OrgController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/org-service/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/org-service/build.gradle" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -73,12 +74,14 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "DtoCreateDialog.USE_JAVA_RECORDS_INITIAL_PROP_KEY": "true",
+    "Gradle.Build org-service.executor": "Run",
     "Gradle.Download Sources.executor": "Run",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
     "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "Spring Boot.OrgServiceApplication.executor": "Run",
     "git-widget-placeholder": "feature/orgService",
     "kotlin-language-version-configured": "true",
     "last_opened_file_path": "/Users/andreibeloziorove/git/bento/backend",
@@ -101,6 +104,7 @@
       </method>
     </configuration>
     <configuration name="OrgServiceApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <option name="ACTIVE_PROFILES" value="dev" />
       <option name="FRAME_DEACTIVATION_UPDATE_POLICY" value="UpdateClassesAndResources" />
       <module name="org-service.main" />
       <option name="SPRING_BOOT_MAIN_CLASS" value="io.bento.orgservice.OrgServiceApplication" />
@@ -108,6 +112,10 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
+    <list>
+      <item itemvalue="Spring Boot.AuthServiceApplication" />
+      <item itemvalue="Spring Boot.OrgServiceApplication" />
+    </list>
   </component>
   <component name="SharedIndexes">
     <attachedChunks>
@@ -275,7 +283,15 @@
       <option name="project" value="LOCAL" />
       <updated>1772231108505</updated>
     </task>
-    <option name="localTasksCounter" value="19" />
+    <task id="LOCAL-00019" summary="feat(org-service): add deleteOrganization method for organization deletion">
+      <option name="closed" value="true" />
+      <created>1772231119973</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1772231119973</updated>
+    </task>
+    <option name="localTasksCounter" value="20" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -300,7 +316,8 @@
     <MESSAGE value="feat(org-service): add updateOrganization method for updating organization details" />
     <MESSAGE value="feat(org-service): add updateOrganizationSettings method for updating organization settings" />
     <MESSAGE value="feat(org-service): add transferOrganizationOwnership method for transferring organization ownership" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(org-service): add transferOrganizationOwnership method for transferring organization ownership" />
+    <MESSAGE value="feat(org-service): add deleteOrganization method for organization deletion" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(org-service): add deleteOrganization method for organization deletion" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>
