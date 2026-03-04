@@ -14,6 +14,9 @@ import io.bento.orgservice.exception.InvitationExpiredException;
 import io.bento.orgservice.exception.InvitationNotFoundException;
 import io.bento.orgservice.exception.MemberAlreadyExistsException;
 import io.bento.orgservice.exception.OrgAccessDeniedException;
+import io.bento.orgservice.event.InvitationCreatedEvent;
+import io.bento.orgservice.event.MemberJoinedEvent;
+import io.bento.orgservice.event.OrgEventPublisher;
 import io.bento.orgservice.mapper.OrgInvitationMapper;
 import io.bento.orgservice.mapper.OrgMemberMapper;
 import io.bento.orgservice.repository.OrgInvitationRepository;
@@ -36,6 +39,7 @@ public class OrgInvitationService {
     private final OrgInvitationRepository orgInvitationRepository;
     private final OrgInvitationMapper orgInvitationMapper;
     private final OrgMemberMapper orgMemberMapper;
+    private final OrgEventPublisher orgEventPublisher;
 
     @Transactional
     public InvitationResponse sentNewInvitation(UUID adminId, UUID orgId, SendInvitationRequest invitationRequest) {
@@ -63,7 +67,16 @@ public class OrgInvitationService {
         // save them
         OrgInvitation savedInvitation = orgInvitationRepository.save(invitation);
 
-        // TODO: sent message to kafka topic to ent email. org Service ==> kafka ==> notification service
+        orgEventPublisher.publishInvitationCreated(new InvitationCreatedEvent(
+                orgId,
+                organization.getName(),
+                adminId,
+                savedInvitation.getEmail(),
+                savedInvitation.getOrgRole(),
+                savedInvitation.getToken(),
+                savedInvitation.getExpiresAt()
+        ));
+
         return orgInvitationMapper.toInvitationResponse(savedInvitation);
     }
 
@@ -134,8 +147,15 @@ public class OrgInvitationService {
                 .build();
 
         OrganizationMember savedMember = organizationMemberRepository.save(newMember);
+
+        orgEventPublisher.publishMemberJoined(new MemberJoinedEvent(
+                organization.getId(),
+                organization.getName(),
+                savedMember.getUserId(),
+                savedMember.getOrgRole(),
+                savedMember.getJoinedAt()
+        ));
+
         return orgMemberMapper.toMemberResponse(savedMember);
-
-
     }
 }
