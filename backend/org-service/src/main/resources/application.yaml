@@ -34,7 +34,7 @@ spring:
             host: localhost
             port: 6380
     kafka:
-        bootstrap-servers: localhost:9093
+        bootstrap-servers: localhost:9092
         consumer:
             group-id: org-service
             auto-offset-reset: earliest
@@ -63,7 +63,7 @@ spring:
             host: redis
             port: 6379
     kafka:
-        bootstrap-servers: kafka:9092
+        bootstrap-servers: kafka:29092
         consumer:
             group-id: org-service
             auto-offset-reset: earliest

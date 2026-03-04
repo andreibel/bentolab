@@ -41,18 +41,50 @@ spring:
         properties:
             hibernate:
                 format_sql: true
+    data:
+        redis:
+            host: localhost
+            port: 6380
+    kafka:
+        bootstrap-servers: localhost:9092
+        consumer:
+            group-id: auth-service
+            auto-offset-reset: earliest
+            key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+            value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+            properties:
+                spring.json.trusted.packages: "*"
+        producer:
+            key-serializer: org.apache.kafka.common.serialization.StringSerializer
+            value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 ---
 spring:
     config:
         activate:
             on-profile: docker
     datasource:
-        url: jdbc:postgresql://postgres:5432/authdb
+        url: jdbc:postgresql://postgres-auth:5432/authdb
         username: ${DB_USERNAME:admin}
         password: ${DB_PASSWORD:admin}
     jpa:
         hibernate:
             ddl-auto: validate
+    data:
+        redis:
+            host: redis
+            port: 6379
+    kafka:
+        bootstrap-servers: kafka:29092
+        consumer:
+            group-id: auth-service
+            auto-offset-reset: earliest
+            key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+            value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+            properties:
+                spring.json.trusted.packages: "*"
+        producer:
+            key-serializer: org.apache.kafka.common.serialization.StringSerializer
+            value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 ---
 spring:
     config:
@@ -65,3 +97,19 @@ spring:
     jpa:
         hibernate:
             ddl-auto: validate
+    data:
+        redis:
+            host: ${REDIS_HOST:localhost}
+            port: ${REDIS_PORT:6379}
+    kafka:
+        bootstrap-servers: ${KAFKA_SERVERS:localhost:9092}
+        consumer:
+            group-id: auth-service
+            auto-offset-reset: earliest
+            key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+            value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+            properties:
+                spring.json.trusted.packages: "*"
+        producer:
+            key-serializer: org.apache.kafka.common.serialization.StringSerializer
+            value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
