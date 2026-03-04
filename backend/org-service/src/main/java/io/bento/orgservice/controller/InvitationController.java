@@ -2,6 +2,7 @@ package io.bento.orgservice.controller;
 
 import io.bento.orgservice.dto.request.SendInvitationRequest;
 import io.bento.orgservice.dto.response.InvitationResponse;
+import io.bento.orgservice.enums.Status;
 import io.bento.orgservice.service.OrgInvitationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -9,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -26,6 +28,15 @@ public class InvitationController {
     ) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(orgInvitationService.sentNewInvitation(adminId, orgId, invitationRequest));
+    }
+
+    @GetMapping("/orgs/{orgId}/invitations")
+    public ResponseEntity<List<InvitationResponse>> getInvitations(
+            @RequestHeader("X-User-Id") UUID adminId,
+            @PathVariable("orgId") UUID orgId,
+            @RequestParam(required = false) Status status
+            ) {
+        return ResponseEntity.ok(orgInvitationService.getAllOrgActiveInitiation(adminId,orgId, status));
     }
 }
 
