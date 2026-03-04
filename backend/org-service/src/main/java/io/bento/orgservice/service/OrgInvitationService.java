@@ -7,7 +7,9 @@ import io.bento.orgservice.entity.Organization;
 import io.bento.orgservice.entity.OrganizationMember;
 import io.bento.orgservice.enums.OrgRoles;
 import io.bento.orgservice.enums.Status;
+import io.bento.orgservice.exception.InvalidInvitationStatusException;
 import io.bento.orgservice.exception.InvitationAlreadyExistsException;
+import io.bento.orgservice.exception.InvitationNotFoundException;
 import io.bento.orgservice.exception.OrgAccessDeniedException;
 import io.bento.orgservice.mapper.OrgInvitationMapper;
 import io.bento.orgservice.repository.OrgInvitationRepository;
@@ -31,13 +33,9 @@ public class OrgInvitationService {
 
     @Transactional
     public InvitationResponse sentNewInvitation(UUID adminId, UUID orgId, SendInvitationRequest invitationRequest) {
-        // check part of the organization
-        OrganizationMember orgAdmin = getCallerMember(adminId, orgId);
+        OrganizationMember orgAdmin = getCallerAdminMember(adminId, orgId);
 
-        // check premonition
-        if (!orgAdmin.getOrgRole().isAtLeast(OrgRoles.ORG_ADMIN))
-            throw new OrgAccessDeniedException("you are not allowed to invite new members to this organization");
-        // chack that you have premonition to invite to this role,
+        // chack that you have premonition to invite to this role
         if (invitationRequest.orgRole().isHigherThan(orgAdmin.getOrgRole()))
             throw new OrgAccessDeniedException("you are not allowed to invite to role higher then yours");
         // there is admin so no need to check if org is existed
@@ -66,10 +64,7 @@ public class OrgInvitationService {
 
     @Transactional(readOnly = true)
     public List<InvitationResponse> getAllOrgActiveInitiation(UUID adminId, UUID orgId, Status status) {
-        OrganizationMember orgAdmin = getCallerMember(adminId, orgId);
-        if (!orgAdmin.getOrgRole().isAtLeast(OrgRoles.ORG_ADMIN))
-            throw new OrgAccessDeniedException("you are not allowed to get all initiation for this organization");
-
+        checkAdminRole(adminId, orgId);
         if (status == null) {
             return orgInvitationRepository.findAllByOrganization_Id(orgId)
                     .stream().map(orgInvitationMapper::toInvitationResponse).toList();
@@ -80,9 +75,30 @@ public class OrgInvitationService {
     }
 
 
-    private OrganizationMember getCallerMember(UUID userId, UUID orgId) {
-        return organizationMemberRepository.findAllByOrganization_IdAndUserId(orgId, userId)
+    private OrganizationMember getCallerAdminMember(UUID userId, UUID orgId) {
+        OrganizationMember orgAdmin = organizationMemberRepository.findAllByOrganization_IdAndUserId(orgId, userId)
                 .orElseThrow(() -> new OrgAccessDeniedException("You are not a member of the organization. Access denied"));
+        if (!orgAdmin.getOrgRole().isAtLeast(OrgRoles.ORG_ADMIN))
+            throw new OrgAccessDeniedException("you are not allowed to get all initiation for this organization");
+        return orgAdmin;
     }
 
+    private void checkAdminRole(UUID userId, UUID orgId) {
+        OrgRoles role = organizationMemberRepository.findRoleByOrgIdAndUserId(orgId, userId)
+                .orElseThrow(() -> new OrgAccessDeniedException("You are not a member of the organization. Access denied"));
+        if (!role.isAtLeast(OrgRoles.ORG_ADMIN))
+            throw new OrgAccessDeniedException("you are not allowed to get all initiation for this organization");
+    }
+
+
+    @Transactional
+    public void deleteInvitation(UUID adminId, UUID orgId, UUID invitationId) {
+        checkAdminRole(adminId, orgId);
+        OrgInvitation orgInvitation = orgInvitationRepository.findByIdAndOrganization_Id(invitationId,orgId)
+                .orElseThrow(() -> new InvitationNotFoundException("invitation not found"));
+        if (!orgInvitation.getStatus().equals(Status.PENDING))
+            throw new InvalidInvitationStatusException("Cannot revoke an invitation that is not pending");
+        orgInvitation.setStatus(Status.REVOKED);
+        orgInvitationRepository.save(orgInvitation);
+    }
 }

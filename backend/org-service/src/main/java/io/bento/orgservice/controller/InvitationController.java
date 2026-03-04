@@ -38,5 +38,15 @@ public class InvitationController {
             ) {
         return ResponseEntity.ok(orgInvitationService.getAllOrgActiveInitiation(adminId,orgId, status));
     }
+
+    @DeleteMapping("/orgs/{orgId}/invitations/{invitationId}")
+    public ResponseEntity<Void> deleteInvitation(
+            @RequestHeader("X-User-Id") UUID adminId,
+            @PathVariable("orgId") UUID orgId,
+            @PathVariable("invitationId") UUID invitationId
+    ) {
+        orgInvitationService.deleteInvitation(adminId,orgId,invitationId);
+        return ResponseEntity.noContent().build();
+    }
 }
 
