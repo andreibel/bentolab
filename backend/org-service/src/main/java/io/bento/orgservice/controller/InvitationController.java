@@ -2,6 +2,7 @@ package io.bento.orgservice.controller;
 
 import io.bento.orgservice.dto.request.SendInvitationRequest;
 import io.bento.orgservice.dto.response.InvitationResponse;
+import io.bento.orgservice.dto.response.MemberResponse;
 import io.bento.orgservice.enums.Status;
 import io.bento.orgservice.service.OrgInvitationService;
 import jakarta.validation.Valid;
@@ -47,6 +48,15 @@ public class InvitationController {
     ) {
         orgInvitationService.deleteInvitation(adminId,orgId,invitationId);
         return ResponseEntity.noContent().build();
+    }
+
+
+    @PostMapping("/invitations/{token}/accept")
+    public ResponseEntity<MemberResponse> acceptInvitation(
+            @RequestHeader("X-User-Id") UUID userId,
+            @RequestHeader("X-User-Email") String email,
+            @PathVariable("token") String tokenInvitation) {
+        return ResponseEntity.ok(orgInvitationService.acceptNewMember(userId, email, tokenInvitation));
     }
 }
 
