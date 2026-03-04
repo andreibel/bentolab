@@ -15,7 +15,7 @@ public enum OrgRoles {
         return this.rank >= minimum.rank;
     }
 
-    public boolean isLeast(OrgRoles minimum) {
+    public boolean isHigherThan(OrgRoles minimum) {
         return this.rank > minimum.rank;
     }
 }
