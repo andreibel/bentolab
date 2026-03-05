@@ -53,7 +53,7 @@ public class UserService {
         if (request.firstName() != null) changedFields.add("firstName");
         if (request.lastName() != null) changedFields.add("lastName");
         if (request.avatarUrl() != null) changedFields.add("avatarUrl");
-        userEventPublisher.publishUserUpdated(new UserUpdatedEvent(userId, changedFields, Instant.now()));
+        userEventPublisher.publishUserUpdated(new UserUpdatedEvent(userId, changedFields, Instant.now().toString()));
 
         return userMapper.toDto(user);
     }

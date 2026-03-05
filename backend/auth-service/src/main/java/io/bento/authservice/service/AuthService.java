@@ -36,9 +36,11 @@ public class AuthService {
     private final UserMapper userMapper;
     private final AuthProperties authProperties;
     private final UserEventPublisher userEventPublisher;
+    private final OrgServiceClient orgServiceClient;
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
+
         // Check if email already exists before creating user to avoid unnecessary work and potential conflicts
         if (userRepository.existsByEmail(request.email())) {
             throw new EmailAlreadyExistsException(request.email());
@@ -57,7 +59,7 @@ public class AuthService {
         user = userRepository.save(user);
 
         userEventPublisher.publishUserRegistered(new UserRegisteredEvent(
-                user.getId(), user.getEmail(), user.getFirstName(), user.getLastName(), Instant.now()
+                user.getId(), user.getEmail(), user.getFirstName(), user.getLastName(), Instant.now().toString()
         ));
 
         List<UserOrgDto> organizations = fetchUserOrganizations(user.getId());
@@ -90,7 +92,7 @@ public class AuthService {
         user.setLastLoginAt(Instant.now());
         userRepository.save(user);
 
-        userEventPublisher.publishUserLoggedIn(new UserLoggedInEvent(user.getId(), null, Instant.now()));
+        userEventPublisher.publishUserLoggedIn(new UserLoggedInEvent(user.getId(), null, Instant.now().toString()));
 
         List<UserOrgDto> organizations = fetchUserOrganizations(user.getId());
         UserOrgDto primaryOrg = organizations.isEmpty() ? null : organizations.getFirst();
@@ -146,11 +148,7 @@ public class AuthService {
         return new TokenResponse(accessToken, refreshToken.getToken());
     }
 
-    /**
-     * Stub: returns empty list until Org Service is implemented.
-     */
     private List<UserOrgDto> fetchUserOrganizations(UUID userId) {
-        // TODO: Call Org Service GET /api/internal/orgs/user/{userId}
-        return List.of();
+        return orgServiceClient.getUserOrgs(userId);
     }
 }

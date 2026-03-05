@@ -1,0 +1,164 @@
+spring:
+    application:
+        name: api-gateway
+
+server:
+    port: 8080
+
+jwt:
+    secret: ${JWT_SECRET:PKr8VmsFMreD//KrCWf+kINmoKwKaSoptbNJ7D+H/eU=}
+
+internal:
+    # Shared secret added to every forwarded request as X-Internal-Secret header.
+    # Microservices reject requests where this header is missing or wrong.
+    # MUST match the value configured in all microservices. Change in production via env var.
+    gateway-secret: ${GATEWAY_INTERNAL_SECRET:dktxrevDkto3aZUvUD6REkn+x2x0foPhAvXBueFO4rs=}
+
+# Paths that do not require a valid JWT — forwarded without X-User-* headers
+gateway:
+    public-paths:
+        - /api/auth/register
+        - /api/auth/login
+        - /api/auth/refresh
+        - /api/auth/password-reset/request
+        - /api/auth/password-reset/confirm
+
+---
+spring:
+    config:
+        activate:
+            on-profile: dev
+    cloud:
+        gateway:
+            server:
+                webflux:
+                    routes:
+                        - id: auth-service
+                          uri: http://localhost:8081
+                          predicates:
+                              - Path=/api/auth/**, /api/users/**
+
+                        - id: org-service
+                          uri: http://localhost:8082
+                          predicates:
+                              - Path=/api/orgs/**, /api/members/**, /api/invitations/**
+
+                        - id: board-service
+                          uri: http://localhost:8083
+                          predicates:
+                              - Path=/api/boards/**, /api/columns/**, /api/labels/**
+
+                        - id: task-service
+                          uri: http://localhost:8084
+                          predicates:
+                              - Path=/api/tasks/**, /api/sprints/**, /api/comments/**
+
+                        - id: notification-service
+                          uri: http://localhost:8085
+                          predicates:
+                              - Path=/api/notifications/**
+
+---
+spring:
+    config:
+        activate:
+            on-profile: docker
+    cloud:
+        gateway:
+            server:
+                webflux:
+                    routes:
+                        - id: auth-service
+                          uri: http://auth-service:8081
+                          predicates:
+                              - Path=/api/auth/**, /api/users/**
+
+                        - id: org-service
+                          uri: http://org-service:8082
+                          predicates:
+                              - Path=/api/orgs/**, /api/members/**, /api/invitations/**
+
+                        - id: board-service
+                          uri: http://board-service:8083
+                          predicates:
+                              - Path=/api/boards/**, /api/columns/**, /api/labels/**
+
+                        - id: task-service
+                          uri: http://task-service:8084
+                          predicates:
+                              - Path=/api/tasks/**, /api/sprints/**, /api/comments/**
+
+                        - id: notification-service
+                          uri: http://notification-service:8085
+                          predicates:
+                              - Path=/api/notifications/**
+
+---
+spring:
+    config:
+        activate:
+            on-profile: selfhost
+    cloud:
+        gateway:
+            server:
+                webflux:
+                    routes:
+                        - id: auth-service
+                          uri: http://${AUTH_SERVICE_HOST:auth-service}:8081
+                          predicates:
+                              - Path=/api/auth/**, /api/users/**
+
+                        - id: org-service
+                          uri: http://${ORG_SERVICE_HOST:org-service}:8082
+                          predicates:
+                              - Path=/api/orgs/**, /api/members/**, /api/invitations/**
+
+                        - id: board-service
+                          uri: http://${BOARD_SERVICE_HOST:board-service}:8083
+                          predicates:
+                              - Path=/api/boards/**, /api/columns/**, /api/labels/**
+
+                        - id: task-service
+                          uri: http://${TASK_SERVICE_HOST:task-service}:8084
+                          predicates:
+                              - Path=/api/tasks/**, /api/sprints/**, /api/comments/**
+
+                        - id: notification-service
+                          uri: http://${NOTIFICATION_SERVICE_HOST:notification-service}:8085
+                          predicates:
+                              - Path=/api/notifications/**
+
+---
+spring:
+    config:
+        activate:
+            on-profile: cloud
+    cloud:
+        gateway:
+            server:
+                webflux:
+                    routes:
+                        - id: auth-service
+                          uri: http://${AUTH_SERVICE_HOST:auth-service}:8081
+                          predicates:
+                              - Path=/api/auth/**, /api/users/**
+
+                        - id: org-service
+                          uri: http://${ORG_SERVICE_HOST:org-service}:8082
+                          predicates:
+                              - Path=/api/orgs/**, /api/members/**, /api/invitations/**
+
+                        - id: board-service
+                          uri: http://${BOARD_SERVICE_HOST:board-service}:8083
+                          predicates:
+                              - Path=/api/boards/**, /api/columns/**, /api/labels/**
+
+                        - id: task-service
+                          uri: http://${TASK_SERVICE_HOST:task-service}:8084
+                          predicates:
+                              - Path=/api/tasks/**, /api/sprints/**, /api/comments/**
+
+                        - id: notification-service
+                          uri: http://${NOTIFICATION_SERVICE_HOST:notification-service}:8085
+                          predicates:
+                              - Path=/api/notifications/**

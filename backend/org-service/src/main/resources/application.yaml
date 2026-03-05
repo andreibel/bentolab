@@ -11,7 +11,7 @@ internal:
     # The gateway adds X-Internal-Secret header with this value on every forwarded request.
     # Services reject requests where this header is missing or wrong (direct access bypass attempt).
     # MUST match the value configured in the api-gateway. Change in production via env var.
-    gateway-secret: ${GATEWAY_INTERNAL_SECRET:bento-dev-internal-secret-change-in-production}
+    gateway-secret: ${GATEWAY_INTERNAL_SECRET:dktxrevDkto3aZUvUD6REkn+x2x0foPhAvXBueFO4rs=}
 
 ---
 spring:

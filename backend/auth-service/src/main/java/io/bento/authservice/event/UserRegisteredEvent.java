@@ -1,6 +1,5 @@
 package io.bento.authservice.event;
 
-import java.time.Instant;
 import java.util.UUID;
 
 public record UserRegisteredEvent(
@@ -8,5 +7,5 @@ public record UserRegisteredEvent(
         String email,
         String firstName,
         String lastName,
-        Instant registeredAt
+        String registeredAt
 ) {}

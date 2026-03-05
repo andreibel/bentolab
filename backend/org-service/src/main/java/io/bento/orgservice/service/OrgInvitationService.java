@@ -74,7 +74,7 @@ public class OrgInvitationService {
                 savedInvitation.getEmail(),
                 savedInvitation.getOrgRole(),
                 savedInvitation.getToken(),
-                savedInvitation.getExpiresAt()
+                savedInvitation.getExpiresAt().toString()
         ));
 
         return orgInvitationMapper.toInvitationResponse(savedInvitation);
@@ -153,7 +153,7 @@ public class OrgInvitationService {
                 organization.getName(),
                 savedMember.getUserId(),
                 savedMember.getOrgRole(),
-                savedMember.getJoinedAt()
+                savedMember.getJoinedAt().toString()
         ));
 
         return orgMemberMapper.toMemberResponse(savedMember);
