@@ -7,6 +7,9 @@ import io.bento.authservice.dto.response.*;
 import io.bento.authservice.entity.RefreshToken;
 import io.bento.authservice.entity.User;
 import io.bento.authservice.enums.SystemRole;
+import io.bento.authservice.event.UserEventPublisher;
+import io.bento.authservice.event.UserLoggedInEvent;
+import io.bento.authservice.event.UserRegisteredEvent;
 import io.bento.authservice.exception.EmailAlreadyExistsException;
 import io.bento.authservice.exception.UserNotFoundException;
 import io.bento.authservice.mapper.UserMapper;
@@ -32,6 +35,7 @@ public class AuthService {
     private final RefreshTokenService refreshTokenService;
     private final UserMapper userMapper;
     private final AuthProperties authProperties;
+    private final UserEventPublisher userEventPublisher;
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
@@ -52,7 +56,9 @@ public class AuthService {
                 .build();
         user = userRepository.save(user);
 
-        // TODO: Publish user.registered Kafka event
+        userEventPublisher.publishUserRegistered(new UserRegisteredEvent(
+                user.getId(), user.getEmail(), user.getFirstName(), user.getLastName(), Instant.now()
+        ));
 
         List<UserOrgDto> organizations = fetchUserOrganizations(user.getId());
         UserOrgDto primaryOrg = organizations.isEmpty() ? null : organizations.getFirst();
@@ -84,7 +90,7 @@ public class AuthService {
         user.setLastLoginAt(Instant.now());
         userRepository.save(user);
 
-        // TODO: Publish user.logged_in Kafka event
+        userEventPublisher.publishUserLoggedIn(new UserLoggedInEvent(user.getId(), null, Instant.now()));
 
         List<UserOrgDto> organizations = fetchUserOrganizations(user.getId());
         UserOrgDto primaryOrg = organizations.isEmpty() ? null : organizations.getFirst();

@@ -63,6 +63,64 @@ backend/
 - `bento.sprint.events`
 - `bento.notification.events`
 
+## Security Architecture (Gateway + Shared Secret)
+
+### Core principle
+**JWT validation happens exclusively in the api-gateway. Microservices never parse JWTs.**
+
+### How it works
+```
+Client → Gateway → validates JWT → adds X-Internal-Secret + X-User-* headers → Service
+Client → Service directly → GatewayAuthFilter rejects (bad/missing secret) → 401
+```
+
+### Gateway responsibilities
+- Validate JWT (signature + expiry)
+- Extract claims and forward as headers:
+  - `X-User-Id` — userId (UUID)
+  - `X-User-Email` — user email
+  - `X-Org-Id` — current org (if present in JWT)
+  - `X-Org-Role` — role in current org
+  - `X-Org-Slug` — org slug
+- Add `X-Internal-Secret: <shared-secret>` to every forwarded request
+- Public endpoints (login, register, refresh) are forwarded without X-User-* headers
+
+### Microservice Security Config (every service except gateway)
+Each service has:
+1. Spring Security set to `permitAll()` — no JWT parsing ever
+2. A `GatewayAuthFilter` (custom OncePerRequestFilter) that:
+   - Checks `X-Internal-Secret` header → wrong/missing → reject 401
+   - Reads `X-User-Id` header → if present, populates SecurityContext
+   - If `X-User-Id` absent (public endpoint) → SecurityContext is anonymous
+3. CSRF disabled, sessions STATELESS
+
+```java
+// SecurityConfig pattern for all microservices
+http
+    .csrf(csrf -> csrf.disable())
+    .sessionManagement(s -> s.sessionCreationPolicy(STATELESS))
+    .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
+    .addFilterBefore(gatewayAuthFilter, UsernamePasswordAuthenticationFilter.class);
+```
+
+### GatewayAuthFilter pattern
+```java
+// 1. Check X-Internal-Secret — reject if wrong
+// 2. Read X-User-Id — populate SecurityContext if present
+// 3. Continue filter chain
+```
+
+### Configuration
+```yaml
+internal:
+  gateway-secret: ${GATEWAY_INTERNAL_SECRET}
+```
+Same secret value configured in api-gateway and all microservices via env var.
+
+### TODO: api-gateway config
+- Extract `email` claim from JWT → forward as `X-User-Email` header
+  (needed for invitation accept endpoint in org-service to verify invitee identity)
+
 ## Common Patterns
 
 ### REST Controller
