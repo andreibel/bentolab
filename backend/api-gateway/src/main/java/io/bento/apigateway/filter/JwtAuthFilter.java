@@ -3,25 +3,35 @@ package io.bento.apigateway.filter;
 import io.bento.apigateway.config.GatewayAuthProperty;
 import io.bento.apigateway.config.GatewayProperties;
 import io.bento.apigateway.service.JwtService;
+import io.bento.apigateway.service.StaleTokenService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
+import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import java.time.Instant;
+
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class JwtAuthFilter implements GlobalFilter, Ordered {
 
+    private static final byte[] TOKEN_STALE_BODY = "{\"error\":\"TOKEN_STALE\"}".getBytes();
+
     private final JwtService jwtService;
     private final GatewayAuthProperty gatewayAuthProperty;
     private final GatewayProperties gatewayProperties;
+    private final StaleTokenService staleTokenService;
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
@@ -43,22 +53,30 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
         try {
             Claims claims = jwtService.extractClaims(token);
 
-            ServerWebExchange mutated = exchange.mutate()
-                    .request(r -> {
-                        r.header("X-Internal-Secret", gatewayAuthProperty.gatewaySecret());
-                        r.header("X-User-Id", claims.getSubject());
+            String userId = claims.getSubject();
+            String orgId = claims.get("orgId", String.class);
 
-                        String email = claims.get("email", String.class);
-                        String orgId = claims.get("orgId", String.class);
-                        String orgRole = claims.get("orgRole", String.class);
-                        String orgSlug = claims.get("orgSlug", String.class);
+            ServerWebExchange mutated = buildMutatedExchange(exchange, claims);
 
-                        if (email != null) r.header("X-User-Email", email);
-                        if (orgId != null) r.header("X-Org-Id", orgId);
-                        if (orgRole != null) r.header("X-Org-Role", orgRole);
-                        if (orgSlug != null) r.header("X-Org-Slug", orgSlug);
-                    })
-                    .build();
+            // If the JWT carries an org context, check whether it has been marked stale
+            if (orgId != null) {
+                Instant issuedAt = claims.getIssuedAt().toInstant();
+                return staleTokenService.getStaleSince(userId, orgId)
+                        .onErrorResume(e -> {
+                            log.error("[JwtAuthFilter] Redis error during stale check, allowing request through", e);
+                            return Mono.empty();
+                        })
+                        // defaultIfEmpty ensures flatMap always fires — avoids switchIfEmpty triggering
+                        // after writeStaleResponse (Mono<Void> is empty, which would re-invoke chain.filter)
+                        .defaultIfEmpty(Instant.EPOCH)
+                        .flatMap(staleSince -> {
+                            if (!staleSince.equals(Instant.EPOCH) && issuedAt.isBefore(staleSince)) {
+                                log.info("[JwtAuthFilter] TOKEN_STALE for userId={} orgId={}", userId, orgId);
+                                return writeStaleResponse(exchange);
+                            }
+                            return chain.filter(mutated);
+                        });
+            }
 
             return chain.filter(mutated);
 
@@ -66,6 +84,32 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
         }
+    }
+
+    private ServerWebExchange buildMutatedExchange(ServerWebExchange exchange, Claims claims) {
+        return exchange.mutate()
+                .request(r -> {
+                    r.header("X-Internal-Secret", gatewayAuthProperty.gatewaySecret());
+                    r.header("X-User-Id", claims.getSubject());
+
+                    String email = claims.get("email", String.class);
+                    String orgId = claims.get("orgId", String.class);
+                    String orgRole = claims.get("orgRole", String.class);
+                    String orgSlug = claims.get("orgSlug", String.class);
+
+                    if (email != null) r.header("X-User-Email", email);
+                    if (orgId != null) r.header("X-Org-Id", orgId);
+                    if (orgRole != null) r.header("X-Org-Role", orgRole);
+                    if (orgSlug != null) r.header("X-Org-Slug", orgSlug);
+                })
+                .build();
+    }
+
+    private Mono<Void> writeStaleResponse(ServerWebExchange exchange) {
+        exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+        exchange.getResponse().getHeaders().setContentType(MediaType.APPLICATION_JSON);
+        DataBuffer buffer = exchange.getResponse().bufferFactory().wrap(TOKEN_STALE_BODY);
+        return exchange.getResponse().writeWith(Mono.just(buffer));
     }
 
     private boolean isPublicPath(String path) {
@@ -80,6 +124,6 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
 
     @Override
     public int getOrder() {
-        return -1; // run before all other filters
+        return -1;
     }
 }

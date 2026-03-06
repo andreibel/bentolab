@@ -35,7 +35,7 @@ public class AuthController {
 
     @PostMapping("/refresh")
     public ResponseEntity<TokenResponse> refresh(@Valid @RequestBody RefreshTokenRequest request) {
-        return ResponseEntity.ok(authService.refresh(request.refreshToken()));
+        return ResponseEntity.ok(authService.refresh(request.refreshToken(), request.currentOrgId()));
     }
 
     @PostMapping("/logout")

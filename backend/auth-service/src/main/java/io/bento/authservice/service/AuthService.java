@@ -109,15 +109,26 @@ public class AuthService {
     }
 
     @Transactional
-    public TokenResponse refresh(String refreshTokenValue) {
+    public TokenResponse refresh(String refreshTokenValue, UUID currentOrgId) {
         RefreshToken refreshToken = refreshTokenService.validateRefreshToken(refreshTokenValue);
         User user = refreshToken.getUser();
 
         List<UserOrgDto> organizations = fetchUserOrganizations(user.getId());
-        UserOrgDto primaryOrg = organizations.isEmpty() ? null : organizations.getFirst();
 
-        String accessToken = jwtService.generateAccessToken(user, primaryOrg);
+        // Try to preserve the org context the client was in. If the user was removed
+        // from that org, org-service will no longer return it → fall back to first org.
+        UserOrgDto targetOrg = null;
+        if (currentOrgId != null) {
+            targetOrg = organizations.stream()
+                    .filter(o -> o.orgId().equals(currentOrgId))
+                    .findFirst()
+                    .orElse(null);
+        }
+        if (targetOrg == null) {
+            targetOrg = organizations.isEmpty() ? null : organizations.getFirst();
+        }
 
+        String accessToken = jwtService.generateAccessToken(user, targetOrg);
         return new TokenResponse(accessToken, refreshToken.getToken());
     }
 

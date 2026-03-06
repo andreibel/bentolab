@@ -28,6 +28,21 @@ spring:
     config:
         activate:
             on-profile: dev
+    data:
+        redis:
+            host: localhost
+            port: 6380
+    kafka:
+        bootstrap-servers: localhost:9092
+        consumer:
+            group-id: api-gateway
+            auto-offset-reset: earliest
+            key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+            value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+            properties:
+                spring.json.trusted.packages: "*"
+                spring.json.value.default.type: io.bento.apigateway.event.OrgMemberStaleEvent
+                spring.json.use.type.headers: "false"
     cloud:
         gateway:
             server:
@@ -63,6 +78,21 @@ spring:
     config:
         activate:
             on-profile: docker
+    data:
+        redis:
+            host: redis
+            port: 6379
+    kafka:
+        bootstrap-servers: kafka:29092
+        consumer:
+            group-id: api-gateway
+            auto-offset-reset: earliest
+            key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+            value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+            properties:
+                spring.json.trusted.packages: "*"
+                spring.json.value.default.type: io.bento.apigateway.event.OrgMemberStaleEvent
+                spring.json.use.type.headers: "false"
     cloud:
         gateway:
             server:
@@ -98,6 +128,21 @@ spring:
     config:
         activate:
             on-profile: selfhost
+    data:
+        redis:
+            host: ${REDIS_HOST:localhost}
+            port: ${REDIS_PORT:6379}
+    kafka:
+        bootstrap-servers: ${KAFKA_SERVERS:localhost:9092}
+        consumer:
+            group-id: api-gateway
+            auto-offset-reset: earliest
+            key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+            value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+            properties:
+                spring.json.trusted.packages: "*"
+                spring.json.value.default.type: io.bento.apigateway.event.OrgMemberStaleEvent
+                spring.json.use.type.headers: "false"
     cloud:
         gateway:
             server:
@@ -133,6 +178,21 @@ spring:
     config:
         activate:
             on-profile: cloud
+    data:
+        redis:
+            host: ${REDIS_HOST:redis}
+            port: ${REDIS_PORT:6379}
+    kafka:
+        bootstrap-servers: ${KAFKA_SERVERS:kafka:29092}
+        consumer:
+            group-id: api-gateway
+            auto-offset-reset: earliest
+            key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+            value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+            properties:
+                spring.json.trusted.packages: "*"
+                spring.json.value.default.type: io.bento.apigateway.event.OrgMemberStaleEvent
+                spring.json.use.type.headers: "false"
     cloud:
         gateway:
             server:

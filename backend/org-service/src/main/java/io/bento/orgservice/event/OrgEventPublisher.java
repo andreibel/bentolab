@@ -19,6 +19,11 @@ public class OrgEventPublisher {
         kafkaTemplate.send(ORG_EVENTS_TOPIC, event.orgId().toString(), event);
     }
 
+    public void publishMemberRemoved(MemberRemovedEvent event) {
+        kafkaTemplate.send(ORG_EVENTS_TOPIC, event.orgId().toString(), event);
+    }
 
-
+    public void publishMemberRoleChanged(MemberRoleChangedEvent event) {
+        kafkaTemplate.send(ORG_EVENTS_TOPIC, event.orgId().toString(), event);
+    }
 }

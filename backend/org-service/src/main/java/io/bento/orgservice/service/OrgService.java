@@ -27,7 +27,6 @@ import java.util.UUID;
 @Transactional(readOnly = true)
 public class OrgService {
 
-
     private final OrganizationRepository organizationRepository;
     private final OrgMapper orgMapper;
     private final OrganizationMemberRepository organizationMemberRepository;
@@ -49,36 +48,30 @@ public class OrgService {
         return orgMapper.toResponse(savedOrg);
     }
 
-
     public List<OrgResponse> getMyOrgs(UUID userid) {
         return organizationRepository.findAllByMemberUserId(userid).stream()
                 .map(orgMapper::toResponse)
                 .toList();
     }
 
-    public OrgResponse getOrgById(UUID userid, UUID orgId) {
+    // Membership guaranteed by gateway (X-Org-Id header present) — no DB membership check needed
+    public OrgResponse getOrgById(UUID orgId) {
         Organization organization = organizationRepository.findById(orgId)
                 .orElseThrow(() -> new OrgNotFoundException("Organization not found with id: " + orgId));
-        boolean isMember = organizationMemberRepository.existsByOrganization_IdAndUserId(orgId, userid);
-        if (!isMember) {
-            throw new OrgAccessDeniedException("Access denied. not a member of the organization");
-        }
         return orgMapper.toResponse(organization);
     }
 
     @Transactional
-    public OrgResponse updateOrg(UUID userid, UUID orgId, UpdateOrgRequest request) {
-        Organization organization = organizationRepository.findById(orgId)
-                .orElseThrow(() -> new OrgNotFoundException("Organization not found with id: " + orgId));
-        OrganizationMember orgMember = organizationMemberRepository.findAllByOrganization_IdAndUserId(orgId, userid)
-                .orElseThrow(() -> new OrgAccessDeniedException("Access denied. not a member of the organization"));
-        if (!orgMember.getOrgRole().isAtLeast(OrgRoles.ORG_ADMIN)) {
+    public OrgResponse updateOrg(UUID orgId, OrgRoles callerRole, UpdateOrgRequest request) {
+        if (!callerRole.isAtLeast(OrgRoles.ORG_ADMIN)) {
             throw new OrgAccessDeniedException("Insufficient permissions");
         }
+        Organization organization = organizationRepository.findById(orgId)
+                .orElseThrow(() -> new OrgNotFoundException("Organization not found with id: " + orgId));
+
         if (request.name() != null && !request.name().isBlank()) {
             organization.setName(request.name());
         }
-
         if (request.domain() != null && !request.domain().isBlank()) {
             organization.setDomain(request.domain());
         }
@@ -88,61 +81,47 @@ public class OrgService {
         if (request.description() != null) {
             organization.setDescription(request.description());
         }
-        Organization updatedOrg = organizationRepository.save(organization);
-        return orgMapper.toResponse(updatedOrg);
+        return orgMapper.toResponse(organizationRepository.save(organization));
     }
 
     @Transactional
-    public OrgResponse updateOrgSettings(UUID userid, UUID orgId, UpdateOrgSettingsRequest request) {
-        Organization organization = organizationRepository.findById(orgId)
-                .orElseThrow(() -> new OrgNotFoundException("Organization not found with id: " + orgId));
-        OrganizationMember orgMember = organizationMemberRepository.findAllByOrganization_IdAndUserId(orgId, userid)
-                .orElseThrow(() -> new OrgAccessDeniedException("Access denied. not a member of the organization"));
-        if (!orgMember.getOrgRole().isAtLeast(OrgRoles.ORG_ADMIN)) {
+    public OrgResponse updateOrgSettings(UUID orgId, OrgRoles callerRole, UpdateOrgSettingsRequest request) {
+        if (!callerRole.isAtLeast(OrgRoles.ORG_ADMIN)) {
             throw new OrgAccessDeniedException("Insufficient permissions");
         }
+        Organization organization = organizationRepository.findById(orgId)
+                .orElseThrow(() -> new OrgNotFoundException("Organization not found with id: " + orgId));
+
         Map<String, Object> settings = organization.getSettings();
-        if (request.maxUsers() != null) {
-            settings.put("maxUsers", request.maxUsers());
-        }
-        if (request.maxBoards() != null) {
-            settings.put("maxBoards", request.maxBoards());
-        }
-        if (request.maxStorageGB() != null) {
-            settings.put("maxStorageGB", request.maxStorageGB());
-        }
-        if (request.allowDiscord() != null) {
-            settings.put("allowDiscord", request.allowDiscord());
-        }
-        if (request.allowExport() != null) {
-            settings.put("allowExport", request.allowExport());
-        }
-        if (request.customBranding() != null) {
-            settings.put("customBranding", request.customBranding());
-        }
-        if (request.ssoEnabled() != null) {
-            settings.put("ssoEnabled", request.ssoEnabled());
-        }
+        if (request.maxUsers() != null) settings.put("maxUsers", request.maxUsers());
+        if (request.maxBoards() != null) settings.put("maxBoards", request.maxBoards());
+        if (request.maxStorageGB() != null) settings.put("maxStorageGB", request.maxStorageGB());
+        if (request.allowDiscord() != null) settings.put("allowDiscord", request.allowDiscord());
+        if (request.allowExport() != null) settings.put("allowExport", request.allowExport());
+        if (request.customBranding() != null) settings.put("customBranding", request.customBranding());
+        if (request.ssoEnabled() != null) settings.put("ssoEnabled", request.ssoEnabled());
+
         organization.setSettings(settings);
-        Organization updatedOrg = organizationRepository.save(organization);
-        return orgMapper.toResponse(updatedOrg);
+        return orgMapper.toResponse(organizationRepository.save(organization));
     }
 
     @Transactional
-    public void transferOrgOwnership(UUID userid, UUID orgId, TransferOrgOwnershipRequest request) {
+    public void transferOrgOwnership(UUID userid, UUID orgId, OrgRoles callerRole, TransferOrgOwnershipRequest request) {
         if (request.newOwnerId().equals(userid)) {
             throw new OrgAccessDeniedException("Cannot transfer ownership to yourself");
         }
-        Organization organization = organizationRepository.findById(orgId)
-                .orElseThrow(() -> new OrgNotFoundException("Organization not found with id: " + orgId));
-        OrganizationMember currentOwnerMember = organizationMemberRepository.findAllByOrganization_IdAndUserId(orgId, userid)
-                .orElseThrow(() -> new OrgAccessDeniedException("Access denied. not a member of the organization"));
-        if (currentOwnerMember.getOrgRole() != OrgRoles.ORG_OWNER) {
+        if (callerRole != OrgRoles.ORG_OWNER) {
             throw new OrgAccessDeniedException("Only the organization owner can transfer ownership");
         }
+        Organization organization = organizationRepository.findById(orgId)
+                .orElseThrow(() -> new OrgNotFoundException("Organization not found with id: " + orgId));
 
-        OrganizationMember newOwnerMember = organizationMemberRepository.findAllByOrganization_IdAndUserId(orgId,
-                request.newOwnerId())
+        OrganizationMember currentOwnerMember = organizationMemberRepository
+                .findAllByOrganization_IdAndUserId(orgId, userid)
+                .orElseThrow(() -> new OrgAccessDeniedException("Access denied"));
+
+        OrganizationMember newOwnerMember = organizationMemberRepository
+                .findAllByOrganization_IdAndUserId(orgId, request.newOwnerId())
                 .orElseThrow(() -> new OrgAccessDeniedException("The new owner must be a member of the organization"));
 
         currentOwnerMember.setOrgRole(OrgRoles.ORG_ADMIN);
@@ -154,14 +133,12 @@ public class OrgService {
     }
 
     @Transactional
-    public void deleteOrg(UUID userid, UUID orgId) {
-        Organization organization = organizationRepository.findById(orgId)
-                .orElseThrow(() -> new OrgNotFoundException("Organization not found with id: " + orgId));
-        OrganizationMember orgMember = organizationMemberRepository.findAllByOrganization_IdAndUserId(orgId, userid)
-                .orElseThrow(() -> new OrgAccessDeniedException("Access denied. not a member of the organization"));
-        if (orgMember.getOrgRole() != OrgRoles.ORG_OWNER) {
+    public void deleteOrg(UUID orgId, OrgRoles callerRole) {
+        if (callerRole != OrgRoles.ORG_OWNER) {
             throw new OrgAccessDeniedException("Only the organization owner can delete the organization");
         }
+        Organization organization = organizationRepository.findById(orgId)
+                .orElseThrow(() -> new OrgNotFoundException("Organization not found with id: " + orgId));
         organizationRepository.delete(organization);
     }
 }

@@ -4,6 +4,9 @@ import io.bento.orgservice.dto.request.UpdateMemberRoleRequest;
 import io.bento.orgservice.dto.response.MemberResponse;
 import io.bento.orgservice.entity.OrganizationMember;
 import io.bento.orgservice.enums.OrgRoles;
+import io.bento.orgservice.event.MemberRemovedEvent;
+import io.bento.orgservice.event.MemberRoleChangedEvent;
+import io.bento.orgservice.event.OrgEventPublisher;
 import io.bento.orgservice.exception.OrgAccessDeniedException;
 import io.bento.orgservice.exception.OrganizationMemberNotFoundException;
 import io.bento.orgservice.mapper.OrgMemberMapper;
@@ -21,65 +24,55 @@ public class MemberService {
 
     private final OrganizationMemberRepository organizationMemberRepository;
     private final OrgMemberMapper orgMemberMapper;
+    private final OrgEventPublisher orgEventPublisher;
 
-    @Transactional
-    public List<MemberResponse> getAllOrgMember(UUID userid, UUID orgId) {
-        // check if the Member is part of the org so it can access the private information about Organization member
-        if (!organizationMemberRepository.existsByOrganization_IdAndUserId(orgId, userid))
-            throw new OrgAccessDeniedException("You not Member of the Organization. Access denied");
-        List<OrganizationMember> organizationMembers = organizationMemberRepository.findAllByOrganization_Id(orgId);
-        return organizationMembers.stream().map(orgMemberMapper::toMemberResponse).toList();
+    // Membership guaranteed by gateway (X-Org-Id header present) — no existence check needed
+    @Transactional(readOnly = true)
+    public List<MemberResponse> getAllOrgMember(UUID orgId) {
+        return organizationMemberRepository.findAllByOrganization_Id(orgId)
+                .stream().map(orgMemberMapper::toMemberResponse).toList();
     }
 
     @Transactional
-    public MemberResponse updateMemberRole(UUID adminUserId, UUID userId, UUID orgId, UpdateMemberRoleRequest roleRequest) {
-        // admin check
-        OrganizationMember organizationAdmin = this.getCallerMember(adminUserId, orgId);
+    public MemberResponse updateMemberRole(UUID adminUserId, UUID userId, UUID orgId,
+                                           OrgRoles callerRole, UpdateMemberRoleRequest roleRequest) {
+        if (!callerRole.isAtLeast(OrgRoles.ORG_ADMIN))
+            throw new OrgAccessDeniedException("You are not allowed to change the Organization Role. Access denied");
 
-        if (!organizationAdmin.getOrgRole().isAtLeast(OrgRoles.ORG_ADMIN))
-            throw new OrgAccessDeniedException("You are not allowed to change the Organization Role.  Access denied");
-        // strict you can update role that less than yours
-        if (roleRequest.orgRole().isHigherThan(organizationAdmin.getOrgRole()))
-            throw new OrgAccessDeniedException("You are not allowed to change to that role the Organization Role.  " +
-                    "Access denied");
-        // member to update part of the Org
-        OrganizationMember memberToUpdate = this.getTargetMember(userId, orgId);
+        if (roleRequest.orgRole().isHigherThan(callerRole))
+            throw new OrgAccessDeniedException("You are not allowed to promote to a role higher than yours. Access denied");
 
-        // owner role can only be changed via transfer ownership endpoint
+        OrganizationMember memberToUpdate = getTargetMember(userId, orgId);
+
         if (memberToUpdate.getOrgRole() == OrgRoles.ORG_OWNER)
             throw new OrgAccessDeniedException("Cannot change the owner's role. Use the transfer ownership endpoint.");
-        // update the role + save
+
         memberToUpdate.setOrgRole(roleRequest.orgRole());
         OrganizationMember updatedMember = organizationMemberRepository.save(memberToUpdate);
-        return orgMemberMapper.toMemberResponse(updatedMember);
 
+        orgEventPublisher.publishMemberRoleChanged(
+                new MemberRoleChangedEvent(orgId, userId, roleRequest.orgRole()));
+
+        return orgMemberMapper.toMemberResponse(updatedMember);
     }
 
     @Transactional
-    public void deleteMember(UUID adminUserId, UUID userId, UUID orgId) {
-        OrganizationMember organizationAdmin = this.getCallerMember(adminUserId, orgId);
-        OrganizationMember memberToDelete = this.getTargetMember(userId, orgId);
-        // path if itself delete (not owner) or admin want to delete another lesser role member then him
-        if((organizationAdmin.getOrgRole() != OrgRoles.ORG_OWNER && memberToDelete.getId().equals(organizationAdmin.getId()))
-                || organizationAdmin.getOrgRole().isHigherThan(memberToDelete.getOrgRole())) {
+    public void deleteMember(UUID adminUserId, UUID userId, UUID orgId, OrgRoles callerRole) {
+        OrganizationMember memberToDelete = getTargetMember(userId, orgId);
+
+        boolean isSelfDelete = adminUserId.equals(userId) && callerRole != OrgRoles.ORG_OWNER;
+        boolean canDeleteOther = callerRole.isHigherThan(memberToDelete.getOrgRole());
+
+        if (isSelfDelete || canDeleteOther) {
             organizationMemberRepository.delete(memberToDelete);
+            orgEventPublisher.publishMemberRemoved(new MemberRemovedEvent(orgId, userId));
+        } else {
+            throw new OrgAccessDeniedException("You cannot delete this member");
         }
-        else
-            throw new OrgAccessDeniedException("you cannot delete this member");
-    }
-
-
-    private OrganizationMember getCallerMember(UUID userId, UUID orgId) {
-        return organizationMemberRepository.findAllByOrganization_IdAndUserId(orgId, userId)
-                .orElseThrow(() -> new OrgAccessDeniedException("You are not a member of the organization. Access denied"));
     }
 
     private OrganizationMember getTargetMember(UUID userId, UUID orgId) {
         return organizationMemberRepository.findAllByOrganization_IdAndUserId(orgId, userId)
                 .orElseThrow(() -> new OrganizationMemberNotFoundException("Member not found in the organization"));
     }
-
-
-
-
 }
