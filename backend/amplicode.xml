@@ -19,6 +19,11 @@
           <package value="io.bento.orgservice" />
         </packages>
       </persistence-unit>
+      <persistence-unit moduleName="board-service.main" name="Default">
+        <packages>
+          <package value="io.bento.boardservice" />
+        </packages>
+      </persistence-unit>
     </persistence-units>
   </component>
 </project>
