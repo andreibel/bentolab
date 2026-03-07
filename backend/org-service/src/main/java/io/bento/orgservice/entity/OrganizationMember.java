@@ -15,11 +15,7 @@ import java.util.UUID;
 @Entity
 @Table(
     name = "organization_member",
-    uniqueConstraints = @UniqueConstraint(columnNames = {"org_id", "user_id"}),
-    indexes = {
-        @Index(name = "idx_org_member_org_id", columnList = "org_id"),
-        @Index(name = "idx_org_member_user_id", columnList = "user_id")
-    }
+    uniqueConstraints = @UniqueConstraint(columnNames = {"org_id", "user_id"})
 )
 public class OrganizationMember {
     @Id

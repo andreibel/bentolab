@@ -15,12 +15,7 @@ import java.util.UUID;
 @Setter
 @Entity
 @Table(
-    name = "org_invitation",
-    indexes = {
-        @Index(name = "idx_org_invitation_org_status", columnList = "organization_id, status"),
-        @Index(name = "idx_org_invitation_email_status", columnList = "email, status"),
-        @Index(name = "idx_org_invitation_expires_at", columnList = "expires_at")
-    }
+    name = "org_invitation"
 )
 public class OrgInvitation {
     @Id
@@ -32,7 +27,7 @@ public class OrgInvitation {
     @JoinColumn(name = "organization_id", nullable = false)
     private Organization organization;
 
-    @Column(name = "email", nullable = false, length = 255)
+    @Column(name = "email", nullable = false)
     private String email;
 
     @Enumerated(EnumType.STRING)

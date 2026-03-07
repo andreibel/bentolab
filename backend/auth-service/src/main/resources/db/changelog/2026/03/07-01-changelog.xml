@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-5.0.xsd">
+
+    <changeSet id="1772909280810-1" author="andreibeloziorove">
+        <createIndex tableName="users" indexName="IDX_USERS_ON_ACTIVE">
+            <column name="active"/>
+        </createIndex>
+    </changeSet>
+    <changeSet id="1772909323305-1" author="andreibeloziorove">
+        <createIndex tableName="users" indexName="IDX_USERS_ON_CURRENTORGID">
+            <column name="current_org_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>
