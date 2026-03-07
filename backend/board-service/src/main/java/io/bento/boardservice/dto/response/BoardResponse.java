@@ -3,6 +3,7 @@ package io.bento.boardservice.dto.response;
 import io.bento.boardservice.enums.BoardType;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 public record BoardResponse(
@@ -16,6 +17,7 @@ public record BoardResponse(
         UUID ownerId,
         Boolean isArchived,
         Integer issueCounter,
+        List<BoardColumnResponse> columns,
         Instant createdAt,
         Instant updatedAt
 ) {}
