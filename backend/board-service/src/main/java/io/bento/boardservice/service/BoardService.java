@@ -155,6 +155,16 @@ public class BoardService {
                     buildColumn(board, "In Progress", 2, false, false),
                     buildColumn(board, "Done", 3, false, true)
             );
+            case BUG_TRACKING -> List.of(
+                    buildColumn(board, "Open", 1, true, false),
+                    buildColumn(board, "In Progress", 2, false, false),
+                    buildColumn(board, "In Review", 3, false, false),
+                    buildColumn(board, "Resolved", 4, false, true)
+            );
+            case CUSTOM -> List.of(
+                    buildColumn(board, "To Do", 1, true, false),
+                    buildColumn(board, "Done", 2, false, true)
+            );
         };
     }
 
