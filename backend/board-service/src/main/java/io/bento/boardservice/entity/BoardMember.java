@@ -23,7 +23,7 @@ public class BoardMember {
     @Column(name = "id", nullable = false)
     private UUID id;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(optional = false, fetch =  FetchType.LAZY)
     @JoinColumn(name = "board_id", nullable = false)
     private Board board;
 

@@ -25,7 +25,7 @@ public class Label {
     @Column(name = "org_id", nullable = false)
     private UUID orgId;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(optional = false, fetch =  FetchType.LAZY)
     @JoinColumn(name = "board_id", nullable = false)
     private Board board;
 
