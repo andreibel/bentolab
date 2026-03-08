@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-5.0.xsd">
+
+    <changeSet id="1772905285953-1" author="andreibeloziorove">
+        <createTable tableName="org_invitation">
+            <column name="id" type="UUID">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_org_invitation"/>
+            </column>
+            <column name="organization_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="email" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="org_role" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="token" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="invited_by" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="message" type="TEXT"/>
+            <column name="expires_at" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+            <column name="accepted_at" type="DATETIME"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="1772905285953-2" author="andreibeloziorove">
+        <createTable tableName="organization_member">
+            <column name="id" type="UUID">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_organization_member"/>
+            </column>
+            <column name="org_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="user_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="org_role" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="invited_by" type="UUID"/>
+            <column name="joined_at" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet id="1772905285953-3" author="andreibeloziorove">
+        <createTable tableName="organizations">
+            <column name="id" type="UUID">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_organizations"/>
+            </column>
+            <column name="name" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="slug" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="domain" type="VARCHAR(200)"/>
+            <column name="logo_url" type="VARCHAR(500)"/>
+            <column name="description" type="TEXT"/>
+            <column name="plan" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="settings" type="jsonb">
+                <constraints nullable="false"/>
+            </column>
+            <column name="owner_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_active" type="BOOLEAN">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_default" type="BOOLEAN">
+                <constraints nullable="false"/>
+            </column>
+            <column name="setup_completed" type="BOOLEAN">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet id="1772905285953-4" author="andreibeloziorove">
+        <addUniqueConstraint columnNames="org_id, user_id" constraintName="uc_c01a852619fe739dca5d15a69"
+                             tableName="organization_member"/>
+    </changeSet>
+    <changeSet id="1772905285953-5" author="andreibeloziorove">
+        <addUniqueConstraint columnNames="token" constraintName="uc_org_invitation_token" tableName="org_invitation"/>
+    </changeSet>
+    <changeSet id="1772905285953-6" author="andreibeloziorove">
+        <addUniqueConstraint columnNames="slug" constraintName="uc_organizations_slug" tableName="organizations"/>
+    </changeSet>
+    <changeSet id="1772905285953-7" author="andreibeloziorove">
+        <createIndex indexName="idx_org_invitation_email_status" tableName="org_invitation">
+            <column name="email"/>
+            <column name="status"/>
+        </createIndex>
+    </changeSet>
+    <changeSet id="1772905285953-8" author="andreibeloziorove">
+        <createIndex indexName="idx_org_invitation_expires_at" tableName="org_invitation">
+            <column name="expires_at"/>
+        </createIndex>
+    </changeSet>
+    <changeSet id="1772905285953-9" author="andreibeloziorove">
+        <createIndex indexName="idx_org_invitation_org_status" tableName="org_invitation">
+            <column name="organization_id"/>
+            <column name="status"/>
+        </createIndex>
+    </changeSet>
+    <changeSet id="1772905285953-11" author="andreibeloziorove">
+        <createIndex indexName="idx_org_member_user_id" tableName="organization_member">
+            <column name="user_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet id="1772905285953-12" author="andreibeloziorove">
+        <addForeignKeyConstraint baseColumnNames="org_id" baseTableName="organization_member"
+                                 constraintName="FK_ORGANIZATION_MEMBER_ON_ORG" referencedColumnNames="id"
+                                 referencedTableName="organizations"/>
+
+        <createIndex indexName="idx_org_member_org_id" tableName="organization_member">
+            <column name="org_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet id="1772905285953-13" author="andreibeloziorove">
+        <addForeignKeyConstraint baseColumnNames="organization_id" baseTableName="org_invitation"
+                                 constraintName="FK_ORG_INVITATION_ON_ORGANIZATION" referencedColumnNames="id"
+                                 referencedTableName="organizations"/>
+    </changeSet>
+</databaseChangeLog>

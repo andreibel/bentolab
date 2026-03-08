@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-5.0.xsd">
+
+    <changeSet id="1772903123939-1" author="andreibeloziorove">
+        <createTable tableName="board_columns">
+            <column name="id" type="UUID">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_board_columns"/>
+            </column>
+            <column name="board_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="position" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="color" type="VARCHAR(7)"/>
+            <column name="wip_limit" type="INT"/>
+            <column name="is_initial" type="BOOLEAN">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_final" type="BOOLEAN">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet id="1772903123939-2" author="andreibeloziorove">
+        <createTable tableName="board_members">
+            <column name="id" type="UUID">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_board_members"/>
+            </column>
+            <column name="board_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="user_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="board_role" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="joined_at" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+            <column name="added_by" type="UUID"/>
+        </createTable>
+    </changeSet>
+    <changeSet id="1772903123939-3" author="andreibeloziorove">
+        <createTable tableName="boards">
+            <column name="id" type="UUID">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_boards"/>
+            </column>
+            <column name="org_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column name="board_key" type="VARCHAR(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="board_type" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="background" type="VARCHAR(100)"/>
+            <column name="owner_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_archived" type="BOOLEAN">
+                <constraints nullable="false"/>
+            </column>
+            <column name="issue_counter" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet id="1772903123939-4" author="andreibeloziorove">
+        <createTable tableName="labels">
+            <column name="id" type="UUID">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_labels"/>
+            </column>
+            <column name="org_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="board_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="color" type="VARCHAR(7)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="VARCHAR(200)"/>
+            <column name="created_at" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet id="1772903123939-5" author="andreibeloziorove">
+        <addUniqueConstraint columnNames="board_id, name" constraintName="uc_317eb5726acec9218fe891903"
+                             tableName="board_columns"/>
+    </changeSet>
+    <changeSet id="1772903123939-6" author="andreibeloziorove">
+        <addUniqueConstraint columnNames="board_id, name" constraintName="uc_3f48dd652659195c9858a8811"
+                             tableName="labels"/>
+    </changeSet>
+    <changeSet id="1772903123939-7" author="andreibeloziorove">
+        <addUniqueConstraint columnNames="org_id, board_key" constraintName="uc_9e3411c6a0c264155d3535508"
+                             tableName="boards"/>
+    </changeSet>
+    <changeSet id="1772903123939-8" author="andreibeloziorove">
+        <addUniqueConstraint columnNames="board_id, user_id" constraintName="uc_ad4c1afb6a01203d5d15f2416"
+                             tableName="board_members"/>
+    </changeSet>
+    <changeSet id="1772903123939-9" author="andreibeloziorove">
+        <addForeignKeyConstraint baseColumnNames="board_id" baseTableName="board_columns"
+                                 constraintName="FK_BOARD_COLUMNS_ON_BOARD" referencedColumnNames="id"
+                                 referencedTableName="boards"/>
+    </changeSet>
+    <changeSet id="1772903123939-10" author="andreibeloziorove">
+        <addForeignKeyConstraint baseColumnNames="board_id" baseTableName="board_members"
+                                 constraintName="FK_BOARD_MEMBERS_ON_BOARD" referencedColumnNames="id"
+                                 referencedTableName="boards"/>
+    </changeSet>
+    <changeSet id="1772903123939-11" author="andreibeloziorove">
+        <addForeignKeyConstraint baseColumnNames="board_id" baseTableName="labels" constraintName="FK_LABELS_ON_BOARD"
+                                 referencedColumnNames="id" referencedTableName="boards"/>
+    </changeSet>
+</databaseChangeLog>

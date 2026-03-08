@@ -55,13 +55,45 @@ backend/
 | task | - | localhost:27017/task | localhost:6380 |
 | notification | - | localhost:27017/notif | localhost:6380 |
 
-## Kafka Topics
-- `bento.user.events`
-- `bento.org.events`
-- `bento.board.events`
-- `bento.issue.events`
-- `bento.sprint.events`
-- `bento.notification.events`
+## Kafka Events
+
+Only events with at least one consumer are listed.
+
+Legend: 📤 publisher implemented — 📥 consumer implemented — ⏳ not yet implemented
+
+### `bento.user.events` — published by **auth-service**
+| Event | Fields | Publisher | Consumers |
+|-------|--------|-----------|-----------|
+| `UserRegisteredEvent` | `userId`, `email`, `firstName`, `lastName`, `registeredAt` | 📤 | ⏳ notification-service (welcome email) |
+| `EmailVerificationRequestedEvent` | `userId`, `email`, `token`, `expiresAt` | ⏳ | ⏳ notification-service (send verification email) |
+
+### `bento.org.events` — published by **org-service**
+| Event | Fields | Publisher | Consumers |
+|-------|--------|-----------|-----------|
+| `MemberRemovedEvent` | `userId`, `orgId`, `eventType` | 📤 | 📥 api-gateway (stale token) |
+| `MemberRoleChangedEvent` | `userId`, `orgId`, `eventType` | 📤 | 📥 api-gateway (stale token) |
+| `InvitationCreatedEvent` | `orgId`, `orgName`, `invitedByUserId`, `inviteeEmail`, `role`, `token`, `expiresAt` | 📤 | ⏳ notification-service (invitation email) |
+| `MemberJoinedEvent` | `orgId`, `orgName`, `newMemberId`, `role`, `joinedAt` | 📤 | ⏳ notification-service (welcome to org) |
+
+### `bento.board.events` — published by **board-service**
+| Event | Fields | Publisher | Consumers |
+|-------|--------|-----------|-----------|
+| `BoardDeletedEvent` | `boardId`, `orgId` | 📤 | ⏳ task-service (delete all tasks/sprints/comments) |
+| `BoardColumnDeletedEvent` | `columnId`, `boardId` | 📤 | ⏳ task-service (move orphaned tasks to initial column) |
+| `BoardMemberAddedEvent` | `boardId`, `boardName`, `userId`, `addedByUserId`, `boardRole` | 📤 | ⏳ notification-service (notify added user) |
+| `BoardMemberRemovedEvent` | `boardId`, `boardName`, `userId` | 📤 | ⏳ task-service (unassign from tasks), ⏳ notification-service (notify removed user) |
+
+### `bento.issue.events` — published by **task-service**
+| Event | Fields | Publisher | Consumers |
+|-------|--------|-----------|-----------|
+| `IssueAssignedEvent` | `issueId`, `boardId`, `issueTitle`, `assigneeUserId`, `assignedByUserId` | ⏳ | ⏳ notification-service (notify assignee) |
+| `IssueCommentedEvent` | `issueId`, `boardId`, `issueTitle`, `commentAuthorUserId`, `assigneeUserId` | ⏳ | ⏳ notification-service (notify assignee/watchers) |
+
+### `bento.sprint.events` — published by **task-service**
+| Event | Fields | Publisher | Consumers |
+|-------|--------|-----------|-----------|
+| `SprintStartedEvent` | `sprintId`, `boardId`, `sprintName`, `startDate`, `endDate` | ⏳ | ⏳ notification-service (notify board members) |
+| `SprintCompletedEvent` | `sprintId`, `boardId`, `sprintName`, `completedIssues`, `remainingIssues` | ⏳ | ⏳ notification-service (notify board members) |
 
 ## Security Architecture (Gateway + Shared Secret)
 
