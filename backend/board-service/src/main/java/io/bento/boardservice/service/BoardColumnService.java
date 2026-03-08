@@ -7,6 +7,8 @@ import io.bento.boardservice.dto.response.BoardColumnResponse;
 import io.bento.boardservice.entity.Board;
 import io.bento.boardservice.entity.BoardColumn;
 import io.bento.boardservice.enums.BoardRole;
+import io.bento.boardservice.event.BoardColumnDeletedEvent;
+import io.bento.boardservice.event.BoardEventPublisher;
 import io.bento.boardservice.exception.BoardColumnNotFoundException;
 import io.bento.boardservice.exception.BoardNotFoundException;
 import io.bento.boardservice.mapper.BoardColumnMapper;
@@ -16,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
@@ -28,6 +31,7 @@ public class BoardColumnService {
     private final BoardRepository boardRepository;
     private final BoardColumnMapper boardColumnMapper;
     private final BoardAccessService boardAccessService;
+    private final BoardEventPublisher boardEventPublisher;
 
     public List<BoardColumnResponse> getColumns(UUID userId, String orgRole, UUID boardId) {
         boardAccessService.requireBoardMemberOrAdmin(userId, orgRole, boardId);
@@ -78,6 +82,7 @@ public class BoardColumnService {
         BoardColumn column = boardColumnRepository.findByBoard_IdAndId(boardId, columnId)
                 .orElseThrow(() -> new BoardColumnNotFoundException("Column not found: " + columnId));
         boardColumnRepository.delete(column);
+        boardEventPublisher.publishBoardColumnDeleted(new BoardColumnDeletedEvent(columnId, boardId));
     }
 
     @Transactional
@@ -93,7 +98,7 @@ public class BoardColumnService {
         });
 
         return boardColumnRepository.saveAll(columns).stream()
-                .sorted((a, b) -> a.getPosition().compareTo(b.getPosition()))
+                .sorted(Comparator.comparing(BoardColumn::getPosition))
                 .map(boardColumnMapper::toResponse)
                 .toList();
     }

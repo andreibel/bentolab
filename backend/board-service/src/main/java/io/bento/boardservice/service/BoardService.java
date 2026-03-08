@@ -10,6 +10,8 @@ import io.bento.boardservice.entity.BoardColumn;
 import io.bento.boardservice.entity.BoardMember;
 import io.bento.boardservice.enums.BoardRole;
 import io.bento.boardservice.enums.BoardType;
+import io.bento.boardservice.event.BoardDeletedEvent;
+import io.bento.boardservice.event.BoardEventPublisher;
 import io.bento.boardservice.exception.BoardAccessDeniedException;
 import io.bento.boardservice.exception.BoardKeyAlreadyExistsException;
 import io.bento.boardservice.exception.BoardNotFoundException;
@@ -36,6 +38,7 @@ public class BoardService {
     private final BoardMapper boardMapper;
     private final BoardColumnMapper boardColumnMapper;
     private final BoardAccessService boardAccessService;
+    private final BoardEventPublisher boardEventPublisher;
 
     public List<BoardSummaryResponse> getBoards(UUID userId, UUID orgId, String orgRole) {
         List<Board> boards = boardRepository.findAllByOrgId(orgId);
@@ -127,6 +130,7 @@ public class BoardService {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new BoardNotFoundException("Board not found: " + boardId));
         boardRepository.delete(board);
+        boardEventPublisher.publishBoardDeleted(new BoardDeletedEvent(boardId, board.getOrgId()));
     }
 
     @Transactional

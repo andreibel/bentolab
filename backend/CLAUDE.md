@@ -78,10 +78,10 @@ Legend: 📤 publisher implemented — 📥 consumer implemented — ⏳ not yet
 ### `bento.board.events` — published by **board-service**
 | Event | Fields | Publisher | Consumers |
 |-------|--------|-----------|-----------|
-| `BoardDeletedEvent` | `boardId`, `orgId` | ⏳ | ⏳ task-service (delete all tasks/sprints/comments) |
-| `BoardColumnDeletedEvent` | `columnId`, `boardId` | ⏳ | ⏳ task-service (move orphaned tasks to initial column) |
-| `BoardMemberAddedEvent` | `boardId`, `boardName`, `userId`, `addedByUserId`, `boardRole` | ⏳ | ⏳ notification-service (notify added user) |
-| `BoardMemberRemovedEvent` | `boardId`, `boardName`, `userId` | ⏳ | ⏳ task-service (unassign from tasks), ⏳ notification-service (notify removed user) |
+| `BoardDeletedEvent` | `boardId`, `orgId` | 📤 | ⏳ task-service (delete all tasks/sprints/comments) |
+| `BoardColumnDeletedEvent` | `columnId`, `boardId` | 📤 | ⏳ task-service (move orphaned tasks to initial column) |
+| `BoardMemberAddedEvent` | `boardId`, `boardName`, `userId`, `addedByUserId`, `boardRole` | 📤 | ⏳ notification-service (notify added user) |
+| `BoardMemberRemovedEvent` | `boardId`, `boardName`, `userId` | 📤 | ⏳ task-service (unassign from tasks), ⏳ notification-service (notify removed user) |
 
 ### `bento.issue.events` — published by **task-service**
 | Event | Fields | Publisher | Consumers |

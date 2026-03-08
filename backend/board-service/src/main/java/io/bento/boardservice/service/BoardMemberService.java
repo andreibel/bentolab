@@ -6,6 +6,9 @@ import io.bento.boardservice.dto.response.BoardMemberResponse;
 import io.bento.boardservice.entity.Board;
 import io.bento.boardservice.entity.BoardMember;
 import io.bento.boardservice.enums.BoardRole;
+import io.bento.boardservice.event.BoardEventPublisher;
+import io.bento.boardservice.event.BoardMemberAddedEvent;
+import io.bento.boardservice.event.BoardMemberRemovedEvent;
 import io.bento.boardservice.exception.BoardMemberAlreadyExistsException;
 import io.bento.boardservice.exception.BoardMemberNotFoundException;
 import io.bento.boardservice.exception.BoardNotFoundException;
@@ -28,6 +31,7 @@ public class BoardMemberService {
     private final BoardRepository boardRepository;
     private final BoardMemberMapper boardMemberMapper;
     private final BoardAccessService boardAccessService;
+    private final BoardEventPublisher boardEventPublisher;
 
     public List<BoardMemberResponse> getMembers(UUID userId, String orgRole, UUID boardId) {
         boardAccessService.requireBoardMemberOrAdmin(userId, orgRole, boardId);
@@ -53,7 +57,11 @@ public class BoardMemberService {
                 .addedBy(userId)
                 .build();
 
-        return boardMemberMapper.toResponse(boardMemberRepository.save(member));
+        BoardMemberResponse response = boardMemberMapper.toResponse(boardMemberRepository.save(member));
+        boardEventPublisher.publishBoardMemberAdded(new BoardMemberAddedEvent(
+                boardId, board.getName(), request.userId(), userId, request.boardRole()
+        ));
+        return response;
     }
 
     @Transactional
@@ -74,6 +82,8 @@ public class BoardMemberService {
         }
         BoardMember member = boardMemberRepository.findByBoard_IdAndUserId(boardId, targetUserId)
                 .orElseThrow(() -> new BoardMemberNotFoundException("Member not found for user: " + targetUserId));
+        String boardName = member.getBoard().getName();
         boardMemberRepository.delete(member);
+        boardEventPublisher.publishBoardMemberRemoved(new BoardMemberRemovedEvent(boardId, boardName, targetUserId));
     }
 }
