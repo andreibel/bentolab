@@ -1,0 +1,79 @@
+spring:
+    application:
+        name: task-service
+
+server:
+    port: 8084
+
+internal:
+    # Shared secret between the API gateway and all microservices.
+    # The gateway adds X-Internal-Secret header with this value on every forwarded request.
+    # Services reject requests where this header is missing or wrong (direct access bypass attempt).
+    # MUST match the value configured in the api-gateway. Change in production via env var.
+    gateway-secret: ${GATEWAY_INTERNAL_SECRET:dktxrevDkto3aZUvUD6REkn+x2x0foPhAvXBueFO4rs=}
+
+---
+spring:
+    config:
+        activate:
+            on-profile: dev
+    data:
+        mongodb:
+            uri: mongodb://localhost:27017/task_db
+        redis:
+            host: localhost
+            port: 6380
+    kafka:
+        bootstrap-servers: localhost:9092
+        consumer:
+            group-id: task-service
+            auto-offset-reset: earliest
+            key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+            value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+        producer:
+            key-serializer: org.apache.kafka.common.serialization.StringSerializer
+            value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+---
+spring:
+    config:
+        activate:
+            on-profile: docker
+    data:
+        mongodb:
+            uri: mongodb://mongo:27017/task_db
+        redis:
+            host: redis
+            port: 6379
+    kafka:
+        bootstrap-servers: kafka:29092
+        consumer:
+            group-id: task-service
+            auto-offset-reset: earliest
+            key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+            value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+        producer:
+            key-serializer: org.apache.kafka.common.serialization.StringSerializer
+            value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+---
+spring:
+    config:
+        activate:
+            on-profile: selfhost
+    data:
+        mongodb:
+            uri: mongodb://${MONGO_HOST:localhost}:${MONGO_PORT:27017}/${MONGO_DB:task_db}
+        redis:
+            host: ${REDIS_HOST:localhost}
+            port: ${REDIS_PORT:6379}
+    kafka:
+        bootstrap-servers: ${KAFKA_SERVERS:localhost:9092}
+        consumer:
+            group-id: task-service
+            auto-offset-reset: earliest
+            key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+            value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+        producer:
+            key-serializer: org.apache.kafka.common.serialization.StringSerializer
+            value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
