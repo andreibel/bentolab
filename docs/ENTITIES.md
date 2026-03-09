@@ -245,7 +245,7 @@ Complete database schema for all microservices.
   type: String,            // EPIC, STORY, TASK, BUG, SUBTASK
   priority: String,        // CRITICAL, HIGH, MEDIUM, LOW
   severity: String,        // BLOCKER, CRITICAL, MAJOR, MINOR, TRIVIAL (bugs only)
-  status: String,          // BACKLOG, TODO, IN_PROGRESS, IN_REVIEW, TESTING, DONE, CANCELLED
+  // No status field — columnId is the source of truth for issue position/status
   
   // Content
   title: String,
@@ -278,12 +278,9 @@ Complete database schema for all microservices.
   parentIssueId: String,
   
   // Organization
-  labels: [{
-    name: String,
-    color: String
-  }],
+  labelIds: [String],      // references to board-service Label IDs
   components: [String],
-  
+
   // Embedded
   checklist: [{
     id: String,
@@ -292,22 +289,14 @@ Complete database schema for all microservices.
     assigneeId: String,
     position: Integer
   }],
-  attachments: [{
-    id: String,
-    fileName: String,
-    fileUrl: String,
-    fileSize: Long,
-    mimeType: String,
-    uploadedBy: String,
-    uploadedAt: Date
-  }],
-  
-  // Analytics
-  statusHistory: [{
-    status: String,
+
+  // Column history (replaces status history — columnId is source of truth)
+  columnHistory: [{
+    columnId: String,
+    columnName: String,    // snapshot at time of move
     enteredAt: Date,
     exitedAt: Date,
-    duration: Long
+    duration: Long         // milliseconds
   }],
   reassignmentCount: Integer,
   commentCount: Integer,
@@ -484,10 +473,10 @@ Complete database schema for all microservices.
   
   filters: {
     types: [String],
-    statuses: [String],
+    columnIds: [String],   // frontend sends IDs directly from its cached board columns
     priorities: [String],
     assigneeIds: [String],
-    labelNames: [String],
+    labelIds: [String],
     sprintId: String,
     dueDateFrom: Date,
     dueDateTo: Date,

@@ -1,0 +1,64 @@
+spring:
+    application:
+        name: task-service
+
+server:
+    port: 8084
+
+internal:
+    gateway-secret: dktxrevDkto3aZUvUD6REkn+x2x0foPhAvXBueFO4rs=
+
+---
+spring:
+    config:
+        activate:
+            on-profile: dev
+
+    mongodb:
+        host: localhost
+        port: 27017
+        database: task_db
+        username: root
+        password: root
+        authentication-database: admin
+    data:
+        redis:
+            host: localhost
+            port: 6380
+    kafka:
+        bootstrap-servers: localhost:9092
+        consumer:
+            group-id: task-service
+            auto-offset-reset: earliest
+            key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+            value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+        producer:
+            key-serializer: org.apache.kafka.common.serialization.StringSerializer
+            value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+---
+spring:
+    config:
+        activate:
+            on-profile: docker
+    mongodb:
+        host: mongo
+        port: 27017
+        database: task_db
+        username: root
+        password: root
+        authentication-database: admin
+    data:
+        redis:
+            host: redis
+            port: 6379
+    kafka:
+        bootstrap-servers: kafka:29092
+        consumer:
+            group-id: task-service
+            auto-offset-reset: earliest
+            key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+            value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+        producer:
+            key-serializer: org.apache.kafka.common.serialization.StringSerializer
+            value-serializer: org.springframework.kafka.support.serializer.JsonSerializer

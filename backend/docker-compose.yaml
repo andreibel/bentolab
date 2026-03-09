@@ -57,6 +57,7 @@ services:
       start_period: 10s
       retries: 5
 
+
   # ── Shared ───────────────────────────────────────────────────────────────────
   redis:
     image: redis:7-alpine
@@ -97,6 +98,23 @@ services:
       retries: 5
     labels:
       amplicode.image: confluent/kafka
+  mongo:
+    image: mongo:8.2.5
+    restart: "no"
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
+      MONGO_INITDB_DATABASE: task_db
+    healthcheck:
+      test: echo 'db.runCommand({serverStatus:1}).ok' | mongosh admin -u $$MONGO_INITDB_ROOT_USERNAME -p $$MONGO_INITDB_ROOT_PASSWORD --quiet | grep 1
+      interval: 10s
+      timeout: 5s
+      start_period: 10s
+      retries: 5
 
 volumes:
   postgres_auth_data:
@@ -104,3 +122,4 @@ volumes:
   postgres_board_data:
   redis_data:
   kafka_data:
+  mongo_data:
