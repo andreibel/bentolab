@@ -3,10 +3,19 @@ import { Sidebar } from './Sidebar'
 import { Header } from './Header'
 
 const TITLE_MAP: Record<string, string> = {
-  '/boards': 'Boards',
-  '/my-issues': 'My Issues',
+  '/boards':           'Boards',
+  '/calendar':         'Calendar',
+  '/my-issues':        'My Issues',
+  '/inbox':            'Inbox',
+  '/roadmap':          'Roadmap',
+  '/sprints':          'Sprints',
+  '/workload':         'Workload',
+  '/reports':          'Reports',
+  '/time-tracking':    'Time Tracking',
   '/settings/members': 'Members',
-  '/settings/org': 'Org Settings',
+  '/settings/labels':  'Labels',
+  '/automations':      'Automations',
+  '/settings/org':     'Org Settings',
   '/settings/profile': 'Profile',
 }
 

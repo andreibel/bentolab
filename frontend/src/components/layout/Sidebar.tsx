@@ -10,6 +10,15 @@ import {
   LogOut,
   PanelLeftClose,
   PanelLeftOpen,
+  CalendarDays,
+  Inbox,
+  GanttChart,
+  Timer,
+  Users2,
+  BarChart2,
+  Clock,
+  Tags,
+  Zap,
 } from 'lucide-react'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import * as Tooltip from '@radix-ui/react-tooltip'
@@ -37,15 +46,34 @@ const navGroups: NavGroup[] = [
   {
     label: 'Workspace',
     items: [
-      { label: 'Boards', icon: Kanban, to: '/boards' },
-      { label: 'My Issues', icon: CircleDot, to: '/my-issues' },
+      { label: 'Boards',     icon: Kanban,       to: '/boards'      },
+      { label: 'Calendar',   icon: CalendarDays, to: '/calendar'    },
+      { label: 'My Issues',  icon: CircleDot,    to: '/my-issues'   },
+      { label: 'Inbox',      icon: Inbox,        to: '/inbox'       },
+    ],
+  },
+  {
+    label: 'Planning',
+    items: [
+      { label: 'Roadmap',    icon: GanttChart,   to: '/roadmap'     },
+      { label: 'Sprints',    icon: Timer,        to: '/sprints'     },
+      { label: 'Workload',   icon: Users2,       to: '/workload'    },
+    ],
+  },
+  {
+    label: 'Analytics',
+    items: [
+      { label: 'Reports',       icon: BarChart2, to: '/reports'        },
+      { label: 'Time Tracking', icon: Clock,     to: '/time-tracking'  },
     ],
   },
   {
     label: 'Organization',
     items: [
-      { label: 'Members', icon: Users, to: '/settings/members' },
-      { label: 'Settings', icon: Settings, to: '/settings/org' },
+      { label: 'Members',      icon: Users,    to: '/settings/members'     },
+      { label: 'Labels',       icon: Tags,     to: '/settings/labels'      },
+      { label: 'Automations',  icon: Zap,      to: '/automations'          },
+      { label: 'Settings',     icon: Settings, to: '/settings/org'         },
     ],
   },
 ]

@@ -9,6 +9,14 @@ import LoginPage from '@/pages/auth/LoginPage'
 import RegisterPage from '@/pages/auth/RegisterPage'
 import CreateOrgPage from '@/pages/org/CreateOrgPage'
 import BoardListPage from '@/pages/board/BoardListPage'
+import CalendarPage from '@/pages/CalendarPage'
+import InboxPage from '@/pages/InboxPage'
+import RoadmapPage from '@/pages/planning/RoadmapPage'
+import SprintsPage from '@/pages/planning/SprintsPage'
+import WorkloadPage from '@/pages/planning/WorkloadPage'
+import ReportsPage from '@/pages/analytics/ReportsPage'
+import TimeTrackingPage from '@/pages/analytics/TimeTrackingPage'
+import AutomationsPage from '@/pages/settings/AutomationsPage'
 
 const RTL_LANGS = ['he', 'ar', 'fa']
 
@@ -37,29 +45,32 @@ export default function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
 
-        {/* Onboarding — protected but no app shell */}
-        <Route
-          path="/org/new"
-          element={
-            <ProtectedRoute>
-              <CreateOrgPage />
-            </ProtectedRoute>
-          }
-        />
+        {/* Onboarding */}
+        <Route path="/org/new" element={<ProtectedRoute><CreateOrgPage /></ProtectedRoute>} />
 
-        {/* App — protected, inside the shell */}
-        <Route
-          element={
-            <ProtectedRoute>
-              <AppLayout />
-            </ProtectedRoute>
-          }
-        >
-          <Route path="/boards" element={<BoardListPage />} />
-          <Route path="/my-issues" element={<div className="text-sm text-text-muted">My Issues — coming soon</div>} />
-          <Route path="/settings/members" element={<div className="text-sm text-text-muted">Members — coming soon</div>} />
-          <Route path="/settings/org" element={<div className="text-sm text-text-muted">Org Settings — coming soon</div>} />
-          <Route path="/settings/profile" element={<div className="text-sm text-text-muted">Profile — coming soon</div>} />
+        {/* App shell */}
+        <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+          {/* Workspace */}
+          <Route path="/boards"         element={<BoardListPage />} />
+          <Route path="/calendar"       element={<CalendarPage />} />
+          <Route path="/my-issues"      element={<div className="text-sm text-text-muted">My Issues — coming soon</div>} />
+          <Route path="/inbox"          element={<InboxPage />} />
+
+          {/* Planning */}
+          <Route path="/roadmap"        element={<RoadmapPage />} />
+          <Route path="/sprints"        element={<SprintsPage />} />
+          <Route path="/workload"       element={<WorkloadPage />} />
+
+          {/* Analytics */}
+          <Route path="/reports"        element={<ReportsPage />} />
+          <Route path="/time-tracking"  element={<TimeTrackingPage />} />
+
+          {/* Organization */}
+          <Route path="/settings/members"  element={<div className="text-sm text-text-muted">Members — coming soon</div>} />
+          <Route path="/settings/labels"   element={<div className="text-sm text-text-muted">Labels — coming soon</div>} />
+          <Route path="/automations"       element={<AutomationsPage />} />
+          <Route path="/settings/org"      element={<div className="text-sm text-text-muted">Org Settings — coming soon</div>} />
+          <Route path="/settings/profile"  element={<div className="text-sm text-text-muted">Profile — coming soon</div>} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
