@@ -1,0 +1,36 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Heebo:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #5B47E0;
+  --color-primary-light: #7C6CEA;
+  --color-primary-dark: #4333C4;
+  --color-primary-subtle: #EEF0FF;
+
+  --color-accent: #F59E0B;
+  --color-accent-light: #FCD34D;
+  --color-accent-subtle: #FFFBEB;
+
+  --color-surface: #FFFFFF;
+  --color-surface-muted: #F8F8FA;
+  --color-surface-border: #E4E4E7;
+
+  --color-text-primary: #0F0F10;
+  --color-text-secondary: #71717A;
+  --color-text-muted: #A1A1AA;
+
+  --font-family-sans: 'Inter', 'Heebo', system-ui, sans-serif;
+
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+}
+
+:root {
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+:root[lang="he"] {
+  font-family: 'Heebo', system-ui, sans-serif;
+}

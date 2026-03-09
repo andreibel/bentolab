@@ -1,0 +1,15 @@
+{
+  "actions": {
+    "save": "שמור",
+    "cancel": "ביטול",
+    "delete": "מחק",
+    "edit": "עריכה",
+    "create": "צור",
+    "confirm": "אישור"
+  },
+  "errors": {
+    "generic": "משהו השתבש",
+    "notFound": "לא נמצא",
+    "forbidden": "גישה נדחתה"
+  }
+}
