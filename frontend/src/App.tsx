@@ -13,22 +13,25 @@ import BoardListPage from '@/pages/board/BoardListPage'
 import BoardPage from '@/pages/board/BoardPage'
 import CalendarPage from '@/pages/CalendarPage'
 import InboxPage from '@/pages/InboxPage'
-import RoadmapPage from '@/pages/planning/RoadmapPage'
-import SprintsPage from '@/pages/planning/SprintsPage'
-import WorkloadPage from '@/pages/planning/WorkloadPage'
-import ReportsPage from '@/pages/analytics/ReportsPage'
-import TimeTrackingPage from '@/pages/analytics/TimeTrackingPage'
 import AutomationsPage from '@/pages/settings/AutomationsPage'
 import SecurityPage from '@/pages/settings/SecurityPage'
+import { FeaturePlaceholder } from '@/components/common/FeaturePlaceholder'
+import { Package, GitBranch, GanttChart, BarChart2 } from 'lucide-react'
 
 const RTL_LANGS = ['he', 'ar', 'fa']
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { accessToken, refreshToken, isInitialized } = useAuthStore()
-  if (!isInitialized) return null  // wait for initialize() to complete
+  if (!isInitialized) return null
   if (!accessToken && !refreshToken) return <Navigate to="/login" replace />
   return <>{children}</>
 }
+
+// Lab sub-route placeholders
+const BacklogPage  = () => <FeaturePlaceholder icon={Package}    title="Backlog"  description="Manage your lab's backlog — all issues not yet in a cycle." badge="Coming Soon" />
+const SprintsPage  = () => <FeaturePlaceholder icon={GitBranch}  title="Sprints"  description="Plan and track time-boxed sprints for your lab."              badge="Coming Soon" />
+const TimelinePage = () => <FeaturePlaceholder icon={GanttChart} title="Timeline" description="Visualize your lab's work on a timeline and roadmap view."  badge="Coming Soon" />
+const LabReports   = () => <FeaturePlaceholder icon={BarChart2}  title="Reports"  description="Velocity, burndown, and cycle time analytics for this lab."  badge="Coming Soon" />
 
 export default function App() {
   const { i18n } = useTranslation()
@@ -61,29 +64,29 @@ export default function App() {
 
         {/* App shell */}
         <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
-          {/* Workspace */}
-          <Route path="/boards"         element={<BoardListPage />} />
-          <Route path="/boards/:boardId" element={<BoardPage />} />
-          <Route path="/calendar"       element={<CalendarPage />} />
-          <Route path="/my-issues"      element={<div className="text-sm text-text-muted">My Issues — coming soon</div>} />
-          <Route path="/inbox"          element={<InboxPage />} />
 
-          {/* Planning */}
-          <Route path="/roadmap"        element={<RoadmapPage />} />
-          <Route path="/sprints"        element={<SprintsPage />} />
-          <Route path="/workload"       element={<WorkloadPage />} />
+          {/* Labs list */}
+          <Route path="/boards" element={<BoardListPage />} />
 
-          {/* Analytics */}
-          <Route path="/reports"        element={<ReportsPage />} />
-          <Route path="/time-tracking"  element={<TimeTrackingPage />} />
+          {/* Lab (board) — with sub-routes */}
+          <Route path="/boards/:boardId"          element={<BoardPage />} />
+          <Route path="/boards/:boardId/backlog"  element={<BacklogPage />} />
+          <Route path="/boards/:boardId/sprints"  element={<SprintsPage />} />
+          <Route path="/boards/:boardId/timeline" element={<TimelinePage />} />
+          <Route path="/boards/:boardId/reports"  element={<LabReports />} />
 
-          {/* Organization */}
-          <Route path="/settings/members"      element={<div className="text-sm text-text-muted">Members — coming soon</div>} />
-          <Route path="/settings/labels"       element={<div className="text-sm text-text-muted">Labels — coming soon</div>} />
+          {/* Personal */}
+          <Route path="/my-issues" element={<div className="p-6 text-sm text-text-muted">My Issues — coming soon</div>} />
+          <Route path="/inbox"     element={<InboxPage />} />
+          <Route path="/calendar"  element={<CalendarPage />} />
+
+          {/* Settings */}
+          <Route path="/settings/members"      element={<div className="p-6 text-sm text-text-muted">Members — coming soon</div>} />
+          <Route path="/settings/labels"       element={<div className="p-6 text-sm text-text-muted">Labels — coming soon</div>} />
           <Route path="/settings/automations"  element={<AutomationsPage />} />
-          <Route path="/settings/org"          element={<div className="text-sm text-text-muted">Org Settings — coming soon</div>} />
+          <Route path="/settings/org"          element={<div className="p-6 text-sm text-text-muted">Org Settings — coming soon</div>} />
           <Route path="/settings/security"     element={<SecurityPage />} />
-          <Route path="/settings/profile"      element={<div className="text-sm text-text-muted">Profile — coming soon</div>} />
+          <Route path="/settings/profile"      element={<div className="p-6 text-sm text-text-muted">Profile — coming soon</div>} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
