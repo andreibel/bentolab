@@ -19,17 +19,20 @@ import {
   GitCommitHorizontal,
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { issuesApi } from '@/api/issues'
+import { issuesApi, useIssues } from '@/api/issues'
+import { useEpics } from '@/api/epics'
+import { useSprints } from '@/api/sprints'
 import { queryKeys } from '@/api/queryKeys'
 import { useAuthStore } from '@/stores/authStore'
 import { cn } from '@/utils/cn'
 import type { Issue, Comment, Activity } from '@/types/issue'
+import type { Epic } from '@/types/epic'
+import type { Sprint } from '@/types/sprint'
 import type { BoardColumn } from '@/types/board'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const TYPE_CONFIG = {
-  EPIC:    { label: 'Epic',    color: 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300' },
   STORY:   { label: 'Story',   color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' },
   TASK:    { label: 'Task',    color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' },
   BUG:     { label: 'Bug',     color: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' },
@@ -43,7 +46,7 @@ const PRIORITY_CONFIG = {
   LOW:      { label: 'Low',      dot: 'bg-slate-400' },
 } as const
 
-const ISSUE_TYPES = ['EPIC', 'STORY', 'TASK', 'BUG', 'SUBTASK'] as const
+const ISSUE_TYPES = ['STORY', 'TASK', 'BUG', 'SUBTASK'] as const
 const PRIORITIES  = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'] as const
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -539,6 +542,127 @@ function TitleEditor({ value, onSave }: { value: string; onSave: (v: string) => 
   )
 }
 
+// ─── Epic select ──────────────────────────────────────────────────────────────
+
+function EpicSelect({ value, epics, onSave }: { value: string | null; epics: Epic[]; onSave: (id: string | null) => void }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  const current = epics.find((e) => e.id === value)
+
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: MouseEvent) => {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-1 rounded-md px-1.5 py-1 text-sm transition-colors hover:bg-surface-muted"
+      >
+        {current ? (
+          <span className="flex items-center gap-1.5">
+            <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: current.color }} />
+            <span className="max-w-[120px] truncate text-text-primary">{current.title}</span>
+          </span>
+        ) : (
+          <span className="text-text-muted">None</span>
+        )}
+        <ChevronDown className="h-3 w-3 shrink-0 text-text-muted" />
+      </button>
+      {open && (
+        <div className="absolute start-0 top-full z-50 mt-1 min-w-[180px] rounded-lg border border-surface-border bg-surface shadow-xl">
+          <button
+            onClick={() => { onSave(null); setOpen(false) }}
+            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-text-muted hover:bg-surface-muted"
+          >
+            {!value ? <Check className="h-3 w-3 shrink-0 text-primary" /> : <span className="h-3 w-3 shrink-0" />}
+            None
+          </button>
+          {epics.map((e) => (
+            <button
+              key={e.id}
+              onClick={() => { onSave(e.id); setOpen(false) }}
+              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-text-primary hover:bg-surface-muted"
+            >
+              {e.id === value ? <Check className="h-3 w-3 shrink-0 text-primary" /> : <span className="h-3 w-3 shrink-0" />}
+              <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: e.color }} />
+              <span className="truncate">{e.title}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Sprint select ────────────────────────────────────────────────────────────
+
+function SprintSelect({ value, sprints, onSave }: { value: string | null; sprints: Sprint[]; onSave: (id: string | null) => void }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  const current = sprints.find((s) => s.id === value)
+
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: MouseEvent) => {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  const eligible = sprints.filter((s) => s.status !== 'COMPLETED')
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-1 rounded-md px-1.5 py-1 text-sm transition-colors hover:bg-surface-muted"
+      >
+        {current ? (
+          <span className="flex items-center gap-1.5">
+            <span className={cn('h-2 w-2 shrink-0 rounded-full', current.status === 'ACTIVE' ? 'bg-green-500' : 'bg-surface-border')} />
+            <span className="max-w-[120px] truncate text-text-primary">{current.name}</span>
+          </span>
+        ) : (
+          <span className="text-text-muted">Backlog</span>
+        )}
+        <ChevronDown className="h-3 w-3 shrink-0 text-text-muted" />
+      </button>
+      {open && (
+        <div className="absolute start-0 top-full z-50 mt-1 min-w-[180px] rounded-lg border border-surface-border bg-surface shadow-xl">
+          <button
+            onClick={() => { onSave(null); setOpen(false) }}
+            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-text-muted hover:bg-surface-muted"
+          >
+            {!value ? <Check className="h-3 w-3 shrink-0 text-primary" /> : <span className="h-3 w-3 shrink-0" />}
+            Backlog
+          </button>
+          {eligible.map((s) => (
+            <button
+              key={s.id}
+              onClick={() => { onSave(s.id); setOpen(false) }}
+              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-text-primary hover:bg-surface-muted"
+            >
+              {s.id === value ? <Check className="h-3 w-3 shrink-0 text-primary" /> : <span className="h-3 w-3 shrink-0" />}
+              <span className={cn('h-2 w-2 shrink-0 rounded-full', s.status === 'ACTIVE' ? 'bg-green-500' : 'bg-surface-border')} />
+              <span className="truncate">{s.name}</span>
+            </button>
+          ))}
+          {eligible.length === 0 && (
+            <div className="px-3 py-2 text-xs text-text-muted">No active sprints</div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Story points inline edit ─────────────────────────────────────────────────
 
 function StoryPointsField({ value, onSave }: { value: number | null | undefined; onSave: (n: number | null) => void }) {
@@ -580,10 +704,12 @@ function StoryPointsField({ value, onSave }: { value: number | null | undefined;
 
 export function IssueDetailPanel({
   issueId,
+  boardId: propBoardId,
   columns,
   onClose,
 }: {
   issueId: string
+  boardId?: string
   columns: BoardColumn[]
   onClose: () => void
 }) {
@@ -602,6 +728,11 @@ export function IssueDetailPanel({
     queryKey: queryKeys.issues.detail(issueId),
     queryFn: () => issuesApi.get(issueId),
   })
+
+  const effectiveBoardId = propBoardId ?? issue?.boardId ?? ''
+  const { data: epics   = [] } = useEpics(effectiveBoardId)
+  const { data: sprints = [] } = useSprints(effectiveBoardId)
+  const { data: boardIssues } = useIssues(effectiveBoardId)
 
   const { data: commentsData } = useQuery({
     queryKey: queryKeys.issues.comments(issueId),
@@ -771,6 +902,22 @@ export function IssueDetailPanel({
                     />
                   </MetaCell>
 
+                  <MetaCell label="Epic">
+                    <EpicSelect
+                      value={issue.epicId ?? null}
+                      epics={epics}
+                      onSave={(epicId) => handleUpdate({ epicId } as Partial<Issue>)}
+                    />
+                  </MetaCell>
+
+                  <MetaCell label="Sprint">
+                    <SprintSelect
+                      value={issue.sprintId ?? null}
+                      sprints={sprints}
+                      onSave={(sprintId) => handleUpdate({ sprintId } as Partial<Issue>)}
+                    />
+                  </MetaCell>
+
                   <MetaCell label="Assignee">
                     {issue.assigneeId ? (
                       <div className="flex items-center gap-1.5 px-1.5 py-1">
@@ -822,6 +969,18 @@ export function IssueDetailPanel({
                     <span className="px-1.5 py-1 text-xs text-text-muted">{fmtDate(issue.createdAt)}</span>
                   </MetaCell>
 
+                  {issue.parentIssueId && (() => {
+                    const parent = boardIssues?.content.find((i) => i.id === issue.parentIssueId)
+                    return (
+                      <MetaCell label="Parent">
+                        <span className="flex items-center gap-1.5 px-1.5 py-1 text-xs text-text-secondary">
+                          <span className="font-mono text-text-muted">{parent?.issueKey ?? '…'}</span>
+                          <span className="truncate">{parent?.title ?? issue.parentIssueId.slice(0, 8)}</span>
+                        </span>
+                      </MetaCell>
+                    )
+                  })()}
+
                 </div>
 
                 {/* Description */}
@@ -832,6 +991,33 @@ export function IssueDetailPanel({
                     onSave={(description) => handleUpdate({ description })}
                   />
                 </section>
+
+                {/* Child issues */}
+                {(() => {
+                  const children = boardIssues?.content.filter((i) => i.parentIssueId === issue.id) ?? []
+                  if (children.length === 0) return null
+                  return (
+                    <section className="mb-6">
+                      <h2 className="mb-2 text-xs font-semibold uppercase tracking-widest text-text-muted">
+                        Sub-tasks · {children.length}
+                      </h2>
+                      <div className="divide-y divide-surface-border/50 rounded-lg border border-surface-border">
+                        {children.map((child) => (
+                          <div
+                            key={child.id}
+                            className="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-surface-muted/50 first:rounded-t-lg last:rounded-b-lg"
+                          >
+                            <span className="font-mono text-[11px] text-text-muted">{child.issueKey}</span>
+                            <span className="flex-1 truncate text-text-primary">{child.title}</span>
+                            {child.completedAt && (
+                              <span className="shrink-0 rounded-full bg-green-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-green-600">Done</span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </section>
+                  )
+                })()}
 
                 {/* Activity & Comments */}
                 <section>

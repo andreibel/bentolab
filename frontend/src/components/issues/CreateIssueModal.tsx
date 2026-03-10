@@ -3,13 +3,15 @@ import { createPortal } from 'react-dom'
 import { useForm, Controller } from 'react-hook-form'
 import {
   X, Maximize2, Minimize2,
-  Bug, BookOpen, Layers, CheckSquare, Zap,
+  Bug, BookOpen, CheckSquare, Zap,
   ArrowUp, ArrowDown, Minus, GripHorizontal,
 } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { issuesApi, useIssues } from '@/api/issues'
 import { useBoards, useBoard } from '@/api/boards'
+import { useEpics } from '@/api/epics'
+import { useSprints } from '@/api/sprints'
 import { queryKeys } from '@/api/queryKeys'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -19,7 +21,6 @@ import type { IssueType, IssuePriority } from '@/types/issue'
 // ── Config ────────────────────────────────────────────────────────────────────
 
 const TYPES = [
-  { value: 'EPIC'    as IssueType, label: 'Epic',    icon: <Layers      className="h-3.5 w-3.5" />, color: 'text-purple-500',  bg: 'bg-purple-500/10'  },
   { value: 'STORY'   as IssueType, label: 'Story',   icon: <BookOpen    className="h-3.5 w-3.5" />, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
   { value: 'TASK'    as IssueType, label: 'Task',    icon: <CheckSquare className="h-3.5 w-3.5" />, color: 'text-blue-500',    bg: 'bg-blue-500/10'    },
   { value: 'BUG'     as IssueType, label: 'Bug',     icon: <Bug         className="h-3.5 w-3.5" />, color: 'text-red-500',     bg: 'bg-red-500/10'     },
@@ -43,6 +44,7 @@ interface FormValues {
   boardId:       string
   columnId:      string
   epicId:        string
+  sprintId:      string
   parentIssueId: string
   storyPoints:   string
   dueDate:       string
@@ -55,6 +57,7 @@ export interface CreateIssueModalProps {
   boardKey?:  string
   boardName?: string
   columnId?:  string
+  sprintId?:  string
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -119,6 +122,7 @@ export function CreateIssueModal({
   boardKey:  propBoardKey,
   boardName: propBoardName,
   columnId:  propColumnId,
+  sprintId:  propSprintId,
 }: CreateIssueModalProps) {
   const queryClient = useQueryClient()
   const [fullScreen, setFullScreen] = useState(false)
@@ -136,18 +140,19 @@ export function CreateIssueModal({
       type: 'TASK', priority: 'MEDIUM',
       title: '', description: '',
       boardId: propBoardId ?? '', columnId: propColumnId ?? '',
-      epicId: '', parentIssueId: '', storyPoints: '', dueDate: '',
+      epicId: '', sprintId: propSprintId ?? '', parentIssueId: '', storyPoints: '', dueDate: '',
     },
   })
 
   const watchedBoardId   = watch('boardId')
   const effectiveBoardId = propBoardId ?? watchedBoardId
 
-  const { data: boardData }  = useBoard(effectiveBoardId || '')
-  const { data: issuesPage } = useIssues(effectiveBoardId || '')
+  const { data: boardData }      = useBoard(effectiveBoardId || '')
+  const { data: issuesPage }     = useIssues(effectiveBoardId || '')
+  const { data: epicsData   = [] } = useEpics(effectiveBoardId || '')
+  const { data: sprintsData = [] } = useSprints(effectiveBoardId || '')
   const columns   = [...(boardData?.columns ?? [])].sort((a, b) => a.position - b.position)
   const allIssues = issuesPage?.content ?? []
-  const epics     = allIssues.filter((i) => i.type === 'EPIC')
 
   useEffect(() => {
     if (!isGlobalMode || !columns.length) return
@@ -162,7 +167,7 @@ export function CreateIssueModal({
       type: 'TASK', priority: 'MEDIUM',
       title: '', description: '',
       boardId: propBoardId ?? '', columnId: propColumnId ?? '',
-      epicId: '', parentIssueId: '', storyPoints: '', dueDate: '',
+      epicId: '', sprintId: propSprintId ?? '', parentIssueId: '', storyPoints: '', dueDate: '',
     })
     setFullScreen(false)
   }, [open, propBoardId, propColumnId, reset])
@@ -198,6 +203,7 @@ export function CreateIssueModal({
         description: values.description.trim() || undefined,
         columnId:      resolvedColumnId        || undefined,
         epicId:        values.epicId           || undefined,
+        sprintId:      values.sprintId         || undefined,
         parentIssueId: values.parentIssueId    || undefined,
         storyPoints:   values.storyPoints ? Number(values.storyPoints) : undefined,
         dueDate:       values.dueDate          || undefined,
@@ -329,11 +335,21 @@ export function CreateIssueModal({
                     </NativeSelect>
                   </Field>
                 )}
-                {epics.length > 0 && (
+                {epicsData.length > 0 && (
                   <Field label="Epic">
                     <NativeSelect {...register('epicId')}>
                       <option value="">None</option>
-                      {epics.map((e) => <option key={e.id} value={e.id}>{e.issueKey} · {e.title}</option>)}
+                      {epicsData.map((e) => <option key={e.id} value={e.id}>{e.title}</option>)}
+                    </NativeSelect>
+                  </Field>
+                )}
+                {sprintsData.filter((s) => s.status !== 'COMPLETED').length > 0 && (
+                  <Field label="Sprint">
+                    <NativeSelect {...register('sprintId')}>
+                      <option value="">Backlog</option>
+                      {sprintsData.filter((s) => s.status !== 'COMPLETED').map((s) => (
+                        <option key={s.id} value={s.id}>{s.name}</option>
+                      ))}
                     </NativeSelect>
                   </Field>
                 )}

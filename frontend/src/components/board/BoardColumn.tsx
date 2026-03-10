@@ -5,16 +5,18 @@ import { cn } from '@/utils/cn'
 import { IssueCard } from './IssueCard'
 import type { BoardColumn as BoardColumnType } from '@/types/board'
 import type { Issue } from '@/types/issue'
+import type { Epic } from '@/types/epic'
 
 interface BoardColumnProps {
   column: BoardColumnType
   issues: Issue[]
+  epicsMap?: Map<string, Epic>
   onIssueClick?: (issue: Issue) => void
   onAddIssue?: (columnId: string) => void
   dragHandleProps?: React.HTMLAttributes<HTMLButtonElement>
 }
 
-export function BoardColumn({ column, issues, onIssueClick, onAddIssue, dragHandleProps }: BoardColumnProps) {
+export function BoardColumn({ column, issues, epicsMap, onIssueClick, onAddIssue, dragHandleProps }: BoardColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: column.id,
     data: { type: 'column', columnId: column.id },
@@ -80,7 +82,12 @@ export function BoardColumn({ column, issues, onIssueClick, onAddIssue, dragHand
       >
         <SortableContext items={issues.map((i) => i.id)} strategy={verticalListSortingStrategy}>
           {issues.map((issue) => (
-            <IssueCard key={issue.id} issue={issue} onClick={onIssueClick} />
+            <IssueCard
+              key={issue.id}
+              issue={issue}
+              epic={epicsMap?.get(issue.epicId ?? '')}
+              onClick={onIssueClick}
+            />
           ))}
         </SortableContext>
 

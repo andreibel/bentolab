@@ -11,12 +11,14 @@ import RegisterPage from '@/pages/auth/RegisterPage'
 import CreateOrgPage from '@/pages/org/CreateOrgPage'
 import BoardListPage from '@/pages/board/BoardListPage'
 import BoardPage from '@/pages/board/BoardPage'
+import BacklogPage from '@/pages/board/BacklogPage'
+import SprintsPage from '@/pages/board/SprintsPage'
 import CalendarPage from '@/pages/CalendarPage'
 import InboxPage from '@/pages/InboxPage'
 import AutomationsPage from '@/pages/settings/AutomationsPage'
 import SecurityPage from '@/pages/settings/SecurityPage'
 import { FeaturePlaceholder } from '@/components/common/FeaturePlaceholder'
-import { Package, GitBranch, GanttChart, BarChart2 } from 'lucide-react'
+import { GanttChart, BarChart2, LayoutDashboard } from 'lucide-react'
 
 const RTL_LANGS = ['he', 'ar', 'fa']
 
@@ -28,8 +30,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 // Lab sub-route placeholders
-const BacklogPage  = () => <FeaturePlaceholder icon={Package}    title="Backlog"  description="Manage your lab's backlog — all issues not yet in a cycle." badge="Coming Soon" />
-const SprintsPage  = () => <FeaturePlaceholder icon={GitBranch}  title="Sprints"  description="Plan and track time-boxed sprints for your lab."              badge="Coming Soon" />
+const SummaryPage  = () => <FeaturePlaceholder icon={LayoutDashboard} title="Summary" description="At-a-glance health metrics, velocity trends, and key stats for this lab." badge="Coming Soon" />
 const TimelinePage = () => <FeaturePlaceholder icon={GanttChart} title="Timeline" description="Visualize your lab's work on a timeline and roadmap view."  badge="Coming Soon" />
 const LabReports   = () => <FeaturePlaceholder icon={BarChart2}  title="Reports"  description="Velocity, burndown, and cycle time analytics for this lab."  badge="Coming Soon" />
 
@@ -70,6 +71,7 @@ export default function App() {
 
           {/* Lab (board) — with sub-routes */}
           <Route path="/boards/:boardId"          element={<BoardPage />} />
+          <Route path="/boards/:boardId/summary"  element={<SummaryPage />} />
           <Route path="/boards/:boardId/backlog"  element={<BacklogPage />} />
           <Route path="/boards/:boardId/sprints"  element={<SprintsPage />} />
           <Route path="/boards/:boardId/timeline" element={<TimelinePage />} />

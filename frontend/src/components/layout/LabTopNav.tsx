@@ -5,6 +5,7 @@ import { Loader2 } from 'lucide-react'
 
 const LAB_TABS = [
   { label: 'Board',    path: ''          },
+  { label: 'Summary',  path: '/summary'  },
   { label: 'Backlog',  path: '/backlog'  },
   { label: 'Sprints',  path: '/sprints'  },
   { label: 'Timeline', path: '/timeline' },

@@ -1351,6 +1351,120 @@ Complete a sprint. Incomplete issues are moved to backlog or another sprint.
 
 ---
 
+## Epics
+
+Epics are organizational containers (labels/categories) that group related issues across sprints. An epic is **not** an issue type — it is a separate entity. Issues reference an epic via `epicId`. The `EPIC` value has been removed from `IssueType`; issue types are now `STORY`, `TASK`, `BUG`, `SUBTASK`.
+
+**Epic object:**
+```json
+{
+  "id": "68abc123",
+  "orgId": "org-uuid",
+  "boardId": "board-uuid",
+  "title": "User Authentication",
+  "description": "All work related to login, registration, and token management.",
+  "color": "#6366f1",
+  "status": "IN_PROGRESS",
+  "startDate": "2026-03-01T00:00:00Z",
+  "endDate": "2026-04-30T00:00:00Z",
+  "ownerId": "user-uuid",
+  "issueCount": 14,
+  "createdAt": "2026-03-01T09:00:00Z",
+  "updatedAt": "2026-03-10T12:00:00Z"
+}
+```
+
+**Epic statuses:** `OPEN` | `IN_PROGRESS` | `DONE` | `CANCELLED`
+
+---
+
+### GET `/api/epics?boardId=` 🔐 Org member
+
+List all epics for a board, each including live `issueCount`.
+
+**Query params:**
+
+| Param | Required | Description |
+|-------|----------|-------------|
+| `boardId` | ✅ | Filter by board |
+
+**Response `200`:** Array of epic objects.
+
+---
+
+### GET `/api/epics/{epicId}` 🔐 Org member
+
+Get a single epic by ID.
+
+**Response `200`:** Epic object.
+
+**Response `404`:** Epic not found.
+
+---
+
+### POST `/api/epics` 🔐 Org member
+
+Create a new epic.
+
+**Request body:**
+```json
+{
+  "boardId": "board-uuid",
+  "title": "User Authentication",
+  "description": "Optional markdown description",
+  "color": "#6366f1",
+  "startDate": "2026-03-01T00:00:00Z",
+  "endDate": "2026-04-30T00:00:00Z"
+}
+```
+
+| Field | Required | Notes |
+|-------|----------|-------|
+| `boardId` | ✅ | |
+| `title` | ✅ | Max 500 chars |
+| `color` | ❌ | Hex `#rrggbb`. Defaults to `#6366f1` |
+| `startDate` / `endDate` | ❌ | ISO-8601 instants |
+
+**Response `201`:** Created epic object.
+
+---
+
+### PATCH `/api/epics/{epicId}` 🔐 Epic owner or ORG_ADMIN
+
+Update an epic. All fields are optional; only provided fields are updated.
+
+**Request body:**
+```json
+{
+  "title": "Updated Title",
+  "color": "#ec4899",
+  "status": "IN_PROGRESS",
+  "endDate": "2026-05-15T00:00:00Z"
+}
+```
+
+**Response `200`:** Updated epic object.
+
+---
+
+### DELETE `/api/epics/{epicId}` 🔐 Epic owner or ORG_ADMIN
+
+Delete an epic. All issues that belonged to this epic have their `epicId` cleared (they are not deleted).
+
+**Response `204`:** No content.
+
+---
+
+### GET `/api/epics/{epicId}/issues` 🔐 Org member
+
+Get all issues linked to this epic, paginated.
+
+**Query params:** `page`, `size` (default `0`, `50`). Sorted by `createdAt` descending.
+
+**Response `200`:** Paginated page of issue objects (same shape as `/api/issues`).
+
+---
+
 ## Pagination
 
 Endpoints that return lists use Spring's standard pageable format.

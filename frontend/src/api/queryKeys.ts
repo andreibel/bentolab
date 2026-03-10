@@ -32,4 +32,8 @@ export const queryKeys = {
     org:   (orgId: string)   => ['permissions', 'org', orgId],
     board: (boardId: string) => ['permissions', 'board', boardId],
   },
+  epics: {
+    list:   (boardId: string) => ['epics', boardId],
+    detail: (epicId: string)  => ['epics', 'detail', epicId],
+  },
 }

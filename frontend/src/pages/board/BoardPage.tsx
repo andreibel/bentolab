@@ -24,6 +24,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { useBoard, boardsApi } from '@/api/boards'
 import { useIssues, issuesApi } from '@/api/issues'
+import { useEpics } from '@/api/epics'
 import { queryKeys } from '@/api/queryKeys'
 import { BoardColumn } from '@/components/board/BoardColumn'
 import { IssueCardGhost } from '@/components/board/IssueCard'
@@ -33,16 +34,19 @@ import { IssueDetailPanel } from '@/components/issues/IssueDetailPanel'
 import { cn } from '@/utils/cn'
 import type { BoardColumn as BoardColumnType } from '@/types/board'
 import type { Issue } from '@/types/issue'
+import type { Epic } from '@/types/epic'
 
 // ── Sortable column wrapper ───────────────────────────────────────────────────
 function SortableColumn({
   column,
   issues,
+  epicsMap,
   onIssueClick,
   onAddIssue,
 }: {
   column: BoardColumnType
   issues: Issue[]
+  epicsMap?: Map<string, Epic>
   onIssueClick?: (issue: Issue) => void
   onAddIssue?: (columnId: string) => void
 }) {
@@ -60,6 +64,7 @@ function SortableColumn({
       <BoardColumn
         column={column}
         issues={issues}
+        epicsMap={epicsMap}
         onIssueClick={onIssueClick}
         onAddIssue={onAddIssue}
         dragHandleProps={{ ...attributes, ...listeners }}
@@ -82,6 +87,7 @@ export default function BoardPage() {
 
   const { data: board, isLoading: boardLoading, isError: boardError } = useBoard(boardId!)
   const { data: issuesPage, isLoading: issuesLoading } = useIssues(boardId!)
+  const { data: epicsData = [] } = useEpics(boardId!)
 
   const serverIssues = issuesPage?.content ?? []
 
@@ -125,16 +131,22 @@ export default function BoardPage() {
       .filter(Boolean) as BoardColumnType[]
   }, [serverCols, localColOrder])
 
+  const epicsMap = useMemo(() => new Map(epicsData.map((e) => [e.id, e])), [epicsData])
+  const [selectedEpicId, setSelectedEpicId] = useState<string | null>(null)
+
   const issuesByColumn = useMemo(() => {
+    const src = selectedEpicId
+      ? displayIssues.filter((i) => i.epicId === selectedEpicId)
+      : displayIssues
     const map = new Map<string, Issue[]>()
     for (const col of sortedColumns) map.set(col.id, [])
-    for (const issue of displayIssues) {
+    for (const issue of src) {
       if (!map.has(issue.columnId)) map.set(issue.columnId, [])
       map.get(issue.columnId)!.push(issue)
     }
     for (const [, list] of map) list.sort((a, b) => a.position - b.position)
     return map
-  }, [displayIssues, sortedColumns])
+  }, [displayIssues, sortedColumns, selectedEpicId])
 
   const [activeIssue,    setActiveIssue]    = useState<Issue | null>(null)
   const [activeColumn,   setActiveColumn]   = useState<BoardColumnType | null>(null)
@@ -366,6 +378,43 @@ export default function BoardPage() {
         </div>
       </div>
 
+      {/* Epic filter bar */}
+      {epicsData.length > 0 && (
+        <div className="flex shrink-0 items-center gap-2 overflow-x-auto border-b border-surface-border bg-surface px-5 py-2">
+          <span className="shrink-0 text-xs font-medium text-text-muted">Epic:</span>
+          <button
+            onClick={() => setSelectedEpicId(null)}
+            className={cn(
+              'shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors',
+              selectedEpicId === null
+                ? 'bg-primary text-white'
+                : 'bg-surface-muted text-text-muted hover:text-text-primary',
+            )}
+          >
+            All
+          </button>
+          {epicsData.map((e) => (
+            <button
+              key={e.id}
+              onClick={() => setSelectedEpicId(selectedEpicId === e.id ? null : e.id)}
+              className={cn(
+                'flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors',
+                selectedEpicId === e.id
+                  ? 'text-white'
+                  : 'bg-surface-muted text-text-muted hover:text-text-primary',
+              )}
+              style={selectedEpicId === e.id ? { backgroundColor: e.color } : undefined}
+            >
+              <span
+                className="h-1.5 w-1.5 rounded-full"
+                style={{ backgroundColor: selectedEpicId === e.id ? 'rgba(255,255,255,0.75)' : e.color }}
+              />
+              {e.title}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Kanban board */}
       <div className="flex-1 overflow-x-auto overflow-y-hidden">
         <DndContext
@@ -382,6 +431,7 @@ export default function BoardPage() {
                   key={col.id}
                   column={col}
                   issues={issuesByColumn.get(col.id) ?? []}
+                  epicsMap={epicsMap}
                   onIssueClick={(issue) => setDetailIssueId(issue.id)}
                   onAddIssue={(columnId) => setIssueModal({ open: true, columnId })}
                 />
