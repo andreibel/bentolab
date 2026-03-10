@@ -624,13 +624,7 @@ export function IssueDetailPanel({
 
   return (
     <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 z-40 bg-black/20 backdrop-blur-[1px]"
-        onClick={onClose}
-      />
-
-      {/* Panel */}
+      {/* Panel — no backdrop so the board remains fully interactive */}
       <div
         className={cn(
           'fixed end-0 top-0 z-50 flex h-screen w-[720px] max-w-full flex-col',
