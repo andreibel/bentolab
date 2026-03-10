@@ -1,13 +1,15 @@
-import { Bell, Plus, Search } from 'lucide-react'
+import { Bell, Plus, Search, Sun, Moon } from 'lucide-react'
 import { useAuthStore } from '@/stores/authStore'
-import { cn } from '@/utils/cn'
+import { useUIStore } from '@/stores/uiStore'
 
 interface HeaderProps {
   title?: string
+  onCreateClick?: () => void
 }
 
-export function Header({ title }: HeaderProps) {
+export function Header({ title, onCreateClick }: HeaderProps) {
   const { user, orgSlug } = useAuthStore()
+  const { theme, toggleTheme } = useUIStore()
 
   const initials = user
     ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
@@ -42,17 +44,26 @@ export function Header({ title }: HeaderProps) {
         </button>
 
         {/* Create */}
-        <button className={cn(
-          'flex h-8 items-center gap-1.5 rounded-lg bg-primary px-3 text-sm font-medium text-white transition-colors hover:bg-primary-light'
-        )}>
+        <button
+          onClick={onCreateClick}
+          className="flex h-8 items-center gap-1.5 rounded-lg bg-primary px-3 text-sm font-medium text-white transition-colors hover:bg-primary-light"
+        >
           <Plus className="h-3.5 w-3.5" />
           <span className="hidden sm:inline">Create</span>
+        </button>
+
+        {/* Theme toggle */}
+        <button
+          onClick={toggleTheme}
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-surface-muted hover:text-text-primary"
+          aria-label="Toggle theme"
+        >
+          {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
         </button>
 
         {/* Notifications */}
         <button className="relative flex h-8 w-8 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-surface-muted hover:text-text-primary">
           <Bell className="h-4 w-4" />
-          {/* Unread dot — placeholder */}
           <span className="absolute end-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-primary" />
         </button>
 

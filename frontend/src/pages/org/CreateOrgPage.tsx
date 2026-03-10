@@ -60,7 +60,7 @@ export default function CreateOrgPage() {
       })
       // Switch org context — auth service issues a new JWT with orgId embedded
       const { accessToken } = await authApi.switchOrg(org.id)
-      setOrgContext(org.id, 'ORG_OWNER', org.slug, accessToken)
+      setOrgContext(org.id, 'ORG_OWNER', org.slug, accessToken, org.name)
       navigate('/boards')
     } catch (err: unknown) {
       const message =

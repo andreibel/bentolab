@@ -27,4 +27,8 @@ export const queryKeys = {
     all:    (boardId: string)  => ['sprints', boardId],
     detail: (sprintId: string) => ['sprints', sprintId],
   },
+  permissions: {
+    org:   (orgId: string)   => ['permissions', 'org', orgId],
+    board: (boardId: string) => ['permissions', 'board', boardId],
+  },
 }

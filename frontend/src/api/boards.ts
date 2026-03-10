@@ -26,6 +26,20 @@ export const boardsApi = {
 
   columns: (boardId: string) =>
     client.get<BoardColumn[]>(`/api/boards/${boardId}/columns`).then((r) => r.data),
+
+  createColumn: (
+    boardId: string,
+    data: { name: string; color?: string; wipLimit?: number; isInitial?: boolean; isFinal?: boolean },
+  ) =>
+    client.post<BoardColumn>(`/api/boards/${boardId}/columns`, data).then((r) => r.data),
+
+  reorderColumns: (boardId: string, columnIds: string[]) =>
+    client
+      .patch<BoardColumn[]>(`/api/boards/${boardId}/columns/reorder`, { columnIds })
+      .then((r) => r.data),
+
+  deleteColumn: (boardId: string, columnId: string) =>
+    client.delete(`/api/boards/${boardId}/columns/${columnId}`),
 }
 
 export function useBoards() {

@@ -1,0 +1,491 @@
+import { useState, useEffect } from 'react'
+import * as Dialog from '@radix-ui/react-dialog'
+import { useForm, Controller } from 'react-hook-form'
+import {
+  X, Maximize2, Minimize2,
+  Bug, BookOpen, Layers, CheckSquare, Zap,
+  ArrowUp, ArrowDown, Minus,
+} from 'lucide-react'
+import { useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
+import { issuesApi, useIssues } from '@/api/issues'
+import { useBoards, useBoard } from '@/api/boards'
+import { queryKeys } from '@/api/queryKeys'
+import { Button } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
+import { cn } from '@/utils/cn'
+import type { IssueType, IssuePriority } from '@/types/issue'
+
+// ── Config ────────────────────────────────────────────────────────────────────
+
+const TYPES = [
+  { value: 'EPIC'    as IssueType, label: 'Epic',    icon: <Layers    className="h-3.5 w-3.5" />, color: 'text-purple-500',  bg: 'bg-purple-500/10'  },
+  { value: 'STORY'   as IssueType, label: 'Story',   icon: <BookOpen  className="h-3.5 w-3.5" />, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+  { value: 'TASK'    as IssueType, label: 'Task',    icon: <CheckSquare className="h-3.5 w-3.5" />, color: 'text-blue-500',   bg: 'bg-blue-500/10'    },
+  { value: 'BUG'     as IssueType, label: 'Bug',     icon: <Bug       className="h-3.5 w-3.5" />, color: 'text-red-500',    bg: 'bg-red-500/10'     },
+  { value: 'SUBTASK' as IssueType, label: 'Sub',     icon: <Zap       className="h-3.5 w-3.5" />, color: 'text-yellow-500', bg: 'bg-yellow-500/10'  },
+]
+
+const PRIORITIES = [
+  { value: 'CRITICAL' as IssuePriority, label: 'Critical', icon: <ArrowUp  className="h-3 w-3" />, color: 'text-red-500'    },
+  { value: 'HIGH'     as IssuePriority, label: 'High',     icon: <ArrowUp  className="h-3 w-3" />, color: 'text-orange-500' },
+  { value: 'MEDIUM'   as IssuePriority, label: 'Medium',   icon: <Minus    className="h-3 w-3" />, color: 'text-yellow-500' },
+  { value: 'LOW'      as IssuePriority, label: 'Low',      icon: <ArrowDown className="h-3 w-3" />, color: 'text-blue-400'  },
+]
+
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+interface FormValues {
+  type:          IssueType
+  priority:      IssuePriority
+  title:         string
+  description:   string
+  boardId:       string
+  columnId:      string
+  epicId:        string
+  parentIssueId: string
+  storyPoints:   string
+  dueDate:       string
+}
+
+export interface CreateIssueModalProps {
+  open:       boolean
+  onClose:    () => void
+  /** Provided when opening from a board — fixes the board, no dropdown */
+  boardId?:   string
+  boardKey?:  string
+  boardName?: string
+  /** Provided when opening from a specific column */
+  columnId?:  string
+}
+
+// ── Helper ────────────────────────────────────────────────────────────────────
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <p className="text-xs font-medium text-text-muted">{label}</p>
+      {children}
+    </div>
+  )
+}
+
+function NativeSelect({ className, ...props }: React.SelectHTMLAttributes<HTMLSelectElement>) {
+  return (
+    <select
+      className={cn(
+        'w-full rounded-lg border border-surface-border bg-surface-muted px-2.5 py-1.5 text-sm text-text-primary',
+        'outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20',
+        'transition-colors',
+        className,
+      )}
+      {...props}
+    />
+  )
+}
+
+// ── Component ─────────────────────────────────────────────────────────────────
+
+export function CreateIssueModal({
+  open,
+  onClose,
+  boardId:   propBoardId,
+  boardKey:  propBoardKey,
+  boardName: propBoardName,
+  columnId:  propColumnId,
+}: CreateIssueModalProps) {
+  const queryClient = useQueryClient()
+  const [fullScreen, setFullScreen] = useState(false)
+
+  const isGlobalMode = !propBoardId
+
+  const { data: allBoards } = useBoards()
+
+  const {
+    register,
+    control,
+    handleSubmit,
+    watch,
+    setValue,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<FormValues>({
+    defaultValues: {
+      type:        'TASK',
+      priority:    'MEDIUM',
+      title:       '',
+      description: '',
+      boardId:       propBoardId  ?? '',
+      columnId:      propColumnId ?? '',
+      epicId:        '',
+      parentIssueId: '',
+      storyPoints:   '',
+      dueDate:       '',
+    },
+  })
+
+  const watchedBoardId  = watch('boardId')
+  const effectiveBoardId = propBoardId ?? watchedBoardId
+
+  // Fetch columns + existing issues for the active board
+  const { data: boardData }  = useBoard(effectiveBoardId || '')
+  const { data: issuesPage } = useIssues(effectiveBoardId || '')
+  const columns   = [...(boardData?.columns ?? [])].sort((a, b) => a.position - b.position)
+  const allIssues = issuesPage?.content ?? []
+  const epics     = allIssues.filter((i) => i.type === 'EPIC')
+
+  // When board changes (global mode), auto-set to initial column
+  useEffect(() => {
+    if (!isGlobalMode || !columns.length) return
+    const initial = columns.find((c) => c.isInitial) ?? columns[0]
+    setValue('columnId', initial?.id ?? '')
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [effectiveBoardId, isGlobalMode, setValue])
+
+  // Reset form when modal opens
+  useEffect(() => {
+    if (!open) return
+    reset({
+      type:        'TASK',
+      priority:    'MEDIUM',
+      title:       '',
+      description: '',
+      boardId:       propBoardId  ?? '',
+      columnId:      propColumnId ?? '',
+      epicId:        '',
+      parentIssueId: '',
+      storyPoints:   '',
+      dueDate:       '',
+    })
+    setFullScreen(false)
+  }, [open, propBoardId, propColumnId, reset])
+
+  const onSubmit = async (values: FormValues) => {
+    // Resolve boardKey in global mode
+    let resolvedBoardKey = propBoardKey
+    if (!resolvedBoardKey) {
+      const picked = allBoards?.find((b) => b.id === values.boardId)
+      if (!picked) { toast.error('Please select a board'); return }
+      resolvedBoardKey = picked.boardKey
+    }
+
+    // Resolve columnId: use selected or fall back to initial column
+    let resolvedColumnId = values.columnId
+    if (!resolvedColumnId && columns.length) {
+      resolvedColumnId = (columns.find((c) => c.isInitial) ?? columns[0])?.id ?? ''
+    }
+
+    try {
+      await issuesApi.create({
+        boardId:     effectiveBoardId,
+        boardKey:    resolvedBoardKey!,
+        title:       values.title.trim(),
+        type:        values.type,
+        priority:    values.priority,
+        description: values.description.trim() || undefined,
+        columnId:      resolvedColumnId        || undefined,
+        epicId:        values.epicId           || undefined,
+        parentIssueId: values.parentIssueId    || undefined,
+        storyPoints:   values.storyPoints ? Number(values.storyPoints) : undefined,
+        dueDate:       values.dueDate           || undefined,
+      })
+
+      queryClient.invalidateQueries({ queryKey: queryKeys.issues.list(effectiveBoardId) })
+      toast.success('Issue created')
+      onClose()
+    } catch {
+      toast.error('Failed to create issue')
+    }
+  }
+
+  const selectedType     = watch('type')
+  const selectedPriority = watch('priority')
+  const typeInfo         = TYPES.find((t) => t.value === selectedType)!
+  const priorityInfo     = PRIORITIES.find((p) => p.value === selectedPriority)!
+
+  // ── Render ──────────────────────────────────────────────────────────────────
+  return (
+    <Dialog.Root open={open} onOpenChange={(o) => !o && onClose()}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" />
+        <Dialog.Content
+          className={cn(
+            'fixed z-50 flex flex-col bg-surface shadow-2xl transition-all duration-200',
+            fullScreen
+              ? 'inset-2 rounded-2xl border border-surface-border'
+              : 'left-1/2 top-1/2 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-surface-border',
+          )}
+        >
+          {/* ── Header ── */}
+          <div className="flex shrink-0 items-center gap-2 border-b border-surface-border px-5 py-3">
+            <Dialog.Title className="flex-1 text-sm font-semibold text-text-primary">
+              Create issue
+            </Dialog.Title>
+            <button
+              type="button"
+              onClick={() => setFullScreen((f) => !f)}
+              className="rounded p-1 text-text-muted hover:bg-surface-muted hover:text-text-primary"
+              aria-label={fullScreen ? 'Compact view' : 'Full screen'}
+            >
+              {fullScreen
+                ? <Minimize2 className="h-4 w-4" />
+                : <Maximize2 className="h-4 w-4" />}
+            </button>
+            <Dialog.Close asChild>
+              <button className="rounded p-1 text-text-muted hover:bg-surface-muted hover:text-text-primary">
+                <X className="h-4 w-4" />
+              </button>
+            </Dialog.Close>
+          </div>
+
+          {/* ── Form ── */}
+          <form onSubmit={handleSubmit(onSubmit)} className="flex min-h-0 flex-1 flex-col">
+
+            {fullScreen ? (
+              /* ── Full-screen two-column layout ── */
+              <div className="flex min-h-0 flex-1">
+
+                {/* Left — title + description */}
+                <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-6">
+                  {/* Type picker */}
+                  <TypePicker control={control} />
+
+                  {/* Title */}
+                  <div>
+                    <textarea
+                      {...register('title', { required: 'Title is required' })}
+                      placeholder="Issue title"
+                      rows={2}
+                      className={cn(
+                        'w-full resize-none rounded-lg border bg-surface-muted px-3 py-2.5 text-base font-medium',
+                        'text-text-primary placeholder:text-text-muted outline-none transition-colors',
+                        'focus:border-primary/50 focus:ring-1 focus:ring-primary/20',
+                        errors.title ? 'border-red-400' : 'border-surface-border',
+                      )}
+                    />
+                    {errors.title && (
+                      <p className="mt-1 text-xs text-red-500">{errors.title.message}</p>
+                    )}
+                  </div>
+
+                  {/* Description */}
+                  <textarea
+                    {...register('description')}
+                    placeholder="Add a description… (optional)"
+                    rows={10}
+                    className="w-full flex-1 resize-none rounded-lg border border-surface-border bg-surface-muted px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted outline-none transition-colors focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
+                  />
+                </div>
+
+                {/* Right sidebar — metadata */}
+                <div className="flex w-60 shrink-0 flex-col gap-4 overflow-y-auto border-l border-surface-border p-5">
+                  {/* Priority */}
+                  <Field label="Priority">
+                    <PriorityPicker control={control} />
+                  </Field>
+
+                  {/* Board (global mode) */}
+                  {isGlobalMode && (
+                    <Field label="Board">
+                      <NativeSelect {...register('boardId', { required: true })}>
+                        <option value="">Select board…</option>
+                        {allBoards?.map((b) => (
+                          <option key={b.id} value={b.id}>{b.name}</option>
+                        ))}
+                      </NativeSelect>
+                    </Field>
+                  )}
+
+                  {/* Board label (board mode) */}
+                  {!isGlobalMode && propBoardName && (
+                    <Field label="Board">
+                      <p className="text-sm text-text-secondary">{propBoardName}</p>
+                    </Field>
+                  )}
+
+                  {/* Column */}
+                  {columns.length > 0 && (
+                    <Field label="Column">
+                      <NativeSelect {...register('columnId')}>
+                        {columns.map((c) => (
+                          <option key={c.id} value={c.id}>{c.name}</option>
+                        ))}
+                      </NativeSelect>
+                    </Field>
+                  )}
+
+                  {/* Epic */}
+                  {epics.length > 0 && (
+                    <Field label="Epic">
+                      <NativeSelect {...register('epicId')}>
+                        <option value="">None</option>
+                        {epics.map((e) => (
+                          <option key={e.id} value={e.id}>
+                            {e.issueKey} · {e.title}
+                          </option>
+                        ))}
+                      </NativeSelect>
+                    </Field>
+                  )}
+
+                  {/* Parent issue */}
+                  {allIssues.length > 0 && (
+                    <Field label="Parent issue">
+                      <NativeSelect {...register('parentIssueId')}>
+                        <option value="">None</option>
+                        {allIssues.map((i) => (
+                          <option key={i.id} value={i.id}>
+                            {i.issueKey} · {i.title}
+                          </option>
+                        ))}
+                      </NativeSelect>
+                    </Field>
+                  )}
+
+                  {/* Story points */}
+                  <Field label="Story points">
+                    <input
+                      {...register('storyPoints')}
+                      type="number"
+                      min={0}
+                      placeholder="—"
+                      className="w-full rounded-lg border border-surface-border bg-surface-muted px-2.5 py-1.5 text-sm text-text-primary placeholder:text-text-muted outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-colors"
+                    />
+                  </Field>
+
+                  {/* Due date */}
+                  <Field label="Due date">
+                    <input
+                      {...register('dueDate')}
+                      type="date"
+                      className="w-full rounded-lg border border-surface-border bg-surface-muted px-2.5 py-1.5 text-sm text-text-primary outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-colors"
+                    />
+                  </Field>
+                </div>
+              </div>
+            ) : (
+              /* ── Compact layout ── */
+              <div className="flex flex-col gap-4 p-5">
+                {/* Type picker */}
+                <TypePicker control={control} />
+
+                {/* Title */}
+                <Input
+                  placeholder="Issue title"
+                  autoFocus
+                  error={errors.title?.message}
+                  {...register('title', { required: 'Title is required' })}
+                />
+
+                {/* Priority */}
+                <Field label="Priority">
+                  <PriorityPicker control={control} />
+                </Field>
+
+                {/* Board selector (global only) */}
+                {isGlobalMode && (
+                  <Field label="Board">
+                    <NativeSelect {...register('boardId', { required: true })}>
+                      <option value="">Select board…</option>
+                      {allBoards?.map((b) => (
+                        <option key={b.id} value={b.id}>
+                          {b.name} <span className="text-text-muted">({b.boardKey})</span>
+                        </option>
+                      ))}
+                    </NativeSelect>
+                  </Field>
+                )}
+              </div>
+            )}
+
+            {/* ── Footer ── */}
+            <div className="flex shrink-0 items-center justify-between border-t border-surface-border px-5 py-3">
+              {/* Context hint */}
+              <div className="flex items-center gap-1.5 text-xs text-text-muted">
+                <span className={cn('font-medium', typeInfo.color)}>{typeInfo.label}</span>
+                <span>·</span>
+                <span className={priorityInfo.color}>{priorityInfo.label}</span>
+                {propBoardName && (
+                  <>
+                    <span>·</span>
+                    <span>{propBoardName}</span>
+                  </>
+                )}
+              </div>
+
+              <div className="flex gap-2">
+                <Button type="button" variant="secondary" onClick={onClose}>
+                  Cancel
+                </Button>
+                <Button type="submit" loading={isSubmitting}>
+                  Create issue
+                </Button>
+              </div>
+            </div>
+          </form>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
+  )
+}
+
+// ── Sub-components ────────────────────────────────────────────────────────────
+
+function TypePicker({ control }: { control: Parameters<typeof Controller>[0]['control'] }) {
+  return (
+    <Controller
+      name="type"
+      control={control}
+      render={({ field }) => (
+        <div className="flex gap-1">
+          {TYPES.map((t) => (
+            <button
+              key={t.value}
+              type="button"
+              onClick={() => field.onChange(t.value)}
+              title={t.label}
+              className={cn(
+                'flex h-8 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition-colors',
+                field.value === t.value
+                  ? `${t.color} ${t.bg}`
+                  : 'text-text-muted hover:bg-surface-muted hover:text-text-primary',
+              )}
+            >
+              {t.icon}
+              {t.label}
+            </button>
+          ))}
+        </div>
+      )}
+    />
+  )
+}
+
+function PriorityPicker({ control }: { control: Parameters<typeof Controller>[0]['control'] }) {
+  return (
+    <Controller
+      name="priority"
+      control={control}
+      render={({ field }) => (
+        <div className="flex gap-1">
+          {PRIORITIES.map((p) => (
+            <button
+              key={p.value}
+              type="button"
+              onClick={() => field.onChange(p.value)}
+              className={cn(
+                'flex items-center gap-1 rounded px-2.5 py-1.5 text-xs font-medium transition-colors',
+                field.value === p.value
+                  ? `${p.color} bg-current/10`
+                  : 'text-text-muted hover:bg-surface-muted',
+              )}
+            >
+              <span className={field.value === p.value ? p.color : ''}>{p.icon}</span>
+              {p.label}
+            </button>
+          ))}
+        </div>
+      )}
+    />
+  )
+}
