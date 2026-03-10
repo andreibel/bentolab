@@ -19,6 +19,7 @@ import io.bento.boardservice.mapper.BoardColumnMapper;
 import io.bento.boardservice.mapper.BoardMapper;
 import io.bento.boardservice.repository.BoardColumnRepository;
 import io.bento.boardservice.repository.BoardMemberRepository;
+import io.bento.boardservice.repository.BoardPermissionRepository;
 import io.bento.boardservice.repository.BoardRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -39,6 +40,7 @@ public class BoardService {
     private final BoardColumnMapper boardColumnMapper;
     private final BoardAccessService boardAccessService;
     private final BoardEventPublisher boardEventPublisher;
+    private final BoardPermissionService boardPermissionService;
 
     public List<BoardSummaryResponse> getBoards(UUID userId, UUID orgId, String orgRole) {
         List<Board> boards = boardRepository.findAllByOrgId(orgId);
@@ -90,6 +92,7 @@ public class BoardService {
                 .addedBy(userId)
                 .build();
         boardMemberRepository.save(owner);
+        boardPermissionService.initializeDefaults(board.getId());
 
         List<BoardColumnResponse> columnResponses = defaultColumns.stream()
                 .map(boardColumnMapper::toResponse)
@@ -149,36 +152,37 @@ public class BoardService {
     private List<BoardColumn> buildDefaultColumns(Board board, BoardType type) {
         return switch (type) {
             case SCRUM -> List.of(
-                    buildColumn(board, "To Do", 1, true, false),
-                    buildColumn(board, "In Progress", 2, false, false),
-                    buildColumn(board, "In Review", 3, false, false),
-                    buildColumn(board, "Done", 4, false, true)
+                    buildColumn(board, "To Do",       1, true,  false, "#6B7280"),
+                    buildColumn(board, "In Progress",  2, false, false, "#3B82F6"),
+                    buildColumn(board, "In Review",    3, false, false, "#F59E0B"),
+                    buildColumn(board, "Done",         4, false, true,  "#10B981")
             );
             case KANBAN -> List.of(
-                    buildColumn(board, "Backlog", 1, true, false),
-                    buildColumn(board, "In Progress", 2, false, false),
-                    buildColumn(board, "Done", 3, false, true)
+                    buildColumn(board, "Backlog",      1, true,  false, "#6B7280"),
+                    buildColumn(board, "In Progress",  2, false, false, "#3B82F6"),
+                    buildColumn(board, "Done",         3, false, true,  "#10B981")
             );
             case BUG_TRACKING -> List.of(
-                    buildColumn(board, "Open", 1, true, false),
-                    buildColumn(board, "In Progress", 2, false, false),
-                    buildColumn(board, "In Review", 3, false, false),
-                    buildColumn(board, "Resolved", 4, false, true)
+                    buildColumn(board, "Open",         1, true,  false, "#EF4444"),
+                    buildColumn(board, "In Progress",  2, false, false, "#F59E0B"),
+                    buildColumn(board, "In Review",    3, false, false, "#8B5CF6"),
+                    buildColumn(board, "Resolved",     4, false, true,  "#10B981")
             );
             case CUSTOM -> List.of(
-                    buildColumn(board, "To Do", 1, true, false),
-                    buildColumn(board, "Done", 2, false, true)
+                    buildColumn(board, "To Do",        1, true,  false, "#6B7280"),
+                    buildColumn(board, "Done",         2, false, true,  "#10B981")
             );
         };
     }
 
-    private BoardColumn buildColumn(Board board, String name, int position, boolean isInitial, boolean isFinal) {
+    private BoardColumn buildColumn(Board board, String name, int position, boolean isInitial, boolean isFinal, String color) {
         return BoardColumn.builder()
                 .board(board)
                 .name(name)
                 .position(position)
                 .isInitial(isInitial)
                 .isFinal(isFinal)
+                .color(color)
                 .build();
     }
 }

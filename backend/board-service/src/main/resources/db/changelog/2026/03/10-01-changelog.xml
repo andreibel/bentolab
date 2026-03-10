@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-5.0.xsd">
+
+    <changeSet id="1741600000002-1" author="andreibeloziorove">
+        <createTable tableName="board_permissions">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="board_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="permission_key" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="allowed_roles" type="VARCHAR(500)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="1741600000002-2" author="andreibeloziorove">
+        <addUniqueConstraint
+                tableName="board_permissions"
+                columnNames="board_id, permission_key"
+                constraintName="uc_board_permissions_board_key"/>
+    </changeSet>
+
+    <changeSet id="1741600000002-3" author="andreibeloziorove">
+        <createIndex tableName="board_permissions" indexName="IDX_BOARD_PERMISSIONS_ON_BOARD_ID">
+            <column name="board_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

@@ -30,6 +30,7 @@ public class OrgService {
     private final OrganizationRepository organizationRepository;
     private final OrgMapper orgMapper;
     private final OrganizationMemberRepository organizationMemberRepository;
+    private final OrgPermissionService orgPermissionService;
 
     @Transactional
     public OrgResponse createOrg(UUID userid, CreateOrgRequest request) {
@@ -45,6 +46,7 @@ public class OrgService {
                 .orgRole(OrgRoles.ORG_OWNER)
                 .build();
         organizationMemberRepository.save(ownerMember);
+        orgPermissionService.initializeDefaults(savedOrg.getId());
         return orgMapper.toResponse(savedOrg);
     }
 

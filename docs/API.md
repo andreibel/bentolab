@@ -272,7 +272,7 @@ Set a new password using a reset token.
 
 ## Org Service
 
-### GET `/api/orgs` 🔐 Auth required
+### GET `/api/orgs/me` 🔐 Auth required
 List all organizations the current user belongs to.
 
 **Response `200`:**
@@ -282,11 +282,17 @@ List all organizations the current user belongs to.
     "id": "uuid",
     "name": "Acme Corp",
     "slug": "acme",
+    "domain": null,
     "logoUrl": "https://...",
+    "description": null,
     "plan": "FREE",
-    "role": "ORG_OWNER",
+    "settings": {},
+    "ownerId": "uuid",
+    "isActive": true,
     "isDefault": true,
-    "createdAt": "2026-03-09T12:00:00Z"
+    "setupCompleted": true,
+    "createdAt": "2026-03-09T12:00:00Z",
+    "updatedAt": "2026-03-09T12:00:00Z"
   }
 ]
 ```
@@ -364,6 +370,38 @@ Delete organization.
 
 ---
 
+### PATCH `/api/orgs/{orgId}/settings` 🔐 ORG_OWNER
+Update organization plan settings (limits, features).
+
+**Request** (all fields optional):
+```json
+{
+  "maxUsers": 25,
+  "maxBoards": 10,
+  "maxStorageGB": 20,
+  "allowDiscord": true,
+  "allowExport": true,
+  "customBranding": false,
+  "ssoEnabled": false
+}
+```
+
+**Response `200`:** Updated organization object.
+
+---
+
+### POST `/api/orgs/{orgId}/transfer` 🔐 ORG_OWNER
+Transfer ownership of the organization to another member.
+
+**Request:**
+```json
+{ "newOwnerId": "uuid" }
+```
+
+**Response `204`:** No content.
+
+---
+
 ### POST `/api/auth/switch-org` 🔐 Auth required
 Switch the current user's active organization context. Issues a new JWT with the selected org embedded.
 
@@ -379,8 +417,8 @@ Switch the current user's active organization context. Issues a new JWT with the
 
 ---
 
-### GET `/api/members` 🔐 Org member
-List all members of the current org.
+### GET `/api/orgs/{orgId}/members` 🔐 Org member
+List all members of the org.
 
 **Response `200`:**
 ```json
@@ -396,7 +434,7 @@ List all members of the current org.
 
 ---
 
-### PATCH `/api/members/{userId}/role` 🔐 ORG_ADMIN
+### PATCH `/api/orgs/{orgId}/members/{userId}/role` 🔐 ORG_ADMIN
 Change a member's role.
 
 **Request:**
@@ -409,14 +447,14 @@ Change a member's role.
 
 ---
 
-### DELETE `/api/members/{userId}` 🔐 ORG_ADMIN or self
+### DELETE `/api/orgs/{orgId}/members/{userId}` 🔐 ORG_ADMIN or self
 Remove a member from the org (or leave the org yourself).
 
 **Response `204`:** No content.
 
 ---
 
-### POST `/api/invitations` 🔐 ORG_ADMIN
+### POST `/api/orgs/{orgId}/invitations` 🔐 ORG_ADMIN
 Invite a user to the org by email.
 
 **Request:**
@@ -432,26 +470,25 @@ Invite a user to the org by email.
 
 ---
 
-### GET `/api/invitations` 🔐 ORG_ADMIN
-List pending invitations for the org.
+### GET `/api/orgs/{orgId}/invitations` 🔐 ORG_ADMIN
+List invitations for the org.
+
+**Query params:** `status` (optional) — filter by invitation status.
 
 **Response `200`:** Array of invitation objects.
 
 ---
 
-### POST `/api/invitations/accept` 🔓 Public (token-based)
-Accept an org invitation.
+### POST `/api/invitations/{token}/accept` 🔐 Auth required
+Accept an org invitation. The token comes from the invitation email link.
 
-**Request:**
-```json
-{ "token": "invitation-token-from-email" }
-```
+> The user must be authenticated (JWT required). The `X-User-Email` header is used to verify the invitee's identity.
 
-**Response `200`:** Auth tokens (user is now logged in and a member of the org).
+**Response `200`:** Member object (user is now a member of the org).
 
 ---
 
-### DELETE `/api/invitations/{invitationId}` 🔐 ORG_ADMIN
+### DELETE `/api/orgs/{orgId}/invitations/{invitationId}` 🔐 ORG_ADMIN
 Revoke a pending invitation.
 
 **Response `204`:** No content.
@@ -567,7 +604,7 @@ Delete a board. Publishes `BoardDeletedEvent` → task-service will delete all a
 
 ---
 
-### POST `/api/boards/{boardId}/archive` 🔐 Board PRODUCT_OWNER or ORG_ADMIN
+### PATCH `/api/boards/{boardId}/archive` 🔐 Board PRODUCT_OWNER or ORG_ADMIN
 Toggle archive status of a board.
 
 **Response `200`:** Updated board object with new `isArchived` value.
@@ -640,7 +677,7 @@ Delete a column. Publishes `BoardColumnDeletedEvent` → task-service moves orph
 
 ---
 
-### PUT `/api/boards/{boardId}/columns/reorder` 🔐 Board PRODUCT_OWNER or ORG_ADMIN
+### PATCH `/api/boards/{boardId}/columns/reorder` 🔐 Board PRODUCT_OWNER or ORG_ADMIN
 Reorder all columns.
 
 **Request:**
@@ -690,7 +727,7 @@ Add a member to the board.
 
 ---
 
-### PATCH `/api/boards/{boardId}/members/{userId}/role` 🔐 Board PRODUCT_OWNER or ORG_ADMIN
+### PATCH `/api/boards/{boardId}/members/{userId}` 🔐 Board PRODUCT_OWNER or ORG_ADMIN
 Change a member's board role.
 
 **Request:**
