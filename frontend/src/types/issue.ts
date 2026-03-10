@@ -53,3 +53,23 @@ export interface Page<T> {
   size: number
   number: number
 }
+
+export interface Comment {
+  id: string
+  issueId: string
+  userId: string
+  text: string
+  mentionedUserIds: string[]
+  isEdited: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface Activity {
+  id: string
+  userId: string
+  entityType: string
+  action: string
+  details: Record<string, unknown>
+  createdAt: string
+}

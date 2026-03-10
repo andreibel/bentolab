@@ -29,6 +29,7 @@ import { BoardColumn } from '@/components/board/BoardColumn'
 import { IssueCardGhost } from '@/components/board/IssueCard'
 import { AddColumnModal } from '@/components/board/AddColumnModal'
 import { CreateIssueModal } from '@/components/issues/CreateIssueModal'
+import { IssueDetailPanel } from '@/components/issues/IssueDetailPanel'
 import { cn } from '@/utils/cn'
 import type { BoardColumn as BoardColumnType } from '@/types/board'
 import type { Issue } from '@/types/issue'
@@ -135,10 +136,11 @@ export default function BoardPage() {
     return map
   }, [displayIssues, sortedColumns])
 
-  const [activeIssue,   setActiveIssue]   = useState<Issue | null>(null)
-  const [activeColumn,  setActiveColumn]  = useState<BoardColumnType | null>(null)
+  const [activeIssue,    setActiveIssue]    = useState<Issue | null>(null)
+  const [activeColumn,   setActiveColumn]   = useState<BoardColumnType | null>(null)
   const [addColumnOpen,  setAddColumnOpen]  = useState(false)
-  const [issueModal, setIssueModal] = useState<{ open: boolean; columnId?: string }>({ open: false })
+  const [issueModal,     setIssueModal]     = useState<{ open: boolean; columnId?: string }>({ open: false })
+  const [detailIssueId,  setDetailIssueId]  = useState<string | null>(null)
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -380,7 +382,7 @@ export default function BoardPage() {
                   key={col.id}
                   column={col}
                   issues={issuesByColumn.get(col.id) ?? []}
-                  onIssueClick={(issue) => console.log('open issue', issue.id)}
+                  onIssueClick={(issue) => setDetailIssueId(issue.id)}
                   onAddIssue={(columnId) => setIssueModal({ open: true, columnId })}
                 />
               ))}
@@ -430,6 +432,14 @@ export default function BoardPage() {
         boardName={board?.name}
         columnId={issueModal.columnId}
       />
+
+      {detailIssueId && (
+        <IssueDetailPanel
+          issueId={detailIssueId}
+          columns={sortedColumns}
+          onClose={() => setDetailIssueId(null)}
+        />
+      )}
     </div>
   )
 }

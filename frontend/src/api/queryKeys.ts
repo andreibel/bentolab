@@ -23,6 +23,7 @@ export const queryKeys = {
     activities: (issueId: string)                => ['issues', issueId, 'activities'],
     filters:    (boardId: string)                => ['issues', 'filters', boardId],
   },
+
   sprints: {
     all:    (boardId: string)  => ['sprints', boardId],
     detail: (sprintId: string) => ['sprints', sprintId],
