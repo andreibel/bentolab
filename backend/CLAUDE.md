@@ -65,7 +65,8 @@ Legend: 📤 publisher implemented — 📥 consumer implemented — ⏳ not yet
 | Event | Fields | Publisher | Consumers |
 |-------|--------|-----------|-----------|
 | `UserRegisteredEvent` | `userId`, `email`, `firstName`, `lastName`, `registeredAt` | 📤 | ⏳ notification-service (welcome email) |
-| `EmailVerificationRequestedEvent` | `userId`, `email`, `token`, `expiresAt` | ⏳ | ⏳ notification-service (send verification email) |
+| `EmailVerificationRequestedEvent` | `userId`, `email`, `token`, `expiresAt` | 📤 | ⏳ notification-service (send verification email) |
+| `PasswordResetRequestedEvent` | `userId`, `email`, `token`, `expiresAt` | 📤 | ⏳ notification-service (send reset email) |
 
 ### `bento.org.events` — published by **org-service**
 | Event | Fields | Publisher | Consumers |
