@@ -22,4 +22,12 @@ public class UserEventPublisher {
     public void publishUserUpdated(UserUpdatedEvent event) {
         kafkaTemplate.send(USER_EVENTS_TOPIC, event.userId().toString(), event);
     }
+
+    public void publishEmailVerificationRequested(EmailVerificationRequestedEvent event) {
+        kafkaTemplate.send(USER_EVENTS_TOPIC, event.userId().toString(), event);
+    }
+
+    public void publishPasswordResetRequested(PasswordResetRequestedEvent event) {
+        kafkaTemplate.send(USER_EVENTS_TOPIC, event.userId().toString(), event);
+    }
 }

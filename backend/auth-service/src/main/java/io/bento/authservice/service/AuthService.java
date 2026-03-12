@@ -37,6 +37,7 @@ public class AuthService {
     private final AuthProperties authProperties;
     private final UserEventPublisher userEventPublisher;
     private final OrgServiceClient orgServiceClient;
+    private final EmailVerificationService emailVerificationService;
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
@@ -61,6 +62,8 @@ public class AuthService {
         userEventPublisher.publishUserRegistered(new UserRegisteredEvent(
                 user.getId(), user.getEmail(), user.getFirstName(), user.getLastName(), Instant.now().toString()
         ));
+
+        emailVerificationService.generateAndSend(user);
 
         List<UserOrgDto> organizations = fetchUserOrganizations(user.getId());
         UserOrgDto primaryOrg = organizations.isEmpty() ? null : organizations.getFirst();
