@@ -1,0 +1,74 @@
+<svg viewBox="0 0 510 350" xmlns="http://www.w3.org/2000/svg">
+  <rect width="510" height="350" fill="#F4F3FF" rx="8"/>
+
+  <!-- Sprint header -->
+  <rect x="20" y="18" width="470" height="38" rx="8" fill="white" stroke="#E4E4E7" stroke-width="1"/>
+  <rect x="30" y="29" width="10" height="10" rx="2" fill="#5B47E0"/>
+  <text x="46" y="40" font-family="system-ui,sans-serif" font-size="12" font-weight="700" fill="#0F0F10">Sprint 3</text>
+  <text x="112" y="40" font-family="system-ui,sans-serif" font-size="11" fill="#A1A1AA">Mar 1 – Mar 14</text>
+  <rect x="290" y="32" width="150" height="6" rx="3" fill="#E4E4E7"/>
+  <rect x="290" y="32" width="83" height="6" rx="3" fill="#5B47E0"/>
+  <text x="450" y="40" font-family="system-ui,sans-serif" font-size="10" font-weight="600" fill="#5B47E0" text-anchor="middle">55%</text>
+
+  <!-- Column 1 – To Do -->
+  <rect x="20" y="68" width="148" height="268" rx="8" fill="white" stroke="#E4E4E7" stroke-width="1"/>
+  <text x="32" y="88" font-family="system-ui,sans-serif" font-size="10" font-weight="700" fill="#71717A" letter-spacing="0.06em">TO DO</text>
+  <rect x="142" y="77" width="18" height="16" rx="8" fill="#F3F4F6"/>
+  <text x="151" y="89" font-family="system-ui,sans-serif" font-size="9" fill="#71717A" text-anchor="middle">3</text>
+  <!-- card 1 -->
+  <rect x="28" y="98" width="132" height="60" rx="6" fill="white" stroke="#E4E4E7" stroke-width="1"/>
+  <rect x="34" y="106" width="34" height="14" rx="3" fill="#EEF0FF"/>
+  <text x="51" y="117" font-family="system-ui,sans-serif" font-size="8" font-weight="700" fill="#5B47E0" text-anchor="middle">STORY</text>
+  <rect x="34" y="126" width="110" height="5" rx="2" fill="#E4E4E7"/>
+  <rect x="34" y="135" width="74" height="5" rx="2" fill="#E4E4E7"/>
+  <text x="34" y="151" font-family="system-ui,sans-serif" font-size="8" fill="#A1A1AA">BEN-12</text>
+  <!-- card 2 -->
+  <rect x="28" y="166" width="132" height="54" rx="6" fill="white" stroke="#E4E4E7" stroke-width="1"/>
+  <rect x="34" y="174" width="24" height="14" rx="3" fill="#FEE2E2"/>
+  <text x="46" y="185" font-family="system-ui,sans-serif" font-size="8" font-weight="700" fill="#EF4444" text-anchor="middle">BUG</text>
+  <rect x="34" y="194" width="96" height="5" rx="2" fill="#E4E4E7"/>
+  <text x="34" y="212" font-family="system-ui,sans-serif" font-size="8" fill="#A1A1AA">BEN-14</text>
+  <!-- card 3 -->
+  <rect x="28" y="228" width="132" height="46" rx="6" fill="white" stroke="#E4E4E7" stroke-width="1"/>
+  <rect x="34" y="236" width="26" height="14" rx="3" fill="#DBEAFE"/>
+  <text x="47" y="247" font-family="system-ui,sans-serif" font-size="8" font-weight="700" fill="#2563EB" text-anchor="middle">TASK</text>
+  <rect x="34" y="256" width="82" height="5" rx="2" fill="#E4E4E7"/>
+
+  <!-- Column 2 – In Progress -->
+  <rect x="181" y="68" width="148" height="268" rx="8" fill="#FAFAFF" stroke="#5B47E0" stroke-width="1.5"/>
+  <text x="193" y="88" font-family="system-ui,sans-serif" font-size="10" font-weight="700" fill="#5B47E0" letter-spacing="0.04em">IN PROGRESS</text>
+  <!-- active card -->
+  <rect x="189" y="98" width="132" height="70" rx="6" fill="#EEF0FF" stroke="#5B47E0" stroke-width="1"/>
+  <rect x="195" y="106" width="26" height="14" rx="3" fill="#5B47E0"/>
+  <text x="208" y="117" font-family="system-ui,sans-serif" font-size="8" font-weight="700" fill="white" text-anchor="middle">TASK</text>
+  <rect x="195" y="128" width="112" height="5" rx="2" fill="#C4B8F8"/>
+  <rect x="195" y="137" width="78" height="5" rx="2" fill="#C4B8F8"/>
+  <circle cx="286" cy="158" r="8" fill="#5B47E0"/>
+  <text x="286" y="162" font-family="system-ui,sans-serif" font-size="7" font-weight="700" fill="white" text-anchor="middle">AK</text>
+  <!-- second card -->
+  <rect x="189" y="176" width="132" height="50" rx="6" fill="white" stroke="#7C6CEA" stroke-width="1"/>
+  <rect x="195" y="184" width="34" height="14" rx="3" fill="#EEF0FF"/>
+  <text x="212" y="195" font-family="system-ui,sans-serif" font-size="8" font-weight="700" fill="#5B47E0" text-anchor="middle">STORY</text>
+  <rect x="195" y="204" width="100" height="5" rx="2" fill="#E4E4E7"/>
+
+  <!-- Column 3 – Done -->
+  <rect x="342" y="68" width="148" height="268" rx="8" fill="white" stroke="#E4E4E7" stroke-width="1"/>
+  <text x="354" y="88" font-family="system-ui,sans-serif" font-size="10" font-weight="700" fill="#71717A" letter-spacing="0.06em">DONE</text>
+  <circle cx="472" cy="82" r="9" fill="#10B981"/>
+  <path d="M467 82 L470.5 85.5 L477 78" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- done cards -->
+  <rect x="350" y="98" width="132" height="52" rx="6" fill="#FAFAFA" stroke="#E4E4E7" stroke-width="1"/>
+  <rect x="356" y="106" width="34" height="14" rx="3" fill="#D1FAE5"/>
+  <text x="373" y="117" font-family="system-ui,sans-serif" font-size="8" font-weight="700" fill="#059669" text-anchor="middle">DONE</text>
+  <rect x="356" y="126" width="112" height="5" rx="2" fill="#E4E4E7"/>
+
+  <rect x="350" y="162" width="132" height="52" rx="6" fill="#FAFAFA" stroke="#E4E4E7" stroke-width="1"/>
+  <rect x="356" y="170" width="34" height="14" rx="3" fill="#D1FAE5"/>
+  <text x="373" y="181" font-family="system-ui,sans-serif" font-size="8" font-weight="700" fill="#059669" text-anchor="middle">DONE</text>
+  <rect x="356" y="190" width="88" height="5" rx="2" fill="#E4E4E7"/>
+
+  <rect x="350" y="224" width="132" height="52" rx="6" fill="#FAFAFA" stroke="#E4E4E7" stroke-width="1"/>
+  <rect x="356" y="232" width="34" height="14" rx="3" fill="#D1FAE5"/>
+  <text x="373" y="243" font-family="system-ui,sans-serif" font-size="8" font-weight="700" fill="#059669" text-anchor="middle">DONE</text>
+  <rect x="356" y="252" width="100" height="5" rx="2" fill="#E4E4E7"/>
+</svg>

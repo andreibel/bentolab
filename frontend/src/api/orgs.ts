@@ -3,7 +3,7 @@ import type { Org, OrgListItem } from '@/types/org'
 
 export const orgsApi = {
   list: () =>
-    client.get<OrgListItem[]>('/api/orgs').then((r) => r.data),
+    client.get<OrgListItem[]>('/api/orgs/me').then((r) => r.data),
 
   create: (data: { name: string; slug: string; description?: string; logoUrl?: string }) =>
     client.post<Org>('/api/orgs', data).then((r) => r.data),

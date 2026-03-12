@@ -66,7 +66,7 @@ spring:
                         - id: task-service
                           uri: http://localhost:8084
                           predicates:
-                              - Path=/api/issues/**, /api/sprints/**
+                              - Path=/api/issues/**, /api/sprints/**, /api/epics/**
 
                         - id: notification-service
                           uri: http://localhost:8085
@@ -116,7 +116,7 @@ spring:
                         - id: task-service
                           uri: http://task-service:8084
                           predicates:
-                              - Path=/api/issues/**, /api/sprints/**
+                              - Path=/api/issues/**, /api/sprints/**, /api/epics/**
 
                         - id: notification-service
                           uri: http://notification-service:8085
@@ -166,7 +166,7 @@ spring:
                         - id: task-service
                           uri: http://${TASK_SERVICE_HOST:task-service}:8084
                           predicates:
-                              - Path=/api/issues/**, /api/sprints/**
+                              - Path=/api/issues/**, /api/sprints/**, /api/epics/**
 
                         - id: notification-service
                           uri: http://${NOTIFICATION_SERVICE_HOST:notification-service}:8085
@@ -216,7 +216,7 @@ spring:
                         - id: task-service
                           uri: http://${TASK_SERVICE_HOST:task-service}:8084
                           predicates:
-                              - Path=/api/issues/**, /api/sprints/**
+                              - Path=/api/issues/**, /api/sprints/**, /api/epics/**
 
                         - id: notification-service
                           uri: http://${NOTIFICATION_SERVICE_HOST:notification-service}:8085

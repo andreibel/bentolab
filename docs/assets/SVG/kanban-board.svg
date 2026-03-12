@@ -1,0 +1,89 @@
+<svg viewBox="0 0 510 350" xmlns="http://www.w3.org/2000/svg">
+  <rect width="510" height="350" fill="#F0FDF4" rx="8"/>
+
+  <!-- Top bar -->
+  <rect x="20" y="16" width="470" height="34" rx="8" fill="white" stroke="#E4E4E7" stroke-width="1"/>
+  <text x="32" y="38" font-family="system-ui,sans-serif" font-size="13" font-weight="700" fill="#0F0F10">Kanban Board</text>
+  <rect x="380" y="24" width="100" height="18" rx="6" fill="#DCFCE7"/>
+  <text x="430" y="37" font-family="system-ui,sans-serif" font-size="10" font-weight="600" fill="#16A34A" text-anchor="middle">Continuous flow</text>
+
+  <!-- Column: BACKLOG (x=20, color=#71717A) -->
+  <rect x="20" y="62" width="110" height="280" rx="8" fill="white" stroke="#E4E4E7" stroke-width="1"/>
+  <rect x="20" y="62" width="110" height="32" rx="8" fill="#71717A18"/>
+  <rect x="20" y="78" width="110" height="16" fill="#71717A18"/>
+  <text x="30" y="82" font-family="system-ui,sans-serif" font-size="9" font-weight="700" fill="#71717A" letter-spacing="0.05em">BACKLOG</text>
+  <!-- cards -->
+  <rect x="28" y="102" width="94" height="62" rx="6" fill="#E4E4E7" stroke="#71717A44" stroke-width="1"/>
+  <rect x="34" y="112" width="75" height="5" rx="2" fill="#71717A55"/>
+  <rect x="34" y="121" width="40" height="5" rx="2" fill="#71717A33"/>
+  <circle cx="116" cy="112" r="3" fill="#EF4444"/>
+  <rect x="28" y="174" width="94" height="62" rx="6" fill="#E4E4E7" stroke="#71717A44" stroke-width="1"/>
+  <rect x="34" y="184" width="55" height="5" rx="2" fill="#71717A55"/>
+  <rect x="34" y="193" width="55" height="5" rx="2" fill="#71717A33"/>
+  <circle cx="116" cy="184" r="3" fill="#F59E0B"/>
+  <rect x="28" y="246" width="94" height="62" rx="6" fill="#E4E4E7" stroke="#71717A44" stroke-width="1"/>
+  <rect x="34" y="256" width="40" height="5" rx="2" fill="#71717A55"/>
+  <rect x="34" y="265" width="70" height="5" rx="2" fill="#71717A33"/>
+  <circle cx="116" cy="256" r="3" fill="#10B981"/>
+
+  <!-- Column: TO DO (x=139, color=#3B82F6) -->
+  <rect x="139" y="62" width="110" height="280" rx="8" fill="white" stroke="#E4E4E7" stroke-width="1"/>
+  <rect x="139" y="62" width="110" height="32" rx="8" fill="#3B82F618"/>
+  <rect x="139" y="78" width="110" height="16" fill="#3B82F618"/>
+  <text x="149" y="82" font-family="system-ui,sans-serif" font-size="9" font-weight="700" fill="#3B82F6" letter-spacing="0.05em">TO DO</text>
+  <rect x="211" y="68" width="30" height="16" rx="8" fill="#3B82F630"/>
+  <text x="226" y="80" font-family="system-ui,sans-serif" font-size="9" font-weight="600" fill="#3B82F6" text-anchor="middle">WIP 4</text>
+  <!-- cards -->
+  <rect x="147" y="102" width="94" height="62" rx="6" fill="#DBEAFE" stroke="#3B82F644" stroke-width="1"/>
+  <rect x="153" y="112" width="75" height="5" rx="2" fill="#3B82F655"/>
+  <rect x="153" y="121" width="55" height="5" rx="2" fill="#3B82F633"/>
+  <circle cx="235" cy="112" r="3" fill="#EF4444"/>
+  <rect x="147" y="174" width="94" height="62" rx="6" fill="#DBEAFE" stroke="#3B82F644" stroke-width="1"/>
+  <rect x="153" y="184" width="55" height="5" rx="2" fill="#3B82F655"/>
+  <rect x="153" y="193" width="40" height="5" rx="2" fill="#3B82F633"/>
+  <circle cx="235" cy="184" r="3" fill="#F59E0B"/>
+
+  <!-- Column: IN PROG (x=258, color=#5B47E0) -->
+  <rect x="258" y="62" width="110" height="280" rx="8" fill="white" stroke="#E4E4E7" stroke-width="1"/>
+  <rect x="258" y="62" width="110" height="32" rx="8" fill="#5B47E018"/>
+  <rect x="258" y="78" width="110" height="16" fill="#5B47E018"/>
+  <text x="268" y="82" font-family="system-ui,sans-serif" font-size="9" font-weight="700" fill="#5B47E0" letter-spacing="0.05em">IN PROG</text>
+  <rect x="330" y="68" width="30" height="16" rx="8" fill="#5B47E030"/>
+  <text x="345" y="80" font-family="system-ui,sans-serif" font-size="9" font-weight="600" fill="#5B47E0" text-anchor="middle">WIP 3</text>
+  <!-- cards -->
+  <rect x="266" y="102" width="94" height="62" rx="6" fill="#EEF0FF" stroke="#5B47E044" stroke-width="1"/>
+  <rect x="272" y="112" width="75" height="5" rx="2" fill="#5B47E055"/>
+  <rect x="272" y="121" width="40" height="5" rx="2" fill="#5B47E033"/>
+  <circle cx="354" cy="112" r="3" fill="#EF4444"/>
+  <rect x="266" y="174" width="94" height="62" rx="6" fill="#EEF0FF" stroke="#5B47E044" stroke-width="1"/>
+  <rect x="272" y="184" width="55" height="5" rx="2" fill="#5B47E055"/>
+  <rect x="272" y="193" width="55" height="5" rx="2" fill="#5B47E033"/>
+  <circle cx="354" cy="184" r="3" fill="#F59E0B"/>
+  <rect x="266" y="246" width="94" height="62" rx="6" fill="#EEF0FF" stroke="#5B47E044" stroke-width="1"/>
+  <rect x="272" y="256" width="40" height="5" rx="2" fill="#5B47E055"/>
+  <rect x="272" y="265" width="70" height="5" rx="2" fill="#5B47E033"/>
+  <circle cx="354" cy="256" r="3" fill="#10B981"/>
+
+  <!-- Column: DONE (x=377, color=#10B981) -->
+  <rect x="377" y="62" width="110" height="280" rx="8" fill="white" stroke="#E4E4E7" stroke-width="1"/>
+  <rect x="377" y="62" width="110" height="32" rx="8" fill="#10B98118"/>
+  <rect x="377" y="78" width="110" height="16" fill="#10B98118"/>
+  <text x="387" y="82" font-family="system-ui,sans-serif" font-size="9" font-weight="700" fill="#10B981" letter-spacing="0.05em">DONE</text>
+  <!-- cards -->
+  <rect x="385" y="102" width="94" height="62" rx="6" fill="#D1FAE5" stroke="#10B98144" stroke-width="1"/>
+  <rect x="391" y="112" width="75" height="5" rx="2" fill="#10B98155"/>
+  <rect x="391" y="121" width="40" height="5" rx="2" fill="#10B98133"/>
+  <circle cx="473" cy="112" r="3" fill="#10B981"/>
+  <rect x="385" y="174" width="94" height="62" rx="6" fill="#D1FAE5" stroke="#10B98144" stroke-width="1"/>
+  <rect x="391" y="184" width="55" height="5" rx="2" fill="#10B98155"/>
+  <rect x="391" y="193" width="55" height="5" rx="2" fill="#10B98133"/>
+  <circle cx="473" cy="184" r="3" fill="#10B981"/>
+
+  <!-- flow arrows -->
+  <path d="M130 170 L142 170" stroke="#A1A1AA" stroke-width="1.5" stroke-dasharray="3 2"/>
+  <path d="M138 166 L142 170 L138 174" stroke="#A1A1AA" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <path d="M249 170 L261 170" stroke="#A1A1AA" stroke-width="1.5" stroke-dasharray="3 2"/>
+  <path d="M257 166 L261 170 L257 174" stroke="#A1A1AA" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <path d="M368 170 L380 170" stroke="#A1A1AA" stroke-width="1.5" stroke-dasharray="3 2"/>
+  <path d="M376 166 L380 170 L376 174" stroke="#A1A1AA" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+</svg>

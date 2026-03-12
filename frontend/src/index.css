@@ -1,6 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Heebo:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
+/* Enable class-based dark mode for Tailwind v4 */
+@variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-primary: #5B47E0;
   --color-primary-light: #7C6CEA;
@@ -25,6 +28,20 @@
   --radius-md: 8px;
   --radius-lg: 12px;
   --radius-xl: 16px;
+}
+
+/* Dark theme — overrides CSS vars, all Tailwind utilities auto-adapt */
+.dark {
+  --color-primary-subtle: #1E1844;
+  --color-accent-subtle:  #2D2006;
+
+  --color-surface:        #111113;
+  --color-surface-muted:  #18181B;
+  --color-surface-border: #2E2E35;
+
+  --color-text-primary:   #FAFAFA;
+  --color-text-secondary: #A1A1AA;
+  --color-text-muted:     #52525B;
 }
 
 :root {

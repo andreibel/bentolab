@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512.5 364.6">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: gray;
+      }
+
+      .cls-2 {
+        fill: #0d1b2a;
+      }
+
+      .cls-3 {
+        font-family: JetBrainsMonoNF-ExtraBold, 'JetBrainsMono Nerd Font';
+        font-size: 20.42px;
+        font-weight: 700;
+      }
+
+      .cls-3, .cls-4 {
+        fill: #f2f2f2;
+      }
+
+      .cls-5 {
+        fill: #fb2c36;
+      }
+
+      .cls-6 {
+        fill: #5b47e0;
+      }
+
+      .cls-4 {
+        font-family: JetBrainsMonoNF-SemiBold, 'JetBrainsMono Nerd Font';
+        font-size: 15px;
+        font-weight: 600;
+      }
+
+      .cls-7 {
+        fill: #1b263b;
+      }
+
+      .cls-8 {
+        fill: #00bc7d;
+      }
+
+      .cls-9 {
+        fill: #2e3192;
+      }
+
+      .cls-10 {
+        fill: #f59e0b;
+      }
+
+      .cls-11 {
+        fill: #333;
+      }
+
+      .cls-12 {
+        fill: #1a1a1a;
+      }
+
+      .cls-13 {
+        fill: #f0b100;
+      }
+    </style>
+  </defs>
+  <rect class="cls-6" x="230.26" width="282.24" height="364.6"/>
+  <rect class="cls-10" x="22.25" y="15.88" width="281.79" height="332.84" transform="translate(-12.8 12.32) rotate(-4.16)"/>
+  <polygon class="cls-11" points="230.26 344.28 315.75 338.05 291.59 6.09 230.26 10.56 230.26 344.28"/>
+  <g>
+    <rect class="cls-12" x="64.8" y="63.21" width="382.89" height="255.26"/>
+    <circle class="cls-8" cx="414.51" cy="70.87" r="5.11"/>
+    <circle class="cls-13" cx="427.28" cy="70.87" r="5.11"/>
+    <circle class="cls-5" cx="440.04" cy="70.87" r="5.11"/>
+  </g>
+  <rect class="cls-7" x="82.07" y="103.69" width="348.35" height="190.55"/>
+  <text class="cls-3" transform="translate(81.37 98.37)"><tspan x="0" y="0">Backlog</tspan></text>
+  <g>
+    <rect class="cls-2" x="92.66" y="132.69" width="327.54" height="20"/>
+    <rect class="cls-13" x="96.66" y="136.69" width="12.76" height="12.76"/>
+    <rect class="cls-1" x="113.15" y="138.07" width="100" height="10"/>
+    <rect class="cls-9" x="377.29" y="137.69" width="40.82" height="10"/>
+    <circle class="cls-1" cx="369.36" cy="142.69" r="5"/>
+  </g>
+  <g>
+    <rect class="cls-2" x="92.66" y="155.52" width="327.54" height="20"/>
+    <rect class="cls-8" x="96.66" y="159.52" width="12.76" height="12.76"/>
+    <rect class="cls-1" x="113.15" y="160.9" width="79.52" height="10"/>
+    <rect class="cls-9" x="377.29" y="160.52" width="40.82" height="10"/>
+    <circle class="cls-1" cx="369.36" cy="165.52" r="5"/>
+  </g>
+  <g>
+    <rect class="cls-2" x="92.48" y="178.35" width="327.54" height="20"/>
+    <rect class="cls-5" x="96.48" y="182.35" width="12.76" height="12.76"/>
+    <rect class="cls-1" x="112.96" y="183.73" width="145.81" height="10"/>
+    <rect class="cls-9" x="377.1" y="183.35" width="40.82" height="10"/>
+    <circle class="cls-1" cx="369.17" cy="188.35" r="5"/>
+  </g>
+  <g>
+    <rect class="cls-2" x="92.48" y="201.18" width="327.54" height="20"/>
+    <rect class="cls-13" x="96.48" y="205.18" width="12.76" height="12.76"/>
+    <rect class="cls-1" x="112.96" y="206.56" width="79.7" height="10"/>
+    <rect class="cls-9" x="377.1" y="206.18" width="40.82" height="10"/>
+    <circle class="cls-1" cx="369.17" cy="211.18" r="5"/>
+  </g>
+  <text class="cls-4" transform="translate(338.62 125.91)"><tspan x="0" y="0">sprint 15</tspan></text>
+</svg>

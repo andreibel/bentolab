@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-5.0.xsd">
+
+    <changeSet id="1741600000001-1" author="andreibeloziorove">
+        <createTable tableName="org_permissions">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="org_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="permission_key" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="allowed_roles" type="VARCHAR(500)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="1741600000001-2" author="andreibeloziorove">
+        <addUniqueConstraint
+                tableName="org_permissions"
+                columnNames="org_id, permission_key"
+                constraintName="uc_org_permissions_org_key"/>
+    </changeSet>
+
+    <changeSet id="1741600000001-3" author="andreibeloziorove">
+        <createIndex tableName="org_permissions" indexName="IDX_ORG_PERMISSIONS_ON_ORG_ID">
+            <column name="org_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

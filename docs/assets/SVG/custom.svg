@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 364.6">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #0d1b2a;
+      }
+
+      .cls-2 {
+        font-family: JetBrainsMonoNF-ExtraBold, 'JetBrainsMono Nerd Font';
+        font-size: 20.42px;
+        font-weight: 700;
+      }
+
+      .cls-2, .cls-3 {
+        fill: #f2f2f2;
+      }
+
+      .cls-4 {
+        fill: #fb2c36;
+      }
+
+      .cls-5 {
+        fill: #5b47e0;
+      }
+
+      .cls-6 {
+        fill: #1b263b;
+      }
+
+      .cls-7 {
+        fill: #00bc7d;
+      }
+
+      .cls-8 {
+        fill: #f59e0b;
+      }
+
+      .cls-9 {
+        fill: #333;
+      }
+
+      .cls-10 {
+        fill: #1a1a1a;
+      }
+
+      .cls-11 {
+        fill: #f0b100;
+      }
+    </style>
+  </defs>
+  <circle class="cls-8" cx="183.97" cy="182.46" r="182.46"/>
+  <rect class="cls-5" x="227.94" y="15.9" width="266.17" height="334.29" transform="translate(24.27 -41.55) rotate(6.82)"/>
+  <path class="cls-9" d="M247.51,11.38l-38.46,321.84,65.28,7.8c55.02-31.42,92.12-90.65,92.12-158.56,0-78.43-49.48-145.29-118.93-171.09Z"/>
+  <g>
+    <rect class="cls-10" x="64.55" y="73.04" width="382.89" height="255.26"/>
+    <circle class="cls-7" cx="414.26" cy="80.69" r="5.11"/>
+    <circle class="cls-11" cx="427.03" cy="80.69" r="5.11"/>
+    <circle class="cls-4" cx="439.79" cy="80.69" r="5.11"/>
+  </g>
+  <text class="cls-2" transform="translate(74.02 108.1)"><tspan x="0" y="0">Yoar Board</tspan></text>
+  <rect class="cls-6" x="74.83" y="137.74" width="89.34" height="190.55"/>
+  <path class="cls-3" d="M240.75,137.74h-12v2h12v-2h0ZM218.75,137.74h-12v2h12v-2h0ZM196.75,137.74h-12v2h12v-2h0ZM175.41,137.74h-2v2h0v8.66h2v-10.66h0ZM175.41,158.4h-2v12h2v-12h0ZM175.41,180.4h-2v12h2v-12h0ZM175.41,202.4h-2v12h2v-12h0ZM175.41,224.4h-2v12h2v-12h0ZM175.41,246.4h-2v12h2v-12h0ZM175.41,268.4h-2v12h2v-12h0ZM175.41,290.4h-2v12h2v-12h0ZM175.41,312.4h-2v12h2v-12h0ZM191.51,326.3h-12v2h12v-2h0ZM213.51,326.3h-12v2h12v-2h0ZM235.51,326.3h-12v2h12v-2h0ZM257.51,326.3h-12v2h12v-2h0ZM262.75,311.53h-2v12h2v-12h0ZM262.75,289.53h-2v12h2v-12h0ZM262.75,267.53h-2v12h2v-12h0ZM262.75,245.53h-2v12h2v-12h0ZM262.75,223.53h-2v12h2v-12h0ZM262.75,201.53h-2v12h2v-12h0ZM262.75,179.53h-2v12h2v-12h0ZM262.75,157.53h-2v12h2v-12h0ZM262.75,137.74h-12v2h10v7.79h2v-9.79h0Z"/>
+  <rect class="cls-1" x="78.02" y="148.22" width="82.96" height="40.48"/>
+  <rect class="cls-1" x="78.02" y="192.54" width="82.96" height="40.48"/>
+  <rect class="cls-7" x="80.58" y="173.39" width="12.76" height="12.76"/>
+  <rect class="cls-11" x="80.58" y="217.71" width="12.76" height="12.76"/>
+  <path class="cls-3" d="M339.32,137.74h-12v2h12v-2h0ZM317.32,137.74h-12v2h12v-2h0ZM295.32,137.74h-12v2h12v-2h0ZM273.98,137.74h-2v2h0v8.66h2v-10.66h0ZM273.98,158.4h-2v12h2v-12h0ZM273.98,180.4h-2v12h2v-12h0ZM273.98,202.4h-2v12h2v-12h0ZM273.98,224.4h-2v12h2v-12h0ZM273.98,246.4h-2v12h2v-12h0ZM273.98,268.4h-2v12h2v-12h0ZM273.98,290.4h-2v12h2v-12h0ZM273.98,312.4h-2v12h2v-12h0ZM290.09,326.3h-12v2h12v-2h0ZM312.09,326.3h-12v2h12v-2h0ZM334.09,326.3h-12v2h12v-2h0ZM356.09,326.3h-12v2h12v-2h0ZM361.32,311.53h-2v12h2v-12h0ZM361.32,289.53h-2v12h2v-12h0ZM361.32,267.53h-2v12h2v-12h0ZM361.32,245.53h-2v12h2v-12h0ZM361.32,223.53h-2v12h2v-12h0ZM361.32,201.53h-2v12h2v-12h0ZM361.32,179.53h-2v12h2v-12h0ZM361.32,157.53h-2v12h2v-12h0ZM361.32,137.74h-12v2h10v7.79h2v-9.79h0Z"/>
+  <rect class="cls-3" x="206.71" y="226.29" width="22.74" height="8.36"/>
+  <rect class="cls-3" x="206.71" y="226.29" width="22.74" height="8.36" transform="translate(-12.39 448.55) rotate(-90)"/>
+  <rect class="cls-3" x="305.28" y="226.29" width="22.74" height="8.36"/>
+  <rect class="cls-3" x="305.28" y="226.29" width="22.74" height="8.36" transform="translate(86.18 547.12) rotate(-90)"/>
+</svg>

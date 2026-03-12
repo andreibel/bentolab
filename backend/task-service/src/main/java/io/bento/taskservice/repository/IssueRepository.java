@@ -26,5 +26,9 @@ public interface IssueRepository extends MongoRepository<Issue, String> {
 
     long countByOrgIdAndBoardIdAndSprintId(String orgId, String boardId, String sprintId);
 
+    long countByOrgIdAndEpicId(String orgId, String epicId);
+
+    Page<Issue> findAllByOrgIdAndEpicId(String orgId, String epicId, Pageable pageable);
+
     boolean existsByOrgIdAndIssueKey(String orgId, String issueKey);
 }
