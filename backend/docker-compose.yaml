@@ -131,6 +131,14 @@ services:
       start_period: 60s
       retries: 5
 
+  # ── Mail (dev only) ───────────────────────────────────────────────────────
+  mailhog:
+    image: mailhog/mailhog:latest
+    restart: "no"
+    ports:
+      - "1025:1025"   # SMTP — Spring Boot sends here
+      - "8025:8025"   # Web UI — http://localhost:8025
+
 volumes:
   postgres_auth_data:
   postgres_org_data:

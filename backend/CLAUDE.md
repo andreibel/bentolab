@@ -57,44 +57,90 @@ backend/
 
 ## Kafka Events
 
-Only events with at least one consumer are listed.
-
 Legend: 📤 publisher implemented — 📥 consumer implemented — ⏳ not yet implemented
 
-### `bento.user.events` — published by **auth-service**
-| Event | Fields | Publisher | Consumers |
-|-------|--------|-----------|-----------|
-| `UserRegisteredEvent` | `userId`, `email`, `firstName`, `lastName`, `registeredAt` | 📤 | ⏳ notification-service (welcome email) |
-| `EmailVerificationRequestedEvent` | `userId`, `email`, `token`, `expiresAt` | 📤 | ⏳ notification-service (send verification email) |
-| `PasswordResetRequestedEvent` | `userId`, `email`, `token`, `expiresAt` | 📤 | ⏳ notification-service (send reset email) |
+### Event envelope contract
 
-### `bento.org.events` — published by **org-service**
-| Event | Fields | Publisher | Consumers |
-|-------|--------|-----------|-----------|
-| `MemberRemovedEvent` | `userId`, `orgId`, `eventType` | 📤 | 📥 api-gateway (stale token) |
-| `MemberRoleChangedEvent` | `userId`, `orgId`, `eventType` | 📤 | 📥 api-gateway (stale token) |
-| `InvitationCreatedEvent` | `orgId`, `orgName`, `invitedByUserId`, `inviteeEmail`, `role`, `token`, `expiresAt` | 📤 | ⏳ notification-service (invitation email) |
-| `MemberJoinedEvent` | `orgId`, `orgName`, `newMemberId`, `role`, `joinedAt` | 📤 | ⏳ notification-service (welcome to org) |
+Every event published to any topic **must** include `eventType` as the first field.
+Consumers read `eventType` to route the payload — never rely on topic alone.
 
-### `bento.board.events` — published by **board-service**
-| Event | Fields | Publisher | Consumers |
-|-------|--------|-----------|-----------|
-| `BoardDeletedEvent` | `boardId`, `orgId` | 📤 | ⏳ task-service (delete all tasks/sprints/comments) |
-| `BoardColumnDeletedEvent` | `columnId`, `boardId` | 📤 | ⏳ task-service (move orphaned tasks to initial column) |
+```json
+{
+  "eventType": "UserRegisteredEvent",
+  "userId": "uuid",
+  ...event-specific fields...
+}
+```
+
+**Pattern (all event records):**
+```java
+public record SomeEvent(
+        String eventType,   // always first
+        UUID relevantId,
+        ...
+) {
+    // Convenience constructor — callers never pass eventType manually
+    public SomeEvent(UUID relevantId, ...) {
+        this("SomeEvent", relevantId, ...);
+    }
+}
+```
+
+**Consumers route by eventType:**
+```java
+@KafkaListener(topics = "bento.*.events", groupId = "my-service")
+public void onEvent(String payload) {
+    String eventType = objectMapper.readTree(payload).get("eventType").asText();
+    switch (eventType) {
+        case "SomeEvent" -> handle(objectMapper.treeToValue(node, SomeEvent.class));
+        default -> log.debug("Unhandled event: {}", eventType);
+    }
+}
+```
+
+---
+
+### `bento.user.events` — published by **auth-service** — partition key: `userId`
+
+| `eventType` | Fields | Publisher | Consumers |
+|-------------|--------|-----------|-----------|
+| `UserRegisteredEvent` | `userId`, `email`, `firstName`, `lastName`, `registeredAt` | 📤 | 📥 notification-service (welcome email) |
+| `EmailVerificationRequestedEvent` | `userId`, `email`, `token`, `expiresAt` | 📤 | 📥 notification-service (verification email) |
+| `PasswordResetRequestedEvent` | `userId`, `email`, `token`, `expiresAt` | 📤 | 📥 notification-service (reset email) |
+| `UserLoggedInEvent` | `userId`, `deviceInfo`, `loggedInAt` | 📤 | ⏳ analytics-service |
+| `UserUpdatedEvent` | `userId`, `changedFields`, `updatedAt` | 📤 | ⏳ analytics-service |
+
+### `bento.org.events` — published by **org-service** — partition key: `orgId`
+
+| `eventType` | Fields | Publisher | Consumers |
+|-------------|--------|-----------|-----------|
+| `MemberRemovedEvent` | `orgId`, `userId` | 📤 | 📥 api-gateway (stale token) |
+| `MemberRoleChangedEvent` | `orgId`, `userId`, `newRole` | 📤 | 📥 api-gateway (stale token) |
+| `InvitationCreatedEvent` | `orgId`, `orgName`, `invitedByUserId`, `inviteeEmail`, `role`, `token`, `expiresAt` | 📤 | 📥 notification-service (invitation email) |
+| `MemberJoinedEvent` | `orgId`, `orgName`, `newMemberId`, `role`, `joinedAt` | 📤 | 📥 notification-service (welcome to org) |
+
+### `bento.board.events` — published by **board-service** — partition key: `boardId`
+
+| `eventType` | Fields | Publisher | Consumers |
+|-------------|--------|-----------|-----------|
+| `BoardDeletedEvent` | `boardId`, `orgId` | 📤 | ⏳ task-service (delete tasks/sprints) |
+| `BoardColumnDeletedEvent` | `columnId`, `boardId` | 📤 | ⏳ task-service (move orphaned tasks) |
 | `BoardMemberAddedEvent` | `boardId`, `boardName`, `userId`, `addedByUserId`, `boardRole` | 📤 | ⏳ notification-service (notify added user) |
-| `BoardMemberRemovedEvent` | `boardId`, `boardName`, `userId` | 📤 | ⏳ task-service (unassign from tasks), ⏳ notification-service (notify removed user) |
+| `BoardMemberRemovedEvent` | `boardId`, `boardName`, `userId` | 📤 | ⏳ task-service (unassign), ⏳ notification-service (notify removed user) |
 
-### `bento.issue.events` — published by **task-service**
-| Event | Fields | Publisher | Consumers |
-|-------|--------|-----------|-----------|
-| `IssueAssignedEvent` | `issueId`, `boardId`, `issueTitle`, `assigneeUserId`, `assignedByUserId` | ⏳ | ⏳ notification-service (notify assignee) |
-| `IssueCommentedEvent` | `issueId`, `boardId`, `issueTitle`, `commentAuthorUserId`, `assigneeUserId` | ⏳ | ⏳ notification-service (notify assignee/watchers) |
+### `bento.issue.events` — published by **task-service** — partition key: `issueId`
 
-### `bento.sprint.events` — published by **task-service**
-| Event | Fields | Publisher | Consumers |
-|-------|--------|-----------|-----------|
-| `SprintStartedEvent` | `sprintId`, `boardId`, `sprintName`, `startDate`, `endDate` | ⏳ | ⏳ notification-service (notify board members) |
-| `SprintCompletedEvent` | `sprintId`, `boardId`, `sprintName`, `completedIssues`, `remainingIssues` | ⏳ | ⏳ notification-service (notify board members) |
+| `eventType` | Fields | Publisher | Consumers |
+|-------------|--------|-----------|-----------|
+| `IssueAssignedEvent` | `issueId`, `boardId`, `orgId`, `issueKey`, `issueTitle`, `assigneeUserId`, `assignedByUserId` | ⏳ | 📥 notification-service (notify assignee) |
+| `IssueCommentedEvent` | `issueId`, `boardId`, `orgId`, `issueKey`, `issueTitle`, `commentAuthorUserId`, `assigneeUserId` | ⏳ | 📥 notification-service (notify assignee) |
+
+### `bento.sprint.events` — published by **task-service** — partition key: `sprintId`
+
+| `eventType` | Fields | Publisher | Consumers |
+|-------------|--------|-----------|-----------|
+| `SprintStartedEvent` | `sprintId`, `boardId`, `orgId`, `sprintName`, `startDate`, `endDate` | ⏳ | 📥 notification-service (notify board members) |
+| `SprintCompletedEvent` | `sprintId`, `boardId`, `orgId`, `sprintName`, `completedIssues`, `remainingIssues` | ⏳ | 📥 notification-service (notify board members) |
 
 ## Security Architecture (Gateway + Shared Secret)
 

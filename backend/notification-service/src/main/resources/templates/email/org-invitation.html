@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+  <title>You've been invited — Bento</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f4f3ff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f4f3ff;">
+    <tr>
+      <td align="center" style="padding:32px 16px;">
+
+        <!-- Email card -->
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;">
+
+          <!-- ── Hero banner ── -->
+          <tr>
+            <td style="border-radius:16px 16px 0 0;overflow:hidden;line-height:0;font-size:0;background-color:#5b47e0;">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 269" width="100%" style="display:block;">
+                <polygon fill="#5b47e0" points="463.96 269 1280 269 1280 0 508.8 0 463.96 269"/>
+                <polygon fill="#f59e0b" points="0 269 699.49 269 886.54 200.39 813.04 0 0 0 0 269"/>
+                <polygon fill="#333" points="463.96 269 699.49 269 886.54 200.39 813.04 0 508.8 0 463.96 269"/>
+                <path fill="#f2f2f2" d="M55.75,220.46V37.96h58.75c12.16,0,22.79,1.96,31.88,5.88,9.08,3.92,16.16,9.38,21.25,16.38,5.08,7,7.62,15.25,7.62,24.75,0,10.34-2.84,18.96-8.5,25.88-5.67,6.92-13,11.04-22,12.38v.5c6.83.67,12.88,3.04,18.12,7.12,5.25,4.09,9.33,9.29,12.25,15.62,2.91,6.34,4.38,13.42,4.38,21.25,0,10.5-2.62,19.71-7.88,27.62-5.25,7.92-12.59,14.09-22,18.5-9.42,4.42-20.38,6.62-32.88,6.62h-61ZM92,111.46h22c7.33,0,13.08-1.96,17.25-5.88,4.16-3.91,6.25-9.21,6.25-15.88s-2.09-12.12-6.25-15.88c-4.17-3.75-9.92-5.62-17.25-5.62h-22v43.25ZM92,190.21h23.5c8.16,0,14.58-2.16,19.25-6.5,4.66-4.33,7-10.33,7-18s-2.34-13.71-7-18.12c-4.67-4.41-11.09-6.62-19.25-6.62h-23.5v49.25Z"/>
+                <path fill="#f2f2f2" d="M264.5,222.96c-12.17,0-22.79-2.29-31.88-6.88-9.09-4.58-16.09-11-21-19.25-4.92-8.25-7.38-17.88-7.38-28.88v-32.5c0-11,2.46-20.62,7.38-28.88,4.91-8.25,11.91-14.66,21-19.25,9.08-4.58,19.71-6.88,31.88-6.88s22.71,2.29,31.62,6.88c8.91,4.59,15.83,11,20.75,19.25,4.91,8.25,7.38,17.88,7.38,28.88v25.5h-84.25v7c0,8.67,2.04,15,6.12,19,4.08,4,10.21,6,18.38,6,5.33,0,10-.83,14-2.5,4-1.66,6.33-4.16,7-7.5h36.75c-2.67,12-9.25,21.67-19.75,29-10.5,7.34-23.17,11-38,11ZM240,135.46v3.25l48.5-.5v-3.25c0-8.5-1.96-15.08-5.88-19.75-3.92-4.66-9.96-7-18.12-7s-14.29,2.42-18.38,7.25c-4.09,4.84-6.12,11.5-6.12,20Z"/>
+                <path fill="#f2f2f2" d="M355.75,220.46V82.96h36.25v25c2-8.33,6.29-15,12.88-20,6.58-5,14.62-7.5,24.12-7.5,13.33,0,24.04,4.67,32.12,14,8.08,9.34,12.12,21.75,12.12,37.25v88.75h-37.5v-85c0-7.16-1.88-12.71-5.62-16.62-3.75-3.91-8.96-5.88-15.62-5.88s-11.88,1.96-15.62,5.88c-3.75,3.92-5.62,9.46-5.62,16.62v85h-37.5Z"/>
+                <path fill="#f2f2f2" d="M578,220.46c-14,0-25-4-33-12s-12-19-12-33v-58.75h-37v-33.75h37v-38.75h37.5v38.75h53.75v33.75h-53.75v57.5c0,3.67.96,6.67,2.88,9,1.91,2.34,4.71,3.5,8.38,3.5h41.25v33.75h-45Z"/>
+                <path fill="#f2f2f2" d="M714.25,222.96c-12.17,0-22.75-2.29-31.75-6.88s-15.96-11-20.88-19.25c-4.92-8.25-7.38-17.88-7.38-28.88v-32.5c0-11,2.46-20.62,7.38-28.88,4.91-8.25,11.88-14.66,20.88-19.25,9-4.58,19.58-6.88,31.75-6.88s22.96,2.29,31.88,6.88c8.91,4.59,15.83,11,20.75,19.25,4.91,8.25,7.38,17.88,7.38,28.88v32.5c0,11-2.46,20.62-7.38,28.88-4.92,8.25-11.84,14.67-20.75,19.25-8.92,4.58-19.54,6.88-31.88,6.88ZM714.25,190.46c7.33,0,12.91-1.96,16.75-5.88,3.83-3.91,5.75-9.46,5.75-16.62v-32.5c0-7.33-1.92-12.91-5.75-16.75-3.84-3.83-9.42-5.75-16.75-5.75s-12.71,1.92-16.62,5.75c-3.92,3.84-5.88,9.42-5.88,16.75v32.5c0,7.17,1.96,12.71,5.88,16.62,3.91,3.92,9.46,5.88,16.62,5.88Z"/>
+                <path fill="#f2f2f2" d="M818,220.46V37.96h37.5v148.75h73.75v33.75h-111.25Z"/>
+                <path fill="#f2f2f2" d="M996.5,222.96c-13.67,0-24.5-3.96-32.5-11.88-8-7.91-12-18.29-12-31.12,0-13.83,4.91-24.75,14.75-32.75,9.83-8,23.66-12,41.5-12h27v-8.75c0-5.16-1.79-9.21-5.38-12.12-3.59-2.91-8.71-4.38-15.38-4.38s-11.38,1.25-15.12,3.75-5.79,6.17-6.12,11h-35.5c.5-13.5,5.83-24.25,16-32.25,10.16-8,23.91-12,41.25-12s32.33,4.17,42.5,12.5c10.16,8.34,15.25,20,15.25,35v92.5h-36.25v-23.75c-1.67,8.17-6.04,14.59-13.12,19.25-7.09,4.66-16.04,7-26.88,7ZM1009.75,192.96c7.83,0,14.04-1.96,18.62-5.88,4.58-3.91,6.88-9.04,6.88-15.38v-14h-26.25c-6.67,0-11.79,1.62-15.38,4.88-3.59,3.25-5.38,7.46-5.38,12.62s1.88,9.42,5.62,12.75c3.75,3.34,9.04,5,15.88,5Z"/>
+                <path fill="#f2f2f2" d="M1179.75,222.96c-9.17,0-17-2.38-23.5-7.12s-11.25-11.46-14.25-20.12v24.75h-36.25V37.96h37.5v37.5l-1,31.5c3-8.5,7.71-15.04,14.12-19.62,6.41-4.58,14.21-6.88,23.38-6.88,13.33,0,24.08,4.88,32.25,14.62,8.16,9.75,12.25,22.79,12.25,39.12v35c0,16.34-4.09,29.38-12.25,39.12-8.17,9.75-18.92,14.62-32.25,14.62ZM1165.25,190.46c6.83,0,12.12-1.96,15.88-5.88,3.75-3.91,5.62-9.46,5.62-16.62v-32.5c0-7.33-1.88-12.91-5.62-16.75-3.75-3.83-9.04-5.75-15.88-5.75-7.17,0-12.62,2.04-16.38,6.12-3.75,4.09-5.62,9.96-5.62,17.62v30c0,7.67,1.88,13.54,5.62,17.62,3.75,4.09,9.21,6.12,16.38,6.12Z"/>
+              </svg>
+            </td>
+          </tr>
+
+          <!-- ── Content body ── -->
+          <tr>
+            <td style="background-color:#ffffff;padding:40px 48px 32px;border-left:1px solid #e4e4e7;border-right:1px solid #e4e4e7;">
+
+              <p style="margin:0 0 8px;font-size:13px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#5b47e0;">Team invitation</p>
+              <h1 style="margin:0 0 16px;font-size:26px;font-weight:700;color:#0f0f10;letter-spacing:-0.4px;line-height:1.2;">
+                You've been invited to join a workspace
+              </h1>
+              <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#52525b;">
+                Hi <strong th:text="${firstName}" style="color:#0f0f10;">there</strong>,
+              </p>
+              <p style="margin:0 0 32px;font-size:15px;line-height:1.6;color:#52525b;">
+                You've been invited to join
+                <strong th:text="${orgName}" style="color:#0f0f10;">Organization</strong>
+                on Bento as
+                <strong th:text="${role}" style="color:#0f0f10;">Member</strong>.
+                This invitation expires on <strong th:text="${expiresAt}" style="color:#0f0f10;">—</strong>.
+              </p>
+
+              <!-- CTA button -->
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 32px;">
+                <tr>
+                  <td style="border-radius:10px;background-color:#5b47e0;">
+                    <a th:href="${inviteUrl}"
+                       style="display:inline-block;padding:14px 32px;font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:10px;letter-spacing:-0.1px;">
+                      Accept invitation
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Divider -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px;">
+                <tr><td style="height:1px;background-color:#e4e4e7;font-size:0;line-height:0;">&nbsp;</td></tr>
+              </table>
+
+              <p style="margin:0 0 8px;font-size:13px;color:#71717a;">
+                Button not working? Copy and paste this link into your browser:
+              </p>
+              <p style="margin:0 0 24px;font-size:12px;color:#5b47e0;word-break:break-all;">
+                <a th:href="${inviteUrl}" th:text="${inviteUrl}" style="color:#5b47e0;">link</a>
+              </p>
+
+              <p style="margin:0;font-size:13px;color:#71717a;">
+                If you weren't expecting this invitation, you can safely ignore this email.
+              </p>
+
+            </td>
+          </tr>
+
+          <!-- ── Footer ── -->
+          <tr>
+            <td style="background-color:#0f0f10;padding:24px 48px;border-radius:0 0 16px 16px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td>
+                    <!-- Logo icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 117 117" width="28" height="28" style="display:inline-block;vertical-align:middle;margin-right:8px;">
+                      <path d="M0,0v117h106.36C70.91,78,35.45,39,0,0Z" fill="#f59e0b"/>
+                      <polygon points="117 0 117 117 10.64 117 117 0" fill="#5b47e0"/>
+                      <path d="M10.64,117h95.73c-15.95-17.55-31.91-35.1-47.86-52.65L10.64,117Z" fill="#ffffff"/>
+                    </svg>
+                    <span style="font-size:14px;font-weight:700;color:#ffffff;vertical-align:middle;letter-spacing:-0.3px;">bentolab</span>
+                  </td>
+                  <td align="right">
+                    <p style="margin:0;font-size:12px;color:#71717a;">GNU AGPL v3 &nbsp;·&nbsp; © 2026 Bento</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" style="padding-top:12px;">
+                    <p style="margin:0;font-size:12px;color:#52525b;line-height:1.5;">
+                      You received this email because someone invited you to a Bento workspace.
+                      If you don't recognize this, you can safely ignore it.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+        </table>
+        <!-- End email card -->
+
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>

@@ -80,7 +80,7 @@ export default function LoginPage() {
                   Password
                 </label>
                 <Link
-                  to="/reset-password"
+                  to="/forgot-password"
                   className="text-xs text-text-muted hover:text-primary"
                 >
                   Forgot password?

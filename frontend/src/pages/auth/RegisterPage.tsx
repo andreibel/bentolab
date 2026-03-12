@@ -1,8 +1,10 @@
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
+import { MailCheck } from 'lucide-react'
 import { authApi } from '@/api/auth'
 import { useAuthStore } from '@/stores/authStore'
 import { Button } from '@/components/ui/Button'
@@ -20,6 +22,7 @@ type FormValues = z.infer<typeof schema>
 export default function RegisterPage() {
   const navigate = useNavigate()
   const setAuth = useAuthStore((s) => s.setAuth)
+  const [verifyEmail, setVerifyEmail] = useState<string | null>(null)
 
   const {
     register,
@@ -31,6 +34,7 @@ export default function RegisterPage() {
     try {
       const data = await authApi.register(values)
       setAuth(data)
+      if (!data.user.emailVerified) setVerifyEmail(data.user.email)
       navigate(data.user.currentOrgId ? '/boards' : '/org/new')
     } catch (err: unknown) {
       const msg =
@@ -58,6 +62,17 @@ export default function RegisterPage() {
       {/* Form */}
       <main className="flex flex-1 items-center justify-center px-4 py-12">
         <div className="w-full max-w-sm">
+          {verifyEmail && (
+            <div className="mb-6 flex items-start gap-3 rounded-lg border border-primary/20 bg-primary-subtle px-4 py-3">
+              <MailCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+              <p className="text-sm text-text-secondary">
+                We sent a verification email to{' '}
+                <span className="font-medium text-text-primary">{verifyEmail}</span>.
+                Please check your inbox.
+              </p>
+            </div>
+          )}
+
           <div className="mb-8">
             <h1 className="text-2xl font-bold tracking-tight text-text-primary">
               Create your account

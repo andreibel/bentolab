@@ -19,4 +19,16 @@ export const authApi = {
     client.post<{ accessToken: string }>('/api/auth/switch-org', { orgId }).then((r) => r.data),
 
   me: () => client.get<User>('/api/users/me').then((r) => r.data),
+
+  forgotPassword: (email: string) =>
+    client.post('/api/auth/forgot-password', { email }),
+
+  resetPassword: (token: string, newPassword: string) =>
+    client.post('/api/auth/reset-password', { token, newPassword }),
+
+  verifyEmail: (token: string) =>
+    client.get('/api/auth/verify-email', { params: { token } }),
+
+  resendVerification: (email: string) =>
+    client.post('/api/auth/resend-verification', { email }),
 }
