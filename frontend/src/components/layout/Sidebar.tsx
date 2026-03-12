@@ -27,7 +27,6 @@ import {
   Users,
   Pin,
   PinOff,
-  Beaker,
   Building2,
 } from 'lucide-react'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
@@ -83,7 +82,7 @@ function SettingsSidebar() {
           className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-text-secondary transition-colors hover:bg-surface-border hover:text-text-primary"
         >
           <ArrowLeft className="h-4 w-4" />
-          <Beaker className="h-4 w-4 text-primary" />
+          <img src="/logo.svg" alt="Bento" className="h-5 w-5 rounded" />
           <span className="font-bold tracking-tight text-text-primary">bentolab</span>
         </button>
       </div>
@@ -562,7 +561,7 @@ export function Sidebar() {
         >
           {!collapsed && (
             <div className="flex items-center gap-2">
-              <Beaker className="h-5 w-5 text-primary" />
+              <img src="/logo.svg" alt="Bento" className="h-6 w-6 rounded" />
               <span className="text-sm font-bold tracking-tight text-text-primary">bentolab</span>
             </div>
           )}

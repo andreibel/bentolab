@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Kanban, Plus, LayoutGrid, Clock } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useBoards } from '@/api/boards'
-import { CreateBoardModal } from '@/components/board/CreateBoardModal'
+import { CreateBoardWizard } from '@/components/board/CreateBoardWizard'
 import { cn } from '@/utils/cn'
 import type { Board } from '@/types/board'
 
@@ -130,7 +130,7 @@ export default function BoardListPage() {
         </div>
       )}
 
-      <CreateBoardModal open={modalOpen} onClose={() => setModalOpen(false)} />
+      <CreateBoardWizard open={modalOpen} onClose={() => setModalOpen(false)} />
     </div>
   )
 }

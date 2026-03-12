@@ -2,9 +2,10 @@ import { useState, useMemo, useRef, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import {
   Plus, ChevronDown, ChevronRight, Play,
-  Loader2, BookOpen, Bug, CheckSquare, Zap,
-  ArrowUp, ArrowDown, Minus, X,
+  Loader2, X,
 } from 'lucide-react'
+import { IssueTypeIcon, PriorityIcon, EpicTag } from '@/components/ui/Badge'
+import { Avatar } from '@/components/ui/Avatar'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { useIssues, issuesApi } from '@/api/issues'
@@ -15,25 +16,9 @@ import { queryKeys } from '@/api/queryKeys'
 import { IssueDetailPanel } from '@/components/issues/IssueDetailPanel'
 import { CreateIssueModal } from '@/components/issues/CreateIssueModal'
 import { cn } from '@/utils/cn'
-import type { Issue, IssueType, IssuePriority } from '@/types/issue'
+import type { Issue } from '@/types/issue'
 import type { Sprint } from '@/types/sprint'
 import type { Epic } from '@/types/epic'
-
-// ── Icon maps ─────────────────────────────────────────────────────────────────
-
-const TYPE_ICON: Record<IssueType, React.ReactNode> = {
-  STORY:   <BookOpen    className="h-3.5 w-3.5 text-emerald-500" />,
-  TASK:    <CheckSquare className="h-3.5 w-3.5 text-blue-500" />,
-  BUG:     <Bug         className="h-3.5 w-3.5 text-red-500" />,
-  SUBTASK: <Zap         className="h-3.5 w-3.5 text-yellow-500" />,
-}
-
-const PRIORITY_ICON: Record<IssuePriority, React.ReactNode> = {
-  CRITICAL: <ArrowUp   className="h-3 w-3 text-red-500" />,
-  HIGH:     <ArrowUp   className="h-3 w-3 text-orange-500" />,
-  MEDIUM:   <Minus     className="h-3 w-3 text-yellow-500" />,
-  LOW:      <ArrowDown className="h-3 w-3 text-blue-400" />,
-}
 
 const EPIC_COLORS = ['#EF4444', '#F97316', '#EAB308', '#22C55E', '#06B6D4', '#3B82F6', '#8B5CF6', '#EC4899']
 
@@ -137,20 +122,13 @@ function IssueRow({
       onClick={() => onOpen(issue.id)}
       className="group flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-surface-muted/60"
     >
-      <div className="shrink-0">{TYPE_ICON[issue.type]}</div>
+      <div className="shrink-0"><IssueTypeIcon type={issue.type} /></div>
       <span className="w-16 shrink-0 font-mono text-[11px] text-text-muted">{issue.issueKey}</span>
       <span className="flex-1 truncate text-sm text-text-primary">{issue.title}</span>
 
-      {epic && (
-        <span
-          className="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold"
-          style={{ backgroundColor: epic.color + '22', color: epic.color }}
-        >
-          {epic.title}
-        </span>
-      )}
+      {epic && <EpicTag title={epic.title} color={epic.color} />}
 
-      <div className="shrink-0">{PRIORITY_ICON[issue.priority]}</div>
+      <div className="shrink-0"><PriorityIcon priority={issue.priority} /></div>
 
       {issue.storyPoints != null && (
         <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded bg-surface-muted text-[10px] font-semibold text-text-secondary">
@@ -158,15 +136,7 @@ function IssueRow({
         </span>
       )}
 
-      {issue.assigneeId ? (
-        <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary-subtle text-[9px] font-bold text-primary ring-1 ring-surface-border">
-          {issue.assigneeId.slice(0, 2).toUpperCase()}
-        </div>
-      ) : (
-        <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-dashed border-surface-border text-[9px] text-text-muted">
-          ?
-        </div>
-      )}
+      <Avatar userId={issue.assigneeId} size="sm" className="shrink-0" />
 
       <div
         className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
@@ -675,6 +645,7 @@ export default function BacklogPage() {
     try {
       await sprintsApi.start(sprintId)
       queryClient.invalidateQueries({ queryKey: queryKeys.sprints.all(boardId!) })
+      queryClient.invalidateQueries({ queryKey: queryKeys.issues.list(boardId!) })
       toast.success('Sprint started')
     } catch {
       toast.error('Failed to start sprint — make sure no other sprint is active')

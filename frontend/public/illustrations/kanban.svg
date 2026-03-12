@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 364.6">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #0d1b2a;
+      }
+
+      .cls-2 {
+        fill: #f2f2f2;
+        font-family: JetBrainsMonoNF-ExtraBold, 'JetBrainsMono Nerd Font';
+        font-size: 20.42px;
+        font-weight: 700;
+      }
+
+      .cls-3 {
+        fill: #fb2c36;
+      }
+
+      .cls-4 {
+        fill: #5b47e0;
+      }
+
+      .cls-5 {
+        fill: #1b263b;
+      }
+
+      .cls-6 {
+        fill: #00bc7d;
+      }
+
+      .cls-7 {
+        fill: #f59e0b;
+      }
+
+      .cls-8 {
+        fill: #333;
+      }
+
+      .cls-9 {
+        fill: #1a1a1a;
+      }
+
+      .cls-10 {
+        fill: #f0b100;
+      }
+    </style>
+  </defs>
+  <rect class="cls-7" x="12.44" y="10.09" width="477.98" height="220.8" transform="translate(-4.91 10.83) rotate(-2.44)"/>
+  <rect class="cls-4" y="156.96" width="512" height="207.64"/>
+  <polygon class="cls-8" points="17.36 240.98 494.9 220.6 492.19 156.96 13.77 156.96 17.36 240.98"/>
+  <g>
+    <rect class="cls-9" x="64.55" y="71.34" width="382.89" height="255.26"/>
+    <circle class="cls-6" cx="414.26" cy="79" r="5.11"/>
+    <circle class="cls-10" cx="427.03" cy="79" r="5.11"/>
+    <circle class="cls-3" cx="439.79" cy="79" r="5.11"/>
+  </g>
+  <text class="cls-2" transform="translate(78.27 98.37)"><tspan x="0" y="0">Board</tspan></text>
+  <rect class="cls-5" x="74.83" y="136.05" width="89.34" height="190.55"/>
+  <rect class="cls-5" x="173.41" y="136.05" width="89.34" height="190.55"/>
+  <rect class="cls-5" x="271.98" y="136.05" width="89.34" height="190.55"/>
+  <rect class="cls-1" x="78.02" y="146.52" width="82.96" height="40.48"/>
+  <rect class="cls-1" x="176.6" y="146.52" width="82.96" height="40.48"/>
+  <rect class="cls-1" x="275.17" y="146.52" width="82.96" height="40.48"/>
+  <rect class="cls-1" x="78.02" y="190.84" width="82.96" height="40.48"/>
+  <rect class="cls-1" x="275.17" y="190.84" width="82.96" height="40.48"/>
+  <rect class="cls-1" x="176.6" y="190.84" width="82.96" height="40.48"/>
+  <rect class="cls-1" x="176.6" y="235.16" width="82.96" height="40.48"/>
+  <rect class="cls-6" x="80.58" y="171.69" width="12.76" height="12.76"/>
+  <rect class="cls-3" x="178.83" y="171.69" width="12.76" height="12.76"/>
+  <rect class="cls-6" x="277.72" y="171.69" width="12.76" height="12.76"/>
+  <rect class="cls-6" x="179.15" y="216.01" width="12.76" height="12.76"/>
+  <rect class="cls-10" x="80.58" y="216.01" width="12.76" height="12.76"/>
+  <rect class="cls-10" x="277.72" y="216.01" width="12.76" height="12.76"/>
+  <rect class="cls-6" x="179.15" y="260.33" width="12.76" height="12.76"/>
+</svg>
