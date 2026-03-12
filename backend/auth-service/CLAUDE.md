@@ -28,8 +28,7 @@ For protected endpoints (`/logout`, `/switch-org`, `/users/me`), the gateway:
 
 - Spring Boot 4.0.2
 - Java 25
-- PostgreSQL (users, refresh_tokens)
-- Redis (sessions, token blacklist, password reset)
+- PostgreSQL (users, refresh_tokens, email_verification_tokens, password_reset_tokens)
 - Kafka (user events)
 - JWT (jjwt library)
 
@@ -280,24 +279,20 @@ public RefreshToken createRefreshToken(User user, String deviceInfo, String ipAd
 
 **PostgreSQL Tables:**
 - `users` — User accounts
-- `refresh_tokens` — JWT refresh tokens
-
-**Redis Keys:**
-- `session:{userId}:{orgId}` — Active sessions
-- `blacklist:{jwtToken}` — Revoked access tokens (optional)
-- `pwd_reset:{token}` — Password reset tokens
-- `user:{userId}:profile` — User profile cache
+- `refresh_tokens` — JWT refresh tokens (7 day expiry, revocable)
+- `email_verification_tokens` — Single-use tokens for email verification (24h expiry)
+- `password_reset_tokens` — Single-use tokens for password reset (1h expiry)
 
 ---
 
 ## Package Structure
 ```
-com.bento.auth/
+io.bento.authservice/
 ├── config/
 │   ├── SecurityConfig.java
 │   ├── JwtProperties.java
-│   ├── RedisConfig.java
-│   └── KafkaProducerConfig.java
+│   ├── AuthProperties.java
+│   └── GatewayAuthProperties.java
 ├── controller/
 │   ├── AuthController.java
 │   └── UserController.java
@@ -307,7 +302,9 @@ com.bento.auth/
 │   │   ├── LoginRequest.java
 │   │   ├── RefreshTokenRequest.java
 │   │   ├── SwitchOrgRequest.java
-│   │   └── PasswordResetRequest.java
+│   │   ├── PasswordResetRequest.java      # forgot-password body (email)
+│   │   ├── ResetPasswordRequest.java      # reset-password body (token + newPassword)
+│   │   └── ResendVerificationRequest.java # resend-verification body (email)
 │   └── response/
 │       ├── AuthResponse.java
 │       ├── TokenResponse.java
@@ -315,13 +312,18 @@ com.bento.auth/
 │       └── UserOrgDto.java
 ├── entity/
 │   ├── User.java
-│   └── RefreshToken.java
+│   ├── RefreshToken.java
+│   ├── EmailVerificationToken.java
+│   └── PasswordResetToken.java
 ├── enums/
 │   └── SystemRole.java
 ├── event/
 │   ├── UserEventPublisher.java
-│   └── dto/
-│       └── UserEvent.java
+│   ├── UserRegisteredEvent.java
+│   ├── UserLoggedInEvent.java
+│   ├── UserUpdatedEvent.java
+│   ├── EmailVerificationRequestedEvent.java
+│   └── PasswordResetRequestedEvent.java
 ├── exception/
 │   ├── GlobalExceptionHandler.java
 │   ├── UserNotFoundException.java
@@ -331,15 +333,18 @@ com.bento.auth/
 │   └── UserMapper.java
 ├── repository/
 │   ├── UserRepository.java
-│   └── RefreshTokenRepository.java
+│   ├── RefreshTokenRepository.java
+│   ├── EmailVerificationTokenRepository.java
+│   └── PasswordResetTokenRepository.java
 ├── security/
-│   ├── JwtAuthenticationFilter.java
+│   ├── GatewayAuthFilter.java
 │   └── JwtAuthEntryPoint.java
 ├── service/
 │   ├── AuthService.java
 │   ├── UserService.java
 │   ├── JwtService.java
 │   ├── RefreshTokenService.java
+│   ├── EmailVerificationService.java
 │   └── PasswordResetService.java
 └── AuthServiceApplication.java
 ```
@@ -350,13 +355,15 @@ com.bento.auth/
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
-| POST | `/api/auth/register` | No | Register new user |
+| POST | `/api/auth/register` | No | Register new user, triggers verification email |
 | POST | `/api/auth/login` | No | Login, get tokens |
 | POST | `/api/auth/refresh` | No | Refresh access token |
 | POST | `/api/auth/logout` | Yes | Revoke refresh token |
-| POST | `/api/auth/switch-org` | Yes | Switch organization |
-| POST | `/api/auth/password-reset/request` | No | Request password reset |
-| POST | `/api/auth/password-reset/confirm` | No | Confirm password reset |
+| POST | `/api/auth/switch-org` | Yes | Switch organization context |
+| GET | `/api/auth/verify-email?token=<token>` | No | Verify email via token from email link |
+| POST | `/api/auth/resend-verification` | No | Resend verification email `{ email }` |
+| POST | `/api/auth/forgot-password` | No | Request password reset email `{ email }` |
+| POST | `/api/auth/reset-password` | No | Reset password `{ token, newPassword }` |
 | GET | `/api/users/me` | Yes | Get current user |
 | PATCH | `/api/users/me` | Yes | Update current user |
 
@@ -431,13 +438,15 @@ public record UserOrgDto(
 
 **Topic:** `bento.user.events`
 
-| Event Type | Trigger | Data |
-|------------|---------|------|
-| `user.registered` | Registration | userId, email, firstName, lastName |
-| `user.logged_in` | Login | userId, deviceInfo |
-| `user.updated` | Profile update | userId, changedFields |
-| `user.password_reset` | Password reset | userId, email |
-| `user.deactivated` | Account deactivation | userId, deactivatedBy |
+| Event Class | Trigger | Fields |
+|-------------|---------|--------|
+| `UserRegisteredEvent` | Registration | `userId`, `email`, `firstName`, `lastName`, `registeredAt` |
+| `UserLoggedInEvent` | Login | `userId`, `deviceInfo`, `loggedInAt` |
+| `UserUpdatedEvent` | Profile update | `userId`, `changedFields`, `updatedAt` |
+| `EmailVerificationRequestedEvent` | Registration / resend | `userId`, `email`, `token`, `expiresAt` |
+| `PasswordResetRequestedEvent` | Forgot password | `userId`, `email`, `token`, `expiresAt` |
+
+Notification-service consumes `EmailVerificationRequestedEvent` and `PasswordResetRequestedEvent` to send emails (⏳ not yet implemented).
 
 ---
 

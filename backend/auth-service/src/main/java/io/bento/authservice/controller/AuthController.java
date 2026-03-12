@@ -1,12 +1,11 @@
 package io.bento.authservice.controller;
 
-import io.bento.authservice.dto.request.LoginRequest;
-import io.bento.authservice.dto.request.RefreshTokenRequest;
-import io.bento.authservice.dto.request.RegisterRequest;
-import io.bento.authservice.dto.request.SwitchOrgRequest;
+import io.bento.authservice.dto.request.*;
 import io.bento.authservice.dto.response.AuthResponse;
 import io.bento.authservice.dto.response.TokenResponse;
 import io.bento.authservice.service.AuthService;
+import io.bento.authservice.service.EmailVerificationService;
+import io.bento.authservice.service.PasswordResetService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -22,6 +21,8 @@ import java.util.UUID;
 public class AuthController {
 
     private final AuthService authService;
+    private final EmailVerificationService emailVerificationService;
+    private final PasswordResetService passwordResetService;
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
@@ -49,5 +50,29 @@ public class AuthController {
                                                     Authentication authentication) {
         UUID userId = (UUID) authentication.getPrincipal();
         return ResponseEntity.ok(authService.switchOrg(userId, request.orgId()));
+    }
+
+    @GetMapping("/verify-email")
+    public ResponseEntity<Void> verifyEmail(@RequestParam String token) {
+        emailVerificationService.verify(token);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/resend-verification")
+    public ResponseEntity<Void> resendVerification(@Valid @RequestBody ResendVerificationRequest request) {
+        emailVerificationService.resendVerification(request.email());
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Void> forgotPassword(@Valid @RequestBody PasswordResetRequest request) {
+        passwordResetService.requestReset(request.email());
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        passwordResetService.resetPassword(request.token(), request.newPassword());
+        return ResponseEntity.ok().build();
     }
 }

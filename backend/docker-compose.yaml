@@ -115,6 +115,21 @@ services:
       timeout: 5s
       start_period: 10s
       retries: 5
+  kafkaui:
+    image: provectuslabs/kafka-ui:latest
+    restart: "no"
+    ports:
+      - "8989:8080"
+    environment:
+      DYNAMIC_CONFIG_ENABLED: "true"
+      KAFKA_CLUSTERS_0_NAME: MQtR0h8MQcSFSjYjKykizQ
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit -1
+      interval: 10s
+      timeout: 5s
+      start_period: 60s
+      retries: 5
 
 volumes:
   postgres_auth_data:
