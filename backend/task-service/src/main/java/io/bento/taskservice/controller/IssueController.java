@@ -30,9 +30,10 @@ public class IssueController {
             @RequestHeader("X-Org-Id") String orgId,
             @RequestHeader("X-Org-Role") String orgRole,
             @RequestParam String boardId,
+            @RequestParam(required = false) Boolean closed,
             @PageableDefault(size = 50) Pageable pageable) {
         accessService.requireOrgMember(orgRole);
-        return ResponseEntity.ok(issueService.getIssues(orgId, boardId, pageable));
+        return ResponseEntity.ok(issueService.getIssues(orgId, boardId, closed, pageable));
     }
 
     // Any org member can view an issue
@@ -96,6 +97,27 @@ public class IssueController {
             @Valid @RequestBody MoveIssueRequest request) {
         accessService.requireOrgMember(orgRole);
         return ResponseEntity.ok(issueService.moveIssue(orgId, userId, issueId, request));
+    }
+
+    // Any org member can close/reopen issues
+    @PatchMapping("/{issueId}/close")
+    public ResponseEntity<Issue> closeIssue(
+            @RequestHeader("X-User-Id") String userId,
+            @RequestHeader("X-Org-Id") String orgId,
+            @RequestHeader("X-Org-Role") String orgRole,
+            @PathVariable String issueId) {
+        accessService.requireOrgMember(orgRole);
+        return ResponseEntity.ok(issueService.closeIssue(orgId, userId, issueId));
+    }
+
+    @PatchMapping("/{issueId}/reopen")
+    public ResponseEntity<Issue> reopenIssue(
+            @RequestHeader("X-User-Id") String userId,
+            @RequestHeader("X-Org-Id") String orgId,
+            @RequestHeader("X-Org-Role") String orgRole,
+            @PathVariable String issueId) {
+        accessService.requireOrgMember(orgRole);
+        return ResponseEntity.ok(issueService.reopenIssue(orgId, userId, issueId));
     }
 
     // Any org member can assign issues

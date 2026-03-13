@@ -4,9 +4,9 @@ import { queryKeys } from './queryKeys'
 import type { Issue, Comment, Activity, Page } from '@/types/issue'
 
 export const issuesApi = {
-  list: (boardId: string, page = 0, size = 200) =>
+  list: (boardId: string, page = 0, size = 200, closed?: boolean) =>
     client
-      .get<Page<Issue>>('/api/issues', { params: { boardId, page, size } })
+      .get<Page<Issue>>('/api/issues', { params: { boardId, page, size, ...(closed !== undefined ? { closed } : {}) } })
       .then((r) => r.data),
 
   get: (issueId: string) =>
@@ -24,6 +24,12 @@ export const issuesApi = {
       .then((r) => r.data),
 
   delete: (issueId: string) => client.delete(`/api/issues/${issueId}`),
+
+  close: (issueId: string) =>
+    client.patch<Issue>(`/api/issues/${issueId}/close`).then((r) => r.data),
+
+  reopen: (issueId: string) =>
+    client.patch<Issue>(`/api/issues/${issueId}/reopen`).then((r) => r.data),
 
   // ── Comments ────────────────────────────────────────────────────────────────
   comments: {
@@ -53,10 +59,10 @@ export const issuesApi = {
   },
 }
 
-export function useIssues(boardId: string) {
+export function useIssues(boardId: string, closed?: boolean) {
   return useQuery({
-    queryKey: queryKeys.issues.list(boardId),
-    queryFn: () => issuesApi.list(boardId),
+    queryKey: queryKeys.issues.list(boardId, undefined, closed),
+    queryFn: () => issuesApi.list(boardId, 0, 200, closed),
     enabled: !!boardId,
   })
 }

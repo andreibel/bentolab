@@ -29,6 +29,7 @@ import { queryKeys } from '@/api/queryKeys'
 import { BoardColumn } from '@/components/board/BoardColumn'
 import { IssueCardGhost } from '@/components/board/IssueCard'
 import { AddColumnModal } from '@/components/board/AddColumnModal'
+import { BoardMembersPanel } from '@/components/board/BoardMembersPanel'
 import { CreateIssueModal } from '@/components/issues/CreateIssueModal'
 import { IssueDetailPanel } from '@/components/issues/IssueDetailPanel'
 import { cn } from '@/utils/cn'
@@ -59,7 +60,7 @@ function SortableColumn({
     <div
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={cn('transition-opacity', isDragging && 'opacity-40')}
+      className={cn('h-full transition-opacity', isDragging && 'opacity-40')}
     >
       <BoardColumn
         column={column}
@@ -86,7 +87,7 @@ export default function BoardPage() {
   const queryClient = useQueryClient()
 
   const { data: board, isLoading: boardLoading, isError: boardError } = useBoard(boardId!)
-  const { data: issuesPage, isLoading: issuesLoading } = useIssues(boardId!)
+  const { data: issuesPage, isLoading: issuesLoading } = useIssues(boardId!, false)
   const { data: epicsData = [] } = useEpics(boardId!)
 
   const serverIssues = issuesPage?.content ?? []
@@ -153,6 +154,7 @@ export default function BoardPage() {
   const [addColumnOpen,  setAddColumnOpen]  = useState(false)
   const [issueModal,     setIssueModal]     = useState<{ open: boolean; columnId?: string }>({ open: false })
   const [detailIssueId,  setDetailIssueId]  = useState<string | null>(null)
+  const [membersOpen,    setMembersOpen]    = useState(false)
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -346,7 +348,8 @@ export default function BoardPage() {
   const colIds = sortedColumns.map((c) => `col:${c.id}`)
 
   return (
-    <div className="flex h-full flex-col overflow-hidden">
+    <div className="flex h-full overflow-hidden">
+      <div className="flex flex-1 flex-col overflow-hidden">
       {/* Board header */}
       <div className="flex shrink-0 items-center justify-between border-b border-surface-border bg-surface px-5 py-3">
         <div className="flex items-center gap-2 text-sm">
@@ -360,7 +363,14 @@ export default function BoardPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <button className="flex h-8 items-center gap-1.5 rounded-lg border border-surface-border px-3 text-xs text-text-muted transition-colors hover:border-primary/30 hover:text-text-primary">
+          <button
+            onClick={() => setMembersOpen((v) => !v)}
+            className={`flex h-8 items-center gap-1.5 rounded-lg border px-3 text-xs transition-colors ${
+              membersOpen
+                ? 'border-primary/40 bg-primary-subtle text-primary'
+                : 'border-surface-border text-text-muted hover:border-primary/30 hover:text-text-primary'
+            }`}
+          >
             <Users className="h-3.5 w-3.5" />
             Members
           </button>
@@ -488,6 +498,14 @@ export default function BoardPage() {
           issueId={detailIssueId}
           columns={sortedColumns}
           onClose={() => setDetailIssueId(null)}
+        />
+      )}
+      </div>
+
+      {membersOpen && (
+        <BoardMembersPanel
+          boardId={boardId!}
+          onClose={() => setMembersOpen(false)}
         />
       )}
     </div>

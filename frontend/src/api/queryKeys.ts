@@ -15,7 +15,7 @@ export const queryKeys = {
     labels:  (boardId: string) => ['boards', boardId, 'labels'],
   },
   issues: {
-    list:       (boardId: string, page?: number) => ['issues', boardId, page],
+    list:       (boardId: string, page?: number, closed?: boolean) => ['issues', boardId, page, closed],
     detail:     (issueId: string)                => ['issues', 'detail', issueId],
     comments:   (issueId: string)                => ['issues', issueId, 'comments'],
     timelogs:   (issueId: string)                => ['issues', issueId, 'timelogs'],

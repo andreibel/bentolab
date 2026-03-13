@@ -28,6 +28,8 @@ export interface Issue {
   startDate: string | null
   dueDate: string | null
   completedAt: string | null
+  closed: boolean
+  closedAt: string | null
   estimatedHours: number | null
   totalTimeSpent: number
   remainingHours: number | null

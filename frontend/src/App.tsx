@@ -17,13 +17,14 @@ import BoardListPage from '@/pages/board/BoardListPage'
 import BoardPage from '@/pages/board/BoardPage'
 import BacklogPage from '@/pages/board/BacklogPage'
 import SprintsPage from '@/pages/board/SprintsPage'
+import SummaryPageComponent from '@/pages/board/SummaryPage'
 import CalendarPage from '@/pages/CalendarPage'
 import InboxPage from '@/pages/InboxPage'
 import AutomationsPage from '@/pages/settings/AutomationsPage'
 import SecurityPage from '@/pages/settings/SecurityPage'
 import MembersPage from '@/pages/settings/MembersPage'
 import { FeaturePlaceholder } from '@/components/common/FeaturePlaceholder'
-import { GanttChart, BarChart2, LayoutDashboard } from 'lucide-react'
+import { GanttChart, BarChart2 } from 'lucide-react'
 
 const RTL_LANGS = ['he', 'ar', 'fa']
 
@@ -35,7 +36,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 // Lab sub-route placeholders
-const SummaryPage  = () => <FeaturePlaceholder icon={LayoutDashboard} title="Summary" description="At-a-glance health metrics, velocity trends, and key stats for this lab." badge="Coming Soon" />
+const SummaryPage  = SummaryPageComponent
 const TimelinePage = () => <FeaturePlaceholder icon={GanttChart} title="Timeline" description="Visualize your lab's work on a timeline and roadmap view."  badge="Coming Soon" />
 const LabReports   = () => <FeaturePlaceholder icon={BarChart2}  title="Reports"  description="Velocity, burndown, and cycle time analytics for this lab."  badge="Coming Soon" />
 

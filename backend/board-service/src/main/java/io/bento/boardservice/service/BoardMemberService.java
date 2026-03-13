@@ -42,7 +42,7 @@ public class BoardMemberService {
 
     @Transactional
     public BoardMemberResponse addMember(UUID userId, String orgRole, UUID boardId, AddBoardMemberRequest request) {
-        boardAccessService.requireBoardRoleOrAdmin(userId, orgRole, boardId, BoardRole.PRODUCT_OWNER);
+        boardAccessService.requireBoardMemberOrAdmin(userId, orgRole, boardId);
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new BoardNotFoundException("Board not found: " + boardId));
 

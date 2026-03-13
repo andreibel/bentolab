@@ -128,6 +128,12 @@ function IssueRow({
 
       {epic && <EpicTag title={epic.title} color={epic.color} />}
 
+      {issue.closed && (
+        <span className="shrink-0 rounded-full bg-surface-muted px-1.5 py-0.5 text-[10px] font-semibold text-text-muted">
+          Closed
+        </span>
+      )}
+
       <div className="shrink-0"><PriorityIcon priority={issue.priority} /></div>
 
       {issue.storyPoints != null && (
@@ -601,11 +607,18 @@ export default function BacklogPage() {
   const [createEpicOpen,   setCreateEpicOpen]   = useState(false)
   const [completeId,       setCompleteId]       = useState<string | null>(null)
   const [issueModal, setIssueModal] = useState<{ open: boolean; sprintId?: string }>({ open: false })
+  const [closedTab, setClosedTab] = useState<'open' | 'closed' | 'all'>('open')
 
-  // Apply epic filter
+  // Apply closed tab filter first, then epic filter
+  const tabFilteredIssues = useMemo(() => {
+    if (closedTab === 'open')   return allIssues.filter((i) => !i.closed)
+    if (closedTab === 'closed') return allIssues.filter((i) => i.closed)
+    return allIssues
+  }, [allIssues, closedTab])
+
   const filteredIssues = useMemo(
-    () => selectedEpicId ? allIssues.filter((i) => i.epicId === selectedEpicId) : allIssues,
-    [allIssues, selectedEpicId],
+    () => selectedEpicId ? tabFilteredIssues.filter((i) => i.epicId === selectedEpicId) : tabFilteredIssues,
+    [tabFilteredIssues, selectedEpicId],
   )
 
   // Sort: ACTIVE → PLANNED (by startDate) → COMPLETED
@@ -666,7 +679,7 @@ export default function BacklogPage() {
 
   const visibleSprints = sortedSprints.filter((s) => s.status !== 'COMPLETED')
   const backlogIssues  = issuesBySprint.get(null) ?? []
-  const backlogTotal   = allIssues.filter((i) => !i.sprintId).length
+  const backlogTotal   = tabFilteredIssues.filter((i) => !i.sprintId).length
   const completingSprint = completeId ? sortedSprints.find((s) => s.id === completeId) : null
 
   return (
@@ -675,9 +688,29 @@ export default function BacklogPage() {
       <div className="flex shrink-0 items-center justify-between border-b border-surface-border bg-surface px-5 py-3">
         <div className="flex items-center gap-3">
           <h1 className="text-sm font-semibold text-text-primary">Backlog</h1>
-          <span className="rounded-full bg-surface-muted px-2 py-0.5 text-xs text-text-muted">
-            {allIssues.length} issues
-          </span>
+          <div className="flex items-center rounded-lg bg-surface-muted p-0.5 text-xs">
+            {(['open', 'closed', 'all'] as const).map((tab) => {
+              const count = tab === 'open'
+                ? allIssues.filter((i) => !i.closed).length
+                : tab === 'closed'
+                  ? allIssues.filter((i) => i.closed).length
+                  : allIssues.length
+              return (
+                <button
+                  key={tab}
+                  onClick={() => setClosedTab(tab)}
+                  className={cn(
+                    'rounded-md px-2.5 py-1 font-medium capitalize transition-colors',
+                    closedTab === tab
+                      ? 'bg-surface text-text-primary shadow-sm'
+                      : 'text-text-muted hover:text-text-primary',
+                  )}
+                >
+                  {tab} <span className="ms-1 text-[10px] opacity-70">{count}</span>
+                </button>
+              )
+            })}
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <button

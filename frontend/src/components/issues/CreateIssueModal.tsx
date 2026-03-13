@@ -206,10 +206,10 @@ export function CreateIssueModal({
         sprintId:      values.sprintId         || undefined,
         parentIssueId: values.parentIssueId    || undefined,
         storyPoints:   values.storyPoints ? Number(values.storyPoints) : undefined,
-        dueDate:       values.dueDate          || undefined,
+        dueDate:       values.dueDate ? new Date(values.dueDate).toISOString() : undefined,
       })
 
-      queryClient.invalidateQueries({ queryKey: queryKeys.issues.list(effectiveBoardId) })
+      queryClient.invalidateQueries({ queryKey: ['issues', effectiveBoardId], exact: false })
       toast.success('Issue created')
       onClose()
     } catch {
@@ -460,7 +460,7 @@ function PriorityPicker({ control }: { control: Parameters<typeof Controller>[0]
       name="priority"
       control={control}
       render={({ field }) => (
-        <div className="flex gap-1">
+        <div className="flex flex-wrap gap-1">
           {PRIORITIES.map((p) => (
             <button
               key={p.value}

@@ -34,7 +34,14 @@ public class IssueService {
     private final ActivityService activityService;
     private final MongoTemplate mongoTemplate;
 
-    public Page<Issue> getIssues(String orgId, String boardId, Pageable pageable) {
+    public Page<Issue> getIssues(String orgId, String boardId, Boolean closed, Pageable pageable) {
+        if (closed != null) {
+            if (closed) {
+                return issueRepository.findAllByOrgIdAndBoardIdAndClosed(orgId, boardId, true, pageable);
+            } else {
+                return issueRepository.findAllOpenByOrgIdAndBoardId(orgId, boardId, pageable);
+            }
+        }
         return issueRepository.findAllByOrgIdAndBoardId(orgId, boardId, pageable);
     }
 
@@ -179,6 +186,28 @@ public class IssueService {
                         .newValue(request.assigneeId())
                         .build());
 
+        return issue;
+    }
+
+    public Issue closeIssue(String orgId, String userId, String issueId) {
+        Issue issue = getIssue(orgId, issueId);
+        issue.setClosed(true);
+        issue.setClosedAt(Instant.now());
+        issue.setUpdatedAt(Instant.now());
+        issue = issueRepository.save(issue);
+        activityService.log(orgId, issueId, issue.getBoardId(), issue.getSprintId(),
+                userId, EntityType.ISSUE, ActivityAction.CLOSED, null);
+        return issue;
+    }
+
+    public Issue reopenIssue(String orgId, String userId, String issueId) {
+        Issue issue = getIssue(orgId, issueId);
+        issue.setClosed(false);
+        issue.setClosedAt(null);
+        issue.setUpdatedAt(Instant.now());
+        issue = issueRepository.save(issue);
+        activityService.log(orgId, issueId, issue.getBoardId(), issue.getSprintId(),
+                userId, EntityType.ISSUE, ActivityAction.REOPENED, null);
         return issue;
     }
 

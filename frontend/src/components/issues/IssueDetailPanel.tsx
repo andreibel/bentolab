@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { X, Link2, AlertCircle, Pencil, Loader2 } from 'lucide-react'
+import { X, Link2, AlertCircle, Pencil, Loader2, XCircle, RotateCcw } from 'lucide-react'
 import { toast } from 'sonner'
 import { issuesApi, useIssues } from '@/api/issues'
 import { useEpics } from '@/api/epics'
@@ -92,6 +92,19 @@ export function IssueDetailPanel({
   const { data: sprints = [] } = useSprints(effectiveBoardId)
   const { data: boardIssues  } = useIssues(effectiveBoardId)
 
+  const closeMutation = useMutation({
+    mutationFn: (action: 'close' | 'reopen') =>
+      action === 'close' ? issuesApi.close(issueId) : issuesApi.reopen(issueId),
+    onSuccess: (updated) => {
+      queryClient.setQueryData<Issue>(queryKeys.issues.detail(issueId), updated)
+      if (effectiveBoardId) {
+        queryClient.invalidateQueries({ queryKey: ['issues', effectiveBoardId], exact: false })
+      }
+      toast.success(updated.closed ? 'Issue closed' : 'Issue reopened')
+    },
+    onError: () => toast.error('Failed to update issue status'),
+  })
+
   const mutation = useMutation({
     mutationFn: (data: Partial<Issue>) => issuesApi.update(issueId, data),
     onMutate: async (data) => {
@@ -108,7 +121,7 @@ export function IssueDetailPanel({
       queryClient.invalidateQueries({ queryKey: queryKeys.issues.detail(issueId) })
       queryClient.invalidateQueries({ queryKey: queryKeys.issues.activities(issueId) })
       if (effectiveBoardId) {
-        queryClient.invalidateQueries({ queryKey: queryKeys.issues.list(effectiveBoardId) })
+        queryClient.invalidateQueries({ queryKey: ['issues', effectiveBoardId], exact: false })
         if ('sprintId' in variables) queryClient.invalidateQueries({ queryKey: queryKeys.sprints.all(effectiveBoardId) })
         if ('epicId'   in variables) queryClient.invalidateQueries({ queryKey: queryKeys.epics.list(effectiveBoardId) })
       }
@@ -151,6 +164,11 @@ export function IssueDetailPanel({
           <div className="flex shrink-0 items-center gap-2 border-b border-surface-border px-5 py-2.5">
             <span className="font-mono text-xs font-semibold text-text-muted">{issue.issueKey}</span>
             <IssueTypeBadge type={issue.type} />
+            {issue.closed && (
+              <span className="rounded-full bg-surface-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-text-muted">
+                Closed
+              </span>
+            )}
             <div className="ms-auto flex items-center gap-1">
               <button
                 onClick={() => {
@@ -162,6 +180,33 @@ export function IssueDetailPanel({
               >
                 <Link2 className="h-4 w-4" />
               </button>
+              {issue.closed ? (
+                <button
+                  onClick={() => closeMutation.mutate('reopen')}
+                  disabled={closeMutation.isPending}
+                  title="Reopen issue"
+                  className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-green-600 transition-colors hover:bg-green-500/10 disabled:opacity-50"
+                >
+                  {closeMutation.isPending
+                    ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    : <RotateCcw className="h-3.5 w-3.5" />
+                  }
+                  Reopen
+                </button>
+              ) : (
+                <button
+                  onClick={() => closeMutation.mutate('close')}
+                  disabled={closeMutation.isPending}
+                  title="Close issue"
+                  className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-text-muted transition-colors hover:bg-surface-muted hover:text-text-primary disabled:opacity-50"
+                >
+                  {closeMutation.isPending
+                    ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    : <XCircle className="h-3.5 w-3.5" />
+                  }
+                  Close issue
+                </button>
+              )}
               <button
                 onClick={onClose}
                 className="rounded-md p-1.5 text-text-muted transition-colors hover:bg-surface-muted hover:text-text-primary"

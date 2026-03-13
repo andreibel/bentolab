@@ -25,7 +25,7 @@ export function BoardColumn({ column, issues, epicsMap, onIssueClick, onAddIssue
   const wipExceeded = column.wipLimit != null && issues.length > column.wipLimit
 
   return (
-    <div className="flex w-72 shrink-0 flex-col">
+    <div className="flex h-full w-72 shrink-0 flex-col">
       {/* Column header */}
       <div className="group/header mb-3 flex items-center gap-2 px-1">
         {/* Drag handle */}
@@ -74,7 +74,7 @@ export function BoardColumn({ column, issues, epicsMap, onIssueClick, onAddIssue
       <div
         ref={setNodeRef}
         className={cn(
-          'group/col flex min-h-24 flex-1 flex-col gap-2 rounded-xl border p-2 transition-colors',
+          'group/col flex min-h-24 flex-1 flex-col gap-2 overflow-y-auto rounded-xl border p-2 transition-colors',
           isOver
             ? 'border-primary/40 bg-primary/5'
             : 'border-surface-border bg-surface-muted/40',

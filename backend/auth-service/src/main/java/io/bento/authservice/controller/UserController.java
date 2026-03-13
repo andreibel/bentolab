@@ -2,6 +2,7 @@ package io.bento.authservice.controller;
 
 import io.bento.authservice.dto.request.UpdateUserRequest;
 import io.bento.authservice.dto.response.UserDto;
+import io.bento.authservice.dto.response.UserProfileDto;
 import io.bento.authservice.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -9,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -29,5 +31,11 @@ public class UserController {
                                                      Authentication authentication) {
         UUID userId = (UUID) authentication.getPrincipal();
         return ResponseEntity.ok(userService.updateCurrentUser(userId, request));
+    }
+
+    /** Internal — used by other services to resolve user profiles by ID. */
+    @PostMapping("/batch")
+    public ResponseEntity<List<UserProfileDto>> batchGetUsers(@RequestBody List<UUID> ids) {
+        return ResponseEntity.ok(userService.getUsersByIds(ids));
     }
 }
