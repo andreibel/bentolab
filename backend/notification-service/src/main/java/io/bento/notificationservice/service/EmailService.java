@@ -54,10 +54,11 @@ public class EmailService {
     @Async
     public void sendInvitationEmail(InvitationCreatedEvent event) {
         Context ctx = new Context();
+        ctx.setVariable("firstName", "there");   // invitee may not be registered yet
         ctx.setVariable("orgName", event.orgName());
         ctx.setVariable("role", event.role());
-        ctx.setVariable("token", event.token());
         ctx.setVariable("expiresAt", event.expiresAt());
+        ctx.setVariable("inviteUrl", notificationProperties.mail().frontendUrl() + "/invite?token=" + event.token());
         send(event.inviteeEmail(), "You've been invited to " + event.orgName(), "email/org-invitation", ctx);
     }
 

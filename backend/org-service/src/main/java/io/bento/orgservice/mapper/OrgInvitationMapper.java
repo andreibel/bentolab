@@ -17,7 +17,8 @@ public class OrgInvitationMapper {
                 invitation.getStatus(),
                 invitation.getInvitedBy(),
                 invitation.getExpiresAt(),
-                invitation.getCreatedAt()
+                invitation.getCreatedAt(),
+                invitation.getToken()
         );
     }
 }

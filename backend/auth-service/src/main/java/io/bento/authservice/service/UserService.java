@@ -2,6 +2,7 @@ package io.bento.authservice.service;
 
 import io.bento.authservice.dto.request.UpdateUserRequest;
 import io.bento.authservice.dto.response.UserDto;
+import io.bento.authservice.dto.response.UserProfileDto;
 import io.bento.authservice.entity.User;
 import io.bento.authservice.event.UserEventPublisher;
 import io.bento.authservice.event.UserUpdatedEvent;
@@ -25,6 +26,12 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final UserEventPublisher userEventPublisher;
+
+    public List<UserProfileDto> getUsersByIds(List<UUID> ids) {
+        return userRepository.findAllByIdIn(ids).stream()
+                .map(u -> new UserProfileDto(u.getId(), u.getEmail(), u.getFirstName(), u.getLastName(), u.getAvatarUrl()))
+                .toList();
+    }
 
     public UserDto getCurrentUser(UUID userId) {
         User user = userRepository.findById(userId)

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-5.0.xsd">
+
+    <!--
+        Make org_invitation.email nullable to support open link invites
+        (invitations not tied to a specific email address).
+        When email IS set, the accept endpoint enforces that only the invited
+        address can redeem the token. When email IS NULL, anyone can accept.
+    -->
+    <changeSet id="2026-03-13-1" author="andreibeloziorove">
+        <dropNotNullConstraint tableName="org_invitation"
+                               columnName="email"
+                               columnDataType="VARCHAR(255)"/>
+    </changeSet>
+
+</databaseChangeLog>

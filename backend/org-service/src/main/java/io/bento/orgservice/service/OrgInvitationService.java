@@ -1,8 +1,10 @@
 package io.bento.orgservice.service;
 
+import io.bento.orgservice.dto.request.GenerateInviteLinkRequest;
 import io.bento.orgservice.dto.request.SendInvitationRequest;
+import io.bento.orgservice.dto.response.AcceptInvitationResponse;
+import io.bento.orgservice.dto.response.InvitationPreviewResponse;
 import io.bento.orgservice.dto.response.InvitationResponse;
-import io.bento.orgservice.dto.response.MemberResponse;
 import io.bento.orgservice.entity.OrgInvitation;
 import io.bento.orgservice.entity.Organization;
 import io.bento.orgservice.entity.OrganizationMember;
@@ -18,7 +20,6 @@ import io.bento.orgservice.exception.InvitationNotFoundException;
 import io.bento.orgservice.exception.MemberAlreadyExistsException;
 import io.bento.orgservice.exception.OrgAccessDeniedException;
 import io.bento.orgservice.mapper.OrgInvitationMapper;
-import io.bento.orgservice.mapper.OrgMemberMapper;
 import io.bento.orgservice.repository.OrgInvitationRepository;
 import io.bento.orgservice.repository.OrganizationMemberRepository;
 import io.bento.orgservice.repository.OrganizationRepository;
@@ -38,50 +39,159 @@ public class OrgInvitationService {
     private final OrganizationRepository organizationRepository;
     private final OrgInvitationRepository orgInvitationRepository;
     private final OrgInvitationMapper orgInvitationMapper;
-    private final OrgMemberMapper orgMemberMapper;
     private final OrgEventPublisher orgEventPublisher;
 
-    @Transactional
-    public InvitationResponse sentNewInvitation(UUID adminId, UUID orgId,
-                                                OrgRoles callerRole, SendInvitationRequest invitationRequest) {
-        if (!callerRole.isAtLeast(OrgRoles.ORG_ADMIN))
-            throw new OrgAccessDeniedException("You are not allowed to send invitations for this organization");
+    // ── Send email-specific invitation ────────────────────────────────────────
 
-        if (invitationRequest.orgRole().isHigherThan(callerRole))
-            throw new OrgAccessDeniedException("You are not allowed to invite to a role higher than yours");
+    @Transactional
+    public InvitationResponse sendEmailInvitation(UUID adminId, UUID orgId,
+                                                  OrgRoles callerRole, SendInvitationRequest request) {
+        if (!callerRole.isAtLeast(OrgRoles.ORG_ADMIN))
+            throw new OrgAccessDeniedException("You are not allowed to send invitations");
+
+        if (request.orgRole().isHigherThan(callerRole))
+            throw new OrgAccessDeniedException("You cannot invite to a role higher than your own");
 
         Organization organization = organizationRepository.getReferenceById(orgId);
 
-        if (orgInvitationRepository.existsByOrganization_IdAndEmailAndStatus(orgId, invitationRequest.email(), Status.PENDING))
-            throw new InvitationAlreadyExistsException("Invitation has already been sent");
+        if (orgInvitationRepository.existsByOrganization_IdAndEmailAndStatus(orgId, request.email(), Status.PENDING))
+            throw new InvitationAlreadyExistsException("A pending invitation for this email already exists");
 
         OrgInvitation invitation = OrgInvitation.builder()
                 .organization(organization)
-                .email(invitationRequest.email())
-                .orgRole(invitationRequest.orgRole())
+                .email(request.email())
+                .orgRole(request.orgRole())
                 .token(UUID.randomUUID().toString())
                 .invitedBy(adminId)
-                .message(invitationRequest.message())
+                .message(request.message())
                 .build();
-        OrgInvitation savedInvitation = orgInvitationRepository.save(invitation);
+        OrgInvitation saved = orgInvitationRepository.save(invitation);
 
         orgEventPublisher.publishInvitationCreated(new InvitationCreatedEvent(
                 orgId,
                 organization.getName(),
                 adminId,
-                savedInvitation.getEmail(),
-                savedInvitation.getOrgRole(),
-                savedInvitation.getToken(),
-                savedInvitation.getExpiresAt().toString()
+                saved.getEmail(),
+                saved.getOrgRole(),
+                saved.getToken(),
+                saved.getExpiresAt().toString()
         ));
 
-        return orgInvitationMapper.toInvitationResponse(savedInvitation);
+        return orgInvitationMapper.toInvitationResponse(saved);
     }
 
-    @Transactional(readOnly = true)
-    public List<InvitationResponse> getAllOrgActiveInitiation(UUID orgId, OrgRoles callerRole, Status status) {
+    // ── Generate open invite link (no email restriction) ─────────────────────
+
+    @Transactional
+    public InvitationResponse generateOpenInviteLink(UUID adminId, UUID orgId,
+                                                     OrgRoles callerRole, GenerateInviteLinkRequest request) {
         if (!callerRole.isAtLeast(OrgRoles.ORG_ADMIN))
-            throw new OrgAccessDeniedException("You are not allowed to view invitations for this organization");
+            throw new OrgAccessDeniedException("You are not allowed to generate invite links");
+
+        if (request.orgRole().isHigherThan(callerRole))
+            throw new OrgAccessDeniedException("You cannot invite to a role higher than your own");
+
+        Organization organization = organizationRepository.getReferenceById(orgId);
+
+        OrgInvitation invitation = OrgInvitation.builder()
+                .organization(organization)
+                .email(null)            // open link — no email restriction
+                .orgRole(request.orgRole())
+                .token(UUID.randomUUID().toString())
+                .invitedBy(adminId)
+                .build();
+        OrgInvitation saved = orgInvitationRepository.save(invitation);
+
+        return orgInvitationMapper.toInvitationResponse(saved);
+    }
+
+    // ── Public preview (no JWT) ───────────────────────────────────────────────
+
+    @Transactional(readOnly = true)
+    public InvitationPreviewResponse getInvitationPreview(String token) {
+        OrgInvitation invitation = orgInvitationRepository.findByToken(token)
+                .orElseThrow(() -> new InvitationNotFoundException("Invitation not found"));
+
+        if (!invitation.getStatus().equals(Status.PENDING))
+            throw new InvalidInvitationStatusException("This invitation is no longer active");
+
+        if (invitation.getExpiresAt().isBefore(Instant.now()))
+            throw new InvitationExpiredException("This invitation has expired");
+
+        Organization org = invitation.getOrganization();
+        return new InvitationPreviewResponse(
+                org.getId(),
+                org.getName(),
+                org.getSlug(),
+                invitation.getOrgRole(),
+                invitation.getEmail() != null,
+                invitation.getExpiresAt()
+        );
+    }
+
+    // ── Accept invitation ─────────────────────────────────────────────────────
+
+    @Transactional
+    public AcceptInvitationResponse acceptInvitation(UUID userId, String userEmail, String token) {
+        OrgInvitation invitation = orgInvitationRepository.findByToken(token)
+                .orElseThrow(() -> new InvitationNotFoundException("Invitation not found"));
+
+        // Email-protected invites: the caller's email must match exactly
+        if (invitation.getEmail() != null && !invitation.getEmail().equalsIgnoreCase(userEmail)) {
+            throw new InvitationNotFoundException("Invitation not found");  // don't leak info
+        }
+
+        if (!invitation.getStatus().equals(Status.PENDING))
+            throw new InvalidInvitationStatusException("This invitation is no longer active");
+
+        if (invitation.getExpiresAt().isBefore(Instant.now()))
+            throw new InvitationExpiredException("This invitation has expired");
+
+        Organization org = organizationRepository.findById(invitation.getOrganization().getId())
+                .orElseThrow(() -> new InvitationNotFoundException("Organization not found"));
+
+        if (organizationMemberRepository.existsByOrganization_IdAndUserId(org.getId(), userId))
+            throw new MemberAlreadyExistsException("You are already a member of this organization");
+
+        // Email invites are single-use; open links stay PENDING so multiple people can accept
+        if (invitation.getEmail() != null) {
+            invitation.setStatus(Status.ACCEPTED);
+            invitation.setAcceptedAt(Instant.now());
+            orgInvitationRepository.save(invitation);
+        }
+
+        OrganizationMember newMember = OrganizationMember.builder()
+                .organization(org)
+                .userId(userId)
+                .orgRole(invitation.getOrgRole())
+                .invitedBy(invitation.getInvitedBy())
+                .build();
+        OrganizationMember saved = organizationMemberRepository.save(newMember);
+
+        orgEventPublisher.publishMemberJoined(new MemberJoinedEvent(
+                org.getId(),
+                org.getName(),
+                saved.getUserId(),
+                saved.getOrgRole(),
+                saved.getJoinedAt().toString()
+        ));
+
+        return new AcceptInvitationResponse(
+                saved.getUserId(),
+                saved.getOrgRole(),
+                saved.getJoinedAt(),
+                org.getId(),
+                org.getSlug(),
+                org.getName()
+        );
+    }
+
+    // ── List / revoke ─────────────────────────────────────────────────────────
+
+    @Transactional(readOnly = true)
+    public List<InvitationResponse> getAllOrgInvitations(UUID orgId, OrgRoles callerRole, Status status) {
+        if (!callerRole.isAtLeast(OrgRoles.ORG_ADMIN))
+            throw new OrgAccessDeniedException("You are not allowed to view invitations");
 
         if (status == null) {
             return orgInvitationRepository.findAllByOrganization_Id(orgId)
@@ -94,54 +204,15 @@ public class OrgInvitationService {
     @Transactional
     public void deleteInvitation(UUID orgId, OrgRoles callerRole, UUID invitationId) {
         if (!callerRole.isAtLeast(OrgRoles.ORG_ADMIN))
-            throw new OrgAccessDeniedException("You are not allowed to revoke invitations for this organization");
+            throw new OrgAccessDeniedException("You are not allowed to revoke invitations");
 
-        OrgInvitation orgInvitation = orgInvitationRepository.findByIdAndOrganization_Id(invitationId, orgId)
+        OrgInvitation invitation = orgInvitationRepository.findByIdAndOrganization_Id(invitationId, orgId)
                 .orElseThrow(() -> new InvitationNotFoundException("Invitation not found"));
 
-        if (!orgInvitation.getStatus().equals(Status.PENDING))
+        if (!invitation.getStatus().equals(Status.PENDING))
             throw new InvalidInvitationStatusException("Cannot revoke an invitation that is not pending");
 
-        orgInvitation.setStatus(Status.REVOKED);
-        orgInvitationRepository.save(orgInvitation);
-    }
-
-    // Public endpoint — token-based, no JWT org context, all DB checks are required
-    @Transactional
-    public MemberResponse acceptNewMember(UUID userId, String userEmail, String tokenInvitation) {
-        OrgInvitation orgInvitation = orgInvitationRepository.findByEmailAndToken(userEmail, tokenInvitation)
-                .orElseThrow(() -> new InvitationNotFoundException("Invitation not found"));
-
-        if (!orgInvitation.getStatus().equals(Status.PENDING))
-            throw new InvalidInvitationStatusException("Cannot accept an invitation that is not pending");
-
-        if (orgInvitation.getExpiresAt().isBefore(Instant.now()))
-            throw new InvitationExpiredException("Invitation has expired");
-
-        if (organizationMemberRepository.existsByOrganization_IdAndUserId(orgInvitation.getOrganization().getId(), userId))
-            throw new MemberAlreadyExistsException("You are already a member of this organization");
-
-        orgInvitation.setStatus(Status.ACCEPTED);
-        orgInvitation.setAcceptedAt(Instant.now());
-        orgInvitationRepository.save(orgInvitation);
-
-        Organization organization = organizationRepository.getReferenceById(orgInvitation.getOrganization().getId());
-        OrganizationMember newMember = OrganizationMember.builder()
-                .organization(organization)
-                .userId(userId)
-                .orgRole(orgInvitation.getOrgRole())
-                .invitedBy(orgInvitation.getInvitedBy())
-                .build();
-        OrganizationMember savedMember = organizationMemberRepository.save(newMember);
-
-        orgEventPublisher.publishMemberJoined(new MemberJoinedEvent(
-                organization.getId(),
-                organization.getName(),
-                savedMember.getUserId(),
-                savedMember.getOrgRole(),
-                savedMember.getJoinedAt().toString()
-        ));
-
-        return orgMemberMapper.toMemberResponse(savedMember);
+        invitation.setStatus(Status.REVOKED);
+        orgInvitationRepository.save(invitation);
     }
 }

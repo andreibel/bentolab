@@ -11,6 +11,7 @@ import RegisterPage from '@/pages/auth/RegisterPage'
 import ForgotPasswordPage from '@/pages/auth/ForgotPasswordPage'
 import ResetPasswordPage from '@/pages/auth/ResetPasswordPage'
 import VerifyEmailPage from '@/pages/auth/VerifyEmailPage'
+import InviteAcceptPage from '@/pages/auth/InviteAcceptPage'
 import CreateOrgPage from '@/pages/org/CreateOrgPage'
 import BoardListPage from '@/pages/board/BoardListPage'
 import BoardPage from '@/pages/board/BoardPage'
@@ -20,6 +21,7 @@ import CalendarPage from '@/pages/CalendarPage'
 import InboxPage from '@/pages/InboxPage'
 import AutomationsPage from '@/pages/settings/AutomationsPage'
 import SecurityPage from '@/pages/settings/SecurityPage'
+import MembersPage from '@/pages/settings/MembersPage'
 import { FeaturePlaceholder } from '@/components/common/FeaturePlaceholder'
 import { GanttChart, BarChart2, LayoutDashboard } from 'lucide-react'
 
@@ -65,6 +67,7 @@ export default function App() {
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/verify-email" element={<VerifyEmailPage />} />
+        <Route path="/invite" element={<InviteAcceptPage />} />
 
         {/* Onboarding */}
         <Route path="/org/new" element={<ProtectedRoute><CreateOrgPage /></ProtectedRoute>} />
@@ -89,7 +92,7 @@ export default function App() {
           <Route path="/calendar"  element={<CalendarPage />} />
 
           {/* Settings */}
-          <Route path="/settings/members"      element={<div className="p-6 text-sm text-text-muted">Members — coming soon</div>} />
+          <Route path="/settings/members"      element={<MembersPage />} />
           <Route path="/settings/labels"       element={<div className="p-6 text-sm text-text-muted">Labels — coming soon</div>} />
           <Route path="/settings/automations"  element={<AutomationsPage />} />
           <Route path="/settings/org"          element={<div className="p-6 text-sm text-text-muted">Org Settings — coming soon</div>} />
