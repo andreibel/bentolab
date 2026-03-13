@@ -70,32 +70,34 @@ export function BoardColumn({ column, issues, epicsMap, onIssueClick, onAddIssue
         </button>
       </div>
 
-      {/* Droppable area */}
+      {/* Droppable area — must not scroll itself, only the inner list scrolls */}
       <div
         ref={setNodeRef}
         className={cn(
-          'group/col flex min-h-24 flex-1 flex-col gap-2 overflow-y-auto rounded-xl border p-2 transition-colors',
+          'group/col flex min-h-24 flex-1 flex-col rounded-xl border p-2 transition-colors',
           isOver
             ? 'border-primary/40 bg-primary/5'
             : 'border-surface-border bg-surface-muted/40',
         )}
       >
-        <SortableContext items={issues.map((i) => i.id)} strategy={verticalListSortingStrategy}>
-          {issues.map((issue) => (
-            <IssueCard
-              key={issue.id}
-              issue={issue}
-              epic={epicsMap?.get(issue.epicId ?? '')}
-              onClick={onIssueClick}
-            />
-          ))}
-        </SortableContext>
+        <div className="flex flex-1 flex-col gap-2 overflow-y-auto">
+          <SortableContext items={issues.map((i) => i.id)} strategy={verticalListSortingStrategy}>
+            {issues.map((issue) => (
+              <IssueCard
+                key={issue.id}
+                issue={issue}
+                epic={epicsMap?.get(issue.epicId ?? '')}
+                onClick={onIssueClick}
+              />
+            ))}
+          </SortableContext>
 
-        {issues.length === 0 && (
-          <div className="flex flex-1 items-center justify-center py-6 text-xs text-text-muted">
-            Drop here
-          </div>
-        )}
+          {issues.length === 0 && (
+            <div className="flex flex-1 items-center justify-center py-6 text-xs text-text-muted">
+              Drop here
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

@@ -7,6 +7,7 @@ import {
   useSensor,
   useSensors,
   closestCenter,
+  pointerWithin,
   type CollisionDetection,
   type DragStartEvent,
   type DragEndEvent,
@@ -160,19 +161,35 @@ export default function BoardPage() {
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
   )
 
-  // ── Collision detection: column drags only match col: items,
-  //   issue drags only match non-col: items ─────────────────────────────────
+  // ── Collision detection ───────────────────────────────────────────────────
+  // Column drags: closestCenter among col: droppables only.
+  // Issue drags: closestCenter among issues first (precise reordering);
+  //   fall back to pointerWithin among columns so the drop zone activates
+  //   as soon as the pointer enters the column — not just near its center.
   const collisionDetection = useCallback<CollisionDetection>((args) => {
     const activeId = String(args.active.id)
-    const isColDrag = activeId.startsWith('col:')
-    return closestCenter({
-      ...args,
-      droppableContainers: args.droppableContainers.filter((c) =>
-        isColDrag
-          ? String(c.id).startsWith('col:')
-          : !String(c.id).startsWith('col:'),
-      ),
-    })
+
+    if (activeId.startsWith('col:')) {
+      return closestCenter({
+        ...args,
+        droppableContainers: args.droppableContainers.filter((c) =>
+          String(c.id).startsWith('col:'),
+        ),
+      })
+    }
+
+    // Issue drag — check issues first
+    const issueContainers = args.droppableContainers.filter(
+      (c) => !String(c.id).startsWith('col:'),
+    )
+    const issueHits = closestCenter({ ...args, droppableContainers: issueContainers })
+    if (issueHits.length > 0) return issueHits
+
+    // No issue under pointer — activate whichever column the pointer is inside
+    const colContainers = args.droppableContainers.filter((c) =>
+      String(c.id).startsWith('col:'),
+    )
+    return pointerWithin({ ...args, droppableContainers: colContainers })
   }, [])
 
   // ── Drag start ───────────────────────────────────────────────────────────────
@@ -311,7 +328,7 @@ export default function BoardPage() {
 
       // Commit to React Query cache before clearing local state
       queryClient.setQueryData(
-        queryKeys.issues.list(boardId!),
+        queryKeys.issues.list(boardId!, undefined, false),
         (old: { content: Issue[] } | undefined) =>
           old ? { ...old, content: snapshot } : old,
       )
@@ -320,7 +337,7 @@ export default function BoardPage() {
         await issuesApi.move(movedIssue.id, movedIssue.columnId, position)
       } catch {
         toast.error('Failed to move issue')
-        queryClient.invalidateQueries({ queryKey: queryKeys.issues.list(boardId!) })
+        queryClient.invalidateQueries({ queryKey: queryKeys.issues.list(boardId!, undefined, false) })
       }
     }
   }, [boardId, board, queryClient])

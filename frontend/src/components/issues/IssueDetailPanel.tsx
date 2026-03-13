@@ -128,7 +128,18 @@ export function IssueDetailPanel({
     },
   })
 
-  const handleUpdate = useCallback((data: Partial<Issue>) => mutation.mutate(data), [mutation])
+  const handleUpdate = useCallback((data: Partial<Issue>) => {
+    if ('columnId' in data && data.columnId) {
+      issuesApi.move(issueId, data.columnId, 0).then((updated) => {
+        queryClient.setQueryData<Issue>(queryKeys.issues.detail(issueId), updated)
+        if (effectiveBoardId) {
+          queryClient.invalidateQueries({ queryKey: ['issues', effectiveBoardId], exact: false })
+        }
+      }).catch(() => toast.error('Failed to move issue'))
+      return
+    }
+    mutation.mutate(data)
+  }, [mutation, issueId, effectiveBoardId, queryClient])
 
   // Derived data for meta panel
   const parentIssue = issue?.parentIssueId
