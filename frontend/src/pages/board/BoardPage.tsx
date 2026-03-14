@@ -1,4 +1,4 @@
-import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
+import {useCallback, useMemo, useRef, useState} from 'react'
 import {Link, useParams} from 'react-router-dom'
 import {
   closestCenter,
@@ -16,6 +16,7 @@ import {
 import {arrayMove, horizontalListSortingStrategy, SortableContext, useSortable,} from '@dnd-kit/sortable'
 import {CSS} from '@dnd-kit/utilities'
 import {AlertCircle, ChevronRight, Loader2, Plus, Settings, Users} from 'lucide-react'
+import {BoardSettingsPanel} from '@/components/board/BoardSettingsPanel'
 import {useQueryClient} from '@tanstack/react-query'
 import {toast} from 'sonner'
 import {boardsApi, useBoard} from '@/api/boards'
@@ -152,6 +153,7 @@ export default function BoardPage() {
   const [issueModal,     setIssueModal]     = useState<{ open: boolean; columnId?: string }>({ open: false })
   const [detailIssueId,  setDetailIssueId]  = useState<string | null>(null)
   const [membersOpen,    setMembersOpen]    = useState(false)
+  const [settingsOpen,   setSettingsOpen]   = useState(false)
   const MIN_PANEL = 680
   const [panelWidth, setPanelWidth] = useState(MIN_PANEL)
 
@@ -175,7 +177,10 @@ export default function BoardPage() {
     document.addEventListener('mouseup', onUp)
   }, [panelWidth])
 
-  useEffect(() => { if (!detailIssueId) setPanelWidth(MIN_PANEL) }, [detailIssueId])
+  function closeDetail() {
+    setDetailIssueId(null)
+    setPanelWidth(MIN_PANEL)
+  }
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -414,7 +419,14 @@ export default function BoardPage() {
             <Users className="h-3.5 w-3.5" />
             Members
           </button>
-          <button className="flex h-8 items-center gap-1.5 rounded-lg border border-surface-border px-3 text-xs text-text-muted transition-colors hover:border-primary/30 hover:text-text-primary">
+          <button
+            onClick={() => setSettingsOpen((v) => !v)}
+            className={`flex h-8 items-center gap-1.5 rounded-lg border px-3 text-xs transition-colors ${
+              settingsOpen
+                ? 'border-primary/40 bg-primary-subtle text-primary'
+                : 'border-surface-border text-text-muted hover:border-primary/30 hover:text-text-primary'
+            }`}
+          >
             <Settings className="h-3.5 w-3.5" />
             Settings
           </button>
@@ -507,7 +519,7 @@ export default function BoardPage() {
             <IssueDetailPanel
               issueId={detailIssueId}
               columns={sortedColumns}
-              onClose={() => setDetailIssueId(null)}
+              onClose={closeDetail}
             />
           </div>
         </>
@@ -517,6 +529,13 @@ export default function BoardPage() {
         <BoardMembersPanel
           boardId={boardId!}
           onClose={() => setMembersOpen(false)}
+        />
+      )}
+
+      {settingsOpen && (
+        <BoardSettingsPanel
+          board={board}
+          onClose={() => setSettingsOpen(false)}
         />
       )}
     </div>

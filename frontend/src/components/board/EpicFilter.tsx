@@ -1,6 +1,6 @@
 import {useEffect, useMemo, useRef, useState} from 'react'
 import Fuse from 'fuse.js'
-import {Check, ChevronDown, Search, X} from 'lucide-react'
+import {Check, ChevronDown, Pencil, Search, X} from 'lucide-react'
 import {cn} from '@/utils/cn'
 import type {Epic} from '@/types/epic'
 
@@ -8,10 +8,12 @@ export function EpicFilter({
   epics,
   selected,
   onChange,
+  onEditEpic,
 }: {
   epics: Epic[]
   selected: Set<string>
   onChange: (next: Set<string>) => void
+  onEditEpic?: (epicId: string) => void
 }) {
   const [open,  setOpen]  = useState(false)
   const [query, setQuery] = useState('')
@@ -153,25 +155,35 @@ export function EpicFilter({
               results.map(epic => {
                 const checked = selected.has(epic.id)
                 return (
-                  <button
-                    key={epic.id}
-                    onClick={() => toggle(epic.id)}
-                    className="flex w-full items-center gap-2.5 px-3 py-2 text-xs transition-colors hover:bg-surface-muted"
-                  >
-                    <span className={cn(
-                      'flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors',
-                      checked ? 'border-primary bg-primary' : 'border-surface-border',
-                    )}>
-                      {checked && <Check className="h-2.5 w-2.5 text-white" />}
-                    </span>
-                    <span
-                      className="h-2.5 w-2.5 shrink-0 rounded-full"
-                      style={{ backgroundColor: epic.color }}
-                    />
-                    <span className="flex-1 truncate text-start text-text-primary">
-                      {epic.title}
-                    </span>
-                  </button>
+                  <div key={epic.id} className="group/epic flex items-center hover:bg-surface-muted">
+                    <button
+                      onClick={() => toggle(epic.id)}
+                      className="flex flex-1 items-center gap-2.5 px-3 py-2 text-xs"
+                    >
+                      <span className={cn(
+                        'flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors',
+                        checked ? 'border-primary bg-primary' : 'border-surface-border',
+                      )}>
+                        {checked && <Check className="h-2.5 w-2.5 text-white" />}
+                      </span>
+                      <span
+                        className="h-2.5 w-2.5 shrink-0 rounded-full"
+                        style={{ backgroundColor: epic.color }}
+                      />
+                      <span className="flex-1 truncate text-start text-text-primary">
+                        {epic.title}
+                      </span>
+                    </button>
+                    {onEditEpic && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); onEditEpic(epic.id) }}
+                        className="me-2 rounded p-1 text-text-muted opacity-0 transition-all hover:text-primary group-hover/epic:opacity-100"
+                        aria-label="Edit epic"
+                      >
+                        <Pencil className="h-3 w-3" />
+                      </button>
+                    )}
+                  </div>
                 )
               })
             )}

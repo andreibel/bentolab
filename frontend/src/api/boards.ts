@@ -38,6 +38,13 @@ export const boardsApi = {
       .patch<BoardColumn[]>(`/api/boards/${boardId}/columns/reorder`, { columnIds })
       .then((r) => r.data),
 
+  updateColumn: (
+    boardId: string,
+    columnId: string,
+    data: { name?: string; color?: string | null; wipLimit?: number | null },
+  ) =>
+    client.patch<BoardColumn>(`/api/boards/${boardId}/columns/${columnId}`, data).then((r) => r.data),
+
   deleteColumn: (boardId: string, columnId: string) =>
     client.delete(`/api/boards/${boardId}/columns/${columnId}`),
 
