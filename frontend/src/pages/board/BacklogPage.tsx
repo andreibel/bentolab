@@ -158,6 +158,7 @@ function IssueRow({
 function SprintSection({
   sprint,
   issues,
+  allSprintIssues,
   epicsMap,
   allSprints,
   onOpen,
@@ -168,7 +169,8 @@ function SprintSection({
   onEdit,
 }: {
   sprint: Sprint
-  issues: Issue[]
+  issues: Issue[]            // tab-filtered, for display
+  allSprintIssues: Issue[]   // all issues in sprint, for progress/counts
   epicsMap: Map<string, Epic>
   allSprints: Sprint[]
   onOpen: (id: string) => void
@@ -179,9 +181,12 @@ function SprintSection({
   onEdit: (sprintId: string) => void
 }) {
   const [collapsed, setCollapsed] = useState(false)
-  const totalPts = issues.reduce((s, i) => s + (i.storyPoints ?? 0), 0)
-  const doneCount = issues.filter((i) => i.completedAt).length
-  const progress = issues.length > 0 ? Math.round((doneCount / issues.length) * 100) : 0
+  // Progress/counts always from ALL sprint issues regardless of open/closed tab filter
+  const totalPts  = allSprintIssues.reduce((s, i) => s + (i.storyPoints ?? 0), 0)
+  const doneCount = allSprintIssues.filter((i) => i.closed).length
+  const progress  = allSprintIssues.length > 0
+    ? Math.round((doneCount / allSprintIssues.length) * 100)
+    : 0
   const dateRange = fmtDateRange(sprint.startDate, sprint.endDate)
 
   return (
@@ -219,11 +224,13 @@ function SprintSection({
         )}
 
         <span className="shrink-0 text-xs text-text-muted">
-          {issues.length} issue{issues.length !== 1 ? 's' : ''}
+          {doneCount > 0
+            ? `${doneCount}/${allSprintIssues.length} done`
+            : `${allSprintIssues.length} issue${allSprintIssues.length !== 1 ? 's' : ''}`}
           {totalPts > 0 && ` · ${totalPts} pts`}
         </span>
 
-        {sprint.status === 'ACTIVE' && issues.length > 0 && (
+        {sprint.status === 'ACTIVE' && allSprintIssues.length > 0 && (
           <div className="flex shrink-0 items-center gap-1.5">
             <div className="h-1.5 w-16 overflow-hidden rounded-full bg-surface-border">
               <div
@@ -744,7 +751,7 @@ export default function BacklogPage() {
     [sprints],
   )
 
-  // Group issues by sprint
+  // Group filtered issues by sprint (for display, respects open/closed tab)
   const issuesBySprint = useMemo(() => {
     const map = new Map<string | null, Issue[]>()
     map.set(null, [])
@@ -756,6 +763,17 @@ export default function BacklogPage() {
     }
     return map
   }, [filteredIssues, sortedSprints])
+
+  // Group ALL issues by sprint (for progress/counts, ignores tab filter)
+  const allIssuesBySprint = useMemo(() => {
+    const map = new Map<string, Issue[]>()
+    for (const issue of allIssues) {
+      if (!issue.sprintId) continue
+      if (!map.has(issue.sprintId)) map.set(issue.sprintId, [])
+      map.get(issue.sprintId)!.push(issue)
+    }
+    return map
+  }, [allIssues])
 
   const handleMove = async (issueId: string, sprintId: string | null) => {
     try {
@@ -873,6 +891,7 @@ export default function BacklogPage() {
                 key={sprint.id}
                 sprint={sprint}
                 issues={issuesBySprint.get(sprint.id) ?? []}
+                allSprintIssues={allIssuesBySprint.get(sprint.id) ?? []}
                 epicsMap={epicsMap}
                 allSprints={sortedSprints}
                 onOpen={setDetailIssueId}

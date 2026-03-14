@@ -9,6 +9,7 @@ import {queryKeys} from '@/api/queryKeys'
 import {cn} from '@/utils/cn'
 import {CreateSprintModal} from '@/components/sprint/CreateSprintModal'
 import type {Sprint} from '@/types/sprint'
+import type {Issue} from '@/types/issue'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -76,25 +77,28 @@ function CompleteSprintModal({
 
 function SprintCard({
   sprint,
-  boardId,
-  allSprints,
-  issueCount,
+  issues,
   onStart,
   onComplete,
 }: {
   sprint: Sprint
-  boardId: string
-  allSprints: Sprint[]
-  issueCount: number
+  issues: Issue[]
   onStart: (id: string) => void
   onComplete: (id: string) => void
 }) {
   const [expanded, setExpanded] = useState(sprint.status === 'ACTIVE')
-  const progress = sprint.totalIssues > 0
-    ? Math.round((sprint.completedIssues / sprint.totalIssues) * 100)
+
+  // Derive live counts from actual issues (so they update immediately on close/reopen)
+  const totalIssues     = issues.length
+  const closedIssues    = issues.filter((i) => i.closed).length
+  const totalPoints     = issues.reduce((s, i) => s + (i.storyPoints ?? 0), 0)
+  const completedPoints = issues.filter((i) => i.closed).reduce((s, i) => s + (i.storyPoints ?? 0), 0)
+
+  const progress = totalIssues > 0
+    ? Math.round((closedIssues / totalIssues) * 100)
     : 0
-  const pointsProgress = sprint.totalPoints > 0
-    ? Math.round((sprint.completedPoints / sprint.totalPoints) * 100)
+  const pointsProgress = totalPoints > 0
+    ? Math.round((completedPoints / totalPoints) * 100)
     : 0
   const days = daysLeft(sprint.endDate)
   const overdue = days !== null && days < 0
@@ -127,7 +131,7 @@ function SprintCard({
               <span className={cn('shrink-0 text-xs font-medium', overdue ? 'text-red-500' : 'text-text-muted')}>
                 {overdue ? `${Math.abs(days)}d overdue` : `${days}d left`}
               </span>
-            )}fro
+            )}
           </div>
           {sprint.goal && (
             <p className="text-xs text-text-secondary">{sprint.goal}</p>
@@ -176,7 +180,7 @@ function SprintCard({
           <div className="flex flex-col gap-1">
             <span className="text-[10px] font-semibold uppercase tracking-widest text-text-muted">Issues</span>
             <span className="text-xs text-text-secondary">
-              {sprint.completedIssues}/{sprint.totalIssues || issueCount}
+              {closedIssues}/{totalIssues}
             </span>
           </div>
           <div className="flex flex-col gap-1">
@@ -184,13 +188,13 @@ function SprintCard({
             <div className="flex items-center gap-1.5">
               <Target className="h-3 w-3 shrink-0 text-text-muted" />
               <span className="text-xs text-text-secondary">
-                {sprint.completedPoints}/{sprint.totalPoints}
+                {completedPoints}/{totalPoints}
               </span>
             </div>
           </div>
 
           {/* Progress bars */}
-          {sprint.totalIssues > 0 && (
+          {totalIssues > 0 && (
             <div className="col-span-4 space-y-1.5">
               <div className="flex items-center justify-between text-[11px] text-text-muted">
                 <span>Issue progress</span>
@@ -204,7 +208,7 @@ function SprintCard({
               </div>
             </div>
           )}
-          {sprint.totalPoints > 0 && (
+          {totalPoints > 0 && (
             <div className="col-span-4 space-y-1.5">
               <div className="flex items-center justify-between text-[11px] text-text-muted">
                 <span>Story points</span>
@@ -241,10 +245,11 @@ export default function SprintsPage() {
     return new Date(a.startDate ?? 0).getTime() - new Date(b.startDate ?? 0).getTime()
   })
 
-  const issueCountBySprint = new Map<string, number>()
+  const issuesBySprint = new Map<string, Issue[]>()
   for (const issue of issuesPage?.content ?? []) {
     if (issue.sprintId) {
-      issueCountBySprint.set(issue.sprintId, (issueCountBySprint.get(issue.sprintId) ?? 0) + 1)
+      if (!issuesBySprint.has(issue.sprintId)) issuesBySprint.set(issue.sprintId, [])
+      issuesBySprint.get(issue.sprintId)!.push(issue)
     }
   }
 
@@ -336,9 +341,7 @@ export default function SprintsPage() {
               <SprintCard
                 key={sprint.id}
                 sprint={sprint}
-                boardId={boardId!}
-                allSprints={sortedSprints}
-                issueCount={issueCountBySprint.get(sprint.id) ?? 0}
+                issues={issuesBySprint.get(sprint.id) ?? []}
                 onStart={handleStart}
                 onComplete={(id) => setCompleteId(id)}
               />
