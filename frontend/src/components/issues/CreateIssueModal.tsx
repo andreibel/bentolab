@@ -1,24 +1,31 @@
-import { useState, useEffect, useRef } from 'react'
-import { createPortal } from 'react-dom'
-import { useForm, Controller } from 'react-hook-form'
+import {useEffect, useRef, useState} from 'react'
+import {createPortal} from 'react-dom'
+import {Controller, useForm} from 'react-hook-form'
 import {
-  X, Maximize2, Minimize2,
-  Bug, BookOpen, CheckSquare, Zap,
-  ArrowUp, ArrowDown, Minus, GripHorizontal,
+  ArrowDown,
+  ArrowUp,
+  BookOpen,
+  Bug,
+  CheckSquare,
+  GripHorizontal,
+  Maximize2,
+  Minimize2,
+  Minus,
+  X,
+  Zap,
 } from 'lucide-react'
-import { useQueryClient } from '@tanstack/react-query'
-import { toast } from 'sonner'
-import { issuesApi, useIssues } from '@/api/issues'
-import { useBoards, useBoard } from '@/api/boards'
-import { useEpics } from '@/api/epics'
-import { useSprints } from '@/api/sprints'
-import { queryKeys } from '@/api/queryKeys'
-import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
-import { DatePicker, toDatePart } from '@/components/ui/DatePicker'
-import { RichTextInput } from '@/components/ui/RichTextInput'
-import { cn } from '@/utils/cn'
-import type { IssueType, IssuePriority } from '@/types/issue'
+import {useQueryClient} from '@tanstack/react-query'
+import {toast} from 'sonner'
+import {issuesApi, useIssues} from '@/api/issues'
+import {useBoard, useBoards} from '@/api/boards'
+import {useEpics} from '@/api/epics'
+import {useSprints} from '@/api/sprints'
+import {Button} from '@/components/ui/Button'
+import {Input} from '@/components/ui/Input'
+import {DatePicker, toDatePart} from '@/components/ui/DatePicker'
+import {RichTextInput} from '@/components/ui/RichTextInput'
+import {cn} from '@/utils/cn'
+import type {IssuePriority, IssueType} from '@/types/issue'
 
 // ── Config ────────────────────────────────────────────────────────────────────
 

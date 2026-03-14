@@ -1,13 +1,13 @@
-import { useState, useMemo, useRef, useEffect } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { toast } from 'sonner'
+import {useEffect, useMemo, useRef, useState} from 'react'
+import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query'
+import {toast} from 'sonner'
 import Fuse from 'fuse.js'
-import { X, Search, UserPlus, Crown, Shield, Code2, Eye, ChevronDown, Loader2, Trash2 } from 'lucide-react'
-import { boardsApi } from '@/api/boards'
-import { orgsApi } from '@/api/orgs'
-import { usersApi } from '@/api/users'
-import { useAuthStore } from '@/stores/authStore'
-import type { BoardRole, UserProfile } from '@/types/board'
+import {ChevronDown, Code2, Crown, Eye, Loader2, Search, Shield, Trash2, UserPlus, X} from 'lucide-react'
+import {boardsApi} from '@/api/boards'
+import {orgsApi} from '@/api/orgs'
+import {usersApi} from '@/api/users'
+import {useAuthStore} from '@/stores/authStore'
+import type {BoardRole, UserProfile} from '@/types/board'
 
 interface Props {
   boardId: string

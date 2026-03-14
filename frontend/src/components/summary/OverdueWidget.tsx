@@ -1,5 +1,5 @@
-import { AlertCircle } from 'lucide-react'
-import { cn } from '@/utils/cn'
+import {AlertCircle} from 'lucide-react'
+import {cn} from '@/utils/cn'
 
 const MOCK = [
   { key: 'TF-12', title: 'Update payment gateway',     daysLate: 8,  assignee: 'AK', color: '#3B82F6', priority: 'HIGH'     },

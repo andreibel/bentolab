@@ -1,7 +1,7 @@
-import { useEffect } from 'react'
-import { useEditor, EditorContent } from '@tiptap/react'
-import { StarterKit } from '@tiptap/starter-kit'
-import { Bold, Italic, Code, List, ListOrdered, Heading2, Quote } from 'lucide-react'
+import {useEffect} from 'react'
+import {EditorContent, useEditor} from '@tiptap/react'
+import {StarterKit} from '@tiptap/starter-kit'
+import {Bold, Code, Heading2, Italic, List, ListOrdered, Quote} from 'lucide-react'
 
 interface RichTextInputProps {
   value: string

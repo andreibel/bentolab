@@ -1,7 +1,7 @@
-import { useQuery } from '@tanstack/react-query'
+import {useQuery} from '@tanstack/react-query'
 import client from './client'
-import { queryKeys } from './queryKeys'
-import type { Sprint, CreateSprintData, UpdateSprintData } from '@/types/sprint'
+import {queryKeys} from './queryKeys'
+import type {CreateSprintData, Sprint, UpdateSprintData} from '@/types/sprint'
 
 export const sprintsApi = {
   list: (boardId: string) =>

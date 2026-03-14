@@ -1,9 +1,9 @@
-import { useState } from 'react'
-import { Outlet, useLocation, useMatch } from 'react-router-dom'
-import { Sidebar } from './Sidebar'
-import { Header } from './Header'
-import { LabTopNav } from './LabTopNav'
-import { CreateIssueModal } from '@/components/issues/CreateIssueModal'
+import {useState} from 'react'
+import {Outlet, useLocation, useMatch} from 'react-router-dom'
+import {Sidebar} from './Sidebar'
+import {Header} from './Header'
+import {LabTopNav} from './LabTopNav'
+import {CreateIssueModal} from '@/components/issues/CreateIssueModal'
 
 const TITLE_MAP: Record<string, string> = {
   '/boards':             'Labs',

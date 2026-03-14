@@ -1,5 +1,5 @@
-import { Users2 } from 'lucide-react'
-import { FeaturePlaceholder } from '@/components/common/FeaturePlaceholder'
+import {Users2} from 'lucide-react'
+import {FeaturePlaceholder} from '@/components/common/FeaturePlaceholder'
 
 const members = [
   { name: 'Alex Kim',    initials: 'AK', color: 'bg-primary',     assigned: 8,  capacity: 10, issues: ['TF-12', 'TF-18', 'TF-24'] },

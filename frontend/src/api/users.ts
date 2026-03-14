@@ -1,5 +1,5 @@
 import client from './client'
-import type { UserProfile } from '@/types/board'
+import type {UserProfile} from '@/types/board'
 
 export const usersApi = {
   batchGet: (ids: string[]) =>

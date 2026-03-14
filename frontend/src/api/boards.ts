@@ -1,7 +1,7 @@
-import { useQuery } from '@tanstack/react-query'
+import {useQuery} from '@tanstack/react-query'
 import client from './client'
-import { queryKeys } from './queryKeys'
-import type { Board, BoardColumn, BoardMember, BoardRole } from '@/types/board'
+import {queryKeys} from './queryKeys'
+import type {Board, BoardColumn, BoardMember, BoardRole} from '@/types/board'
 
 export const boardsApi = {
   list: () =>

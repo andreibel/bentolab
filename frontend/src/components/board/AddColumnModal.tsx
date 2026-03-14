@@ -1,12 +1,12 @@
-import { useForm } from 'react-hook-form'
-import { useQueryClient } from '@tanstack/react-query'
-import { toast } from 'sonner'
-import { boardsApi } from '@/api/boards'
-import { queryKeys } from '@/api/queryKeys'
-import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
-import { Modal } from '@/components/ui/Modal'
-import { ColorPicker } from '@/components/common/ColorPicker'
+import {useForm} from 'react-hook-form'
+import {useQueryClient} from '@tanstack/react-query'
+import {toast} from 'sonner'
+import {boardsApi} from '@/api/boards'
+import {queryKeys} from '@/api/queryKeys'
+import {Button} from '@/components/ui/Button'
+import {Input} from '@/components/ui/Input'
+import {Modal} from '@/components/ui/Modal'
+import {ColorPicker} from '@/components/common/ColorPicker'
 
 interface FormValues {
   name: string

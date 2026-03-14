@@ -1,5 +1,5 @@
-import { CheckCircle2, Circle, Clock, Target } from 'lucide-react'
-import { cn } from '@/utils/cn'
+import {CheckCircle2, Clock, Target} from 'lucide-react'
+import {cn} from '@/utils/cn'
 
 // ── Mock data ─────────────────────────────────────────────────────────────────
 

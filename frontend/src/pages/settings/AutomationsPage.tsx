@@ -1,5 +1,5 @@
-import { Zap } from 'lucide-react'
-import { FeaturePlaceholder } from '@/components/common/FeaturePlaceholder'
+import {Zap} from 'lucide-react'
+import {FeaturePlaceholder} from '@/components/common/FeaturePlaceholder'
 
 const rules = [
   { trigger: 'Issue moved to "Done"',         action: 'Send Slack notification to #dev',    active: true,  runs: 42 },

@@ -1,9 +1,9 @@
-import { useState, useRef, KeyboardEvent } from 'react'
-import { toast } from 'sonner'
-import { Link2, Mail, Copy, Check, X, ChevronRight, Loader2 } from 'lucide-react'
-import { orgsApi } from '@/api/orgs'
-import { Button } from '@/components/ui/Button'
-import type { OrgRole } from '@/types/org'
+import {KeyboardEvent, useRef, useState} from 'react'
+import {toast} from 'sonner'
+import {Check, ChevronRight, Copy, Link2, Loader2, Mail, X} from 'lucide-react'
+import {orgsApi} from '@/api/orgs'
+import {Button} from '@/components/ui/Button'
+import type {OrgRole} from '@/types/org'
 
 interface Props {
   orgId: string

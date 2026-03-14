@@ -1,4 +1,4 @@
-import { cn } from '@/utils/cn'
+import {cn} from '@/utils/cn'
 
 export const DEFAULT_COLORS = [
   '#6B7280', '#3B82F6', '#10B981', '#F59E0B',

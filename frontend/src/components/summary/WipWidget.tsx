@@ -1,4 +1,4 @@
-import { cn } from '@/utils/cn'
+import {cn} from '@/utils/cn'
 
 const MOCK = [
   { name: 'To Do',       current: 8,  limit: null, color: '#6B7280' },

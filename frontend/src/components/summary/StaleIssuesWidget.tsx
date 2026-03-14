@@ -1,4 +1,4 @@
-import { Snowflake } from 'lucide-react'
+import {Snowflake} from 'lucide-react'
 
 const MOCK = [
   { key: 'TF-15', title: 'Refactor payment module',   daysIdle: 14, assignee: 'MR', color: '#10B981' },

@@ -1,4 +1,4 @@
-import { UserX } from 'lucide-react'
+import {UserX} from 'lucide-react'
 
 const MOCK = [
   { key: 'TF-48', title: 'Implement dark mode toggle',   type: 'TASK', priority: 'MEDIUM' },

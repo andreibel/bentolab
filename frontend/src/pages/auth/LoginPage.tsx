@@ -1,12 +1,12 @@
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { toast } from 'sonner'
-import { authApi } from '@/api/auth'
-import { useAuthStore } from '@/stores/authStore'
-import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
+import {useForm} from 'react-hook-form'
+import {zodResolver} from '@hookform/resolvers/zod'
+import {z} from 'zod'
+import {Link, useNavigate, useSearchParams} from 'react-router-dom'
+import {toast} from 'sonner'
+import {authApi} from '@/api/auth'
+import {useAuthStore} from '@/stores/authStore'
+import {Button} from '@/components/ui/Button'
+import {Input} from '@/components/ui/Input'
 
 const schema = z.object({
   email: z.string().email('Enter a valid email'),

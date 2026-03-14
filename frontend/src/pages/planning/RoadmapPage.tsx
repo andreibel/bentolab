@@ -1,5 +1,5 @@
-import { GanttChart, ChevronDown } from 'lucide-react'
-import { FeaturePlaceholder } from '@/components/common/FeaturePlaceholder'
+import {ChevronDown, GanttChart} from 'lucide-react'
+import {FeaturePlaceholder} from '@/components/common/FeaturePlaceholder'
 
 const epics = [
   { key: 'TF-1',  title: 'Authentication System',   start: 0,  width: 25, color: 'bg-primary',      progress: 80 },

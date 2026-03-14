@@ -1,40 +1,40 @@
-import { useEffect } from 'react'
-import { NavLink, useNavigate, useLocation, useMatch } from 'react-router-dom'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { orgsApi } from '@/api/orgs'
-import { authApi } from '@/api/auth'
-import { boardsApi, useBoards } from '@/api/boards'
-import { queryKeys } from '@/api/queryKeys'
-import type { OrgListItem } from '@/types/org'
-import type { Board } from '@/types/board'
-import { toast } from 'sonner'
+import {useEffect} from 'react'
+import {NavLink, useLocation, useMatch, useNavigate} from 'react-router-dom'
+import {useQuery, useQueryClient} from '@tanstack/react-query'
+import {orgsApi} from '@/api/orgs'
+import {authApi} from '@/api/auth'
+import {useBoards} from '@/api/boards'
+import {queryKeys} from '@/api/queryKeys'
+import type {OrgListItem} from '@/types/org'
+import type {Board} from '@/types/board'
+import {toast} from 'sonner'
 import {
-  Settings,
+  ArrowLeft,
+  Building2,
+  CalendarDays,
   ChevronDown,
-  Plus,
+  CircleDot,
+  Inbox,
   LogOut,
   PanelLeftClose,
   PanelLeftOpen,
-  CalendarDays,
-  Inbox,
-  CircleDot,
-  ArrowLeft,
-  User,
-  SlidersHorizontal,
-  Tags,
-  Zap,
-  ShieldCheck,
-  Users,
   Pin,
   PinOff,
-  Building2,
+  Plus,
+  Settings,
+  ShieldCheck,
+  SlidersHorizontal,
+  Tags,
+  User,
+  Users,
+  Zap,
 } from 'lucide-react'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import * as Tooltip from '@radix-ui/react-tooltip'
-import { useAuthStore } from '@/stores/authStore'
-import { useUIStore } from '@/stores/uiStore'
-import { usePinnedLabs, useRecentLabs } from '@/hooks/usePinnedLabs'
-import { cn } from '@/utils/cn'
+import {useAuthStore} from '@/stores/authStore'
+import {useUIStore} from '@/stores/uiStore'
+import {usePinnedLabs, useRecentLabs} from '@/hooks/usePinnedLabs'
+import {cn} from '@/utils/cn'
 
 // ─── Lab color (deterministic from id) ───────────────────────────────────────
 

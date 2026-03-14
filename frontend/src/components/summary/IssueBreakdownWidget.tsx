@@ -1,4 +1,4 @@
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts'
+import {Cell, Pie, PieChart, ResponsiveContainer, Tooltip} from 'recharts'
 
 const MOCK_TYPES = [
   { name: 'Story',   value: 18, color: '#10B981' },

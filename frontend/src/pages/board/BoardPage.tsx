@@ -1,42 +1,37 @@
-import { useState, useMemo, useRef, useCallback, useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
+import {Link, useParams} from 'react-router-dom'
 import {
-  DndContext,
-  DragOverlay,
-  PointerSensor,
-  useSensor,
-  useSensors,
   closestCenter,
-  pointerWithin,
   type CollisionDetection,
-  type DragStartEvent,
+  DndContext,
   type DragEndEvent,
   type DragOverEvent,
+  DragOverlay,
+  type DragStartEvent,
+  PointerSensor,
+  pointerWithin,
+  useSensor,
+  useSensors,
 } from '@dnd-kit/core'
-import {
-  SortableContext,
-  horizontalListSortingStrategy,
-  arrayMove,
-  useSortable,
-} from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
-import { ChevronRight, Settings, Users, Plus, AlertCircle, Loader2 } from 'lucide-react'
-import { useQueryClient } from '@tanstack/react-query'
-import { toast } from 'sonner'
-import { useBoard, boardsApi } from '@/api/boards'
-import { useIssues, issuesApi } from '@/api/issues'
-import { useEpics } from '@/api/epics'
-import { queryKeys } from '@/api/queryKeys'
-import { BoardColumn } from '@/components/board/BoardColumn'
-import { IssueCardGhost } from '@/components/board/IssueCard'
-import { AddColumnModal } from '@/components/board/AddColumnModal'
-import { BoardMembersPanel } from '@/components/board/BoardMembersPanel'
-import { CreateIssueModal } from '@/components/issues/CreateIssueModal'
-import { IssueDetailPanel } from '@/components/issues/IssueDetailPanel'
-import { cn } from '@/utils/cn'
-import type { BoardColumn as BoardColumnType } from '@/types/board'
-import type { Issue } from '@/types/issue'
-import type { Epic } from '@/types/epic'
+import {arrayMove, horizontalListSortingStrategy, SortableContext, useSortable,} from '@dnd-kit/sortable'
+import {CSS} from '@dnd-kit/utilities'
+import {AlertCircle, ChevronRight, Loader2, Plus, Settings, Users} from 'lucide-react'
+import {useQueryClient} from '@tanstack/react-query'
+import {toast} from 'sonner'
+import {boardsApi, useBoard} from '@/api/boards'
+import {issuesApi, useIssues} from '@/api/issues'
+import {useEpics} from '@/api/epics'
+import {queryKeys} from '@/api/queryKeys'
+import {BoardColumn} from '@/components/board/BoardColumn'
+import {IssueCardGhost} from '@/components/board/IssueCard'
+import {AddColumnModal} from '@/components/board/AddColumnModal'
+import {BoardMembersPanel} from '@/components/board/BoardMembersPanel'
+import {CreateIssueModal} from '@/components/issues/CreateIssueModal'
+import {IssueDetailPanel} from '@/components/issues/IssueDetailPanel'
+import {cn} from '@/utils/cn'
+import type {BoardColumn as BoardColumnType} from '@/types/board'
+import type {Issue} from '@/types/issue'
+import type {Epic} from '@/types/epic'
 
 // ── Sortable column wrapper ───────────────────────────────────────────────────
 function SortableColumn({

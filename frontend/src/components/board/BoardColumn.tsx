@@ -1,11 +1,11 @@
-import { useDroppable } from '@dnd-kit/core'
-import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
-import { GripVertical, Plus } from 'lucide-react'
-import { cn } from '@/utils/cn'
-import { IssueCard } from './IssueCard'
-import type { BoardColumn as BoardColumnType } from '@/types/board'
-import type { Issue } from '@/types/issue'
-import type { Epic } from '@/types/epic'
+import {useDroppable} from '@dnd-kit/core'
+import {SortableContext, verticalListSortingStrategy} from '@dnd-kit/sortable'
+import {GripVertical, Plus} from 'lucide-react'
+import {cn} from '@/utils/cn'
+import {IssueCard} from './IssueCard'
+import type {BoardColumn as BoardColumnType} from '@/types/board'
+import type {Issue} from '@/types/issue'
+import type {Epic} from '@/types/epic'
 
 interface BoardColumnProps {
   column: BoardColumnType

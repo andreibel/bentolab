@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react'
-import { useSearchParams, useNavigate, Link } from 'react-router-dom'
-import { Loader2, CheckCircle2, XCircle, Users } from 'lucide-react'
-import { orgsApi } from '@/api/orgs'
-import { authApi } from '@/api/auth'
-import { useAuthStore } from '@/stores/authStore'
-import { Button } from '@/components/ui/Button'
-import type { InvitationPreview } from '@/types/org'
+import {useEffect, useState} from 'react'
+import {Link, useNavigate, useSearchParams} from 'react-router-dom'
+import {CheckCircle2, Loader2, Users, XCircle} from 'lucide-react'
+import {orgsApi} from '@/api/orgs'
+import {authApi} from '@/api/auth'
+import {useAuthStore} from '@/stores/authStore'
+import {Button} from '@/components/ui/Button'
+import type {InvitationPreview} from '@/types/org'
 
 const ROLE_LABELS: Record<string, string> = {
   ORG_MEMBER: 'Member',

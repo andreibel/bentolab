@@ -1,17 +1,6 @@
-import { motion } from 'framer-motion'
-import {
-  ArrowRight,
-  Kanban,
-  Zap,
-  Users,
-  ShieldCheck,
-  Github,
-  BarChart2,
-  CheckCircle2,
-  Boxes,
-  Cpu,
-} from 'lucide-react'
-import { Link } from 'react-router-dom'
+import {motion} from 'framer-motion'
+import {ArrowRight, BarChart2, Boxes, CheckCircle2, Cpu, Github, Kanban, ShieldCheck, Users, Zap,} from 'lucide-react'
+import {Link} from 'react-router-dom'
 
 // ─── Animation variants ───────────────────────────────────────────────────────
 

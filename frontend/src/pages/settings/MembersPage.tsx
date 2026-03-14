@@ -1,12 +1,12 @@
-import { useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { toast } from 'sonner'
-import { UserPlus, Trash2, Mail, Link2, CheckCircle2 } from 'lucide-react'
-import { orgsApi } from '@/api/orgs'
-import { useAuthStore } from '@/stores/authStore'
-import { Button } from '@/components/ui/Button'
-import { OrgInviteModal } from '@/components/org/OrgInviteModal'
-import type { OrgInvitation } from '@/types/org'
+import {useState} from 'react'
+import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query'
+import {toast} from 'sonner'
+import {CheckCircle2, Link2, Mail, Trash2, UserPlus} from 'lucide-react'
+import {orgsApi} from '@/api/orgs'
+import {useAuthStore} from '@/stores/authStore'
+import {Button} from '@/components/ui/Button'
+import {OrgInviteModal} from '@/components/org/OrgInviteModal'
+import type {OrgInvitation} from '@/types/org'
 
 const ROLE_LABELS: Record<string, string> = {
   ORG_MEMBER: 'Member',

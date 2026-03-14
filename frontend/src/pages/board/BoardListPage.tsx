@@ -1,10 +1,10 @@
-import { useState } from 'react'
-import { Kanban, Plus, LayoutGrid, Clock } from 'lucide-react'
-import { Link } from 'react-router-dom'
-import { useBoards } from '@/api/boards'
-import { CreateBoardWizard } from '@/components/board/CreateBoardWizard'
-import { cn } from '@/utils/cn'
-import type { Board } from '@/types/board'
+import {useState} from 'react'
+import {Clock, Kanban, LayoutGrid, Plus} from 'lucide-react'
+import {Link} from 'react-router-dom'
+import {useBoards} from '@/api/boards'
+import {CreateBoardWizard} from '@/components/board/CreateBoardWizard'
+import {cn} from '@/utils/cn'
+import type {Board} from '@/types/board'
 
 const BOARD_TYPE_LABEL: Record<Board['boardType'], string> = {
   SCRUM:        'Scrum',

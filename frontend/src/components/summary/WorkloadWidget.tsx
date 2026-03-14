@@ -1,5 +1,3 @@
-import { cn } from '@/utils/cn'
-
 const MOCK_MEMBERS = [
   { name: 'Alex Kim',    initials: 'AK', color: '#3B82F6', open: 7, inProgress: 3, done: 12 },
   { name: 'Sara Chen',   initials: 'SC', color: '#8B5CF6', open: 4, inProgress: 2, done: 8  },

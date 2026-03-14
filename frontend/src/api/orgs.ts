@@ -1,5 +1,5 @@
 import client from './client'
-import type { Org, OrgListItem, OrgMember, OrgInvitation, InvitationPreview, AcceptInvitationResult } from '@/types/org'
+import type {AcceptInvitationResult, InvitationPreview, Org, OrgInvitation, OrgListItem, OrgMember} from '@/types/org'
 
 export const orgsApi = {
   list: () =>

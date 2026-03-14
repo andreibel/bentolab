@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
-import { CheckCircle2, AlertCircle, Loader2 } from 'lucide-react'
-import { authApi } from '@/api/auth'
-import { Button } from '@/components/ui/Button'
+import {useEffect, useState} from 'react'
+import {Link, useSearchParams} from 'react-router-dom'
+import {AlertCircle, CheckCircle2, Loader2} from 'lucide-react'
+import {authApi} from '@/api/auth'
+import {Button} from '@/components/ui/Button'
 
 type State = 'loading' | 'success' | 'error'
 

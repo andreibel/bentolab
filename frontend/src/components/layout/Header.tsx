@@ -1,6 +1,6 @@
-import { Bell, Plus, Search, Sun, Moon } from 'lucide-react'
-import { useAuthStore } from '@/stores/authStore'
-import { useUIStore } from '@/stores/uiStore'
+import {Bell, Moon, Plus, Search, Sun} from 'lucide-react'
+import {useAuthStore} from '@/stores/authStore'
+import {useUIStore} from '@/stores/uiStore'
 
 interface HeaderProps {
   title?: string

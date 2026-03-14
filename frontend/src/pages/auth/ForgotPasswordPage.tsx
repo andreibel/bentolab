@@ -1,12 +1,12 @@
-import { useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { Link } from 'react-router-dom'
-import { MailCheck } from 'lucide-react'
-import { authApi } from '@/api/auth'
-import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
+import {useState} from 'react'
+import {useForm} from 'react-hook-form'
+import {zodResolver} from '@hookform/resolvers/zod'
+import {z} from 'zod'
+import {Link} from 'react-router-dom'
+import {MailCheck} from 'lucide-react'
+import {authApi} from '@/api/auth'
+import {Button} from '@/components/ui/Button'
+import {Input} from '@/components/ui/Input'
 
 const schema = z.object({
   email: z.string().email('Enter a valid email'),

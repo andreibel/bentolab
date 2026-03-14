@@ -1,5 +1,5 @@
 import client from './client'
-import type { AuthResponse, User } from '@/types/auth'
+import type {AuthResponse, User} from '@/types/auth'
 
 export const authApi = {
   login: (email: string, password: string) =>

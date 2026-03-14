@@ -1,5 +1,5 @@
-import { BarChart2 } from 'lucide-react'
-import { FeaturePlaceholder, SkeletonBlock } from '@/components/common/FeaturePlaceholder'
+import {BarChart2} from 'lucide-react'
+import {FeaturePlaceholder} from '@/components/common/FeaturePlaceholder'
 
 const velocityData = [14, 22, 18, 26, 28, 24, 30]
 const burndown     = [30, 26, 24, 20, 16, 12, 8, 5, 3, 0]

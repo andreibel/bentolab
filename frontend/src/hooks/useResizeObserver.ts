@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
+import {useCallback, useEffect, useRef, useState} from 'react'
 
 export function useResizeObserver<T extends HTMLElement>(): [
   (node: T | null) => void,

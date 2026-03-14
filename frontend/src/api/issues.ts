@@ -1,7 +1,7 @@
-import { useQuery } from '@tanstack/react-query'
+import {useQuery} from '@tanstack/react-query'
 import client from './client'
-import { queryKeys } from './queryKeys'
-import type { Issue, Comment, Activity, TimeLog, Page } from '@/types/issue'
+import {queryKeys} from './queryKeys'
+import type {Activity, Comment, Issue, Page, TimeLog} from '@/types/issue'
 
 export const issuesApi = {
   list: (boardId: string, page = 0, size = 200, closed?: boolean) =>

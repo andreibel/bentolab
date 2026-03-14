@@ -1,17 +1,14 @@
-import { useState } from 'react'
-import { useParams } from 'react-router-dom'
-import {
-  Plus, Play, CheckCircle, Clock, Target,
-  Loader2, ChevronDown, ChevronRight,
-} from 'lucide-react'
-import { useQueryClient } from '@tanstack/react-query'
-import { toast } from 'sonner'
-import { useSprints, sprintsApi } from '@/api/sprints'
-import { useIssues } from '@/api/issues'
-import { queryKeys } from '@/api/queryKeys'
-import { cn } from '@/utils/cn'
-import { CreateSprintModal } from '@/components/sprint/CreateSprintModal'
-import type { Sprint } from '@/types/sprint'
+import {useState} from 'react'
+import {useParams} from 'react-router-dom'
+import {CheckCircle, ChevronDown, ChevronRight, Clock, Loader2, Play, Plus, Target,} from 'lucide-react'
+import {useQueryClient} from '@tanstack/react-query'
+import {toast} from 'sonner'
+import {sprintsApi, useSprints} from '@/api/sprints'
+import {useIssues} from '@/api/issues'
+import {queryKeys} from '@/api/queryKeys'
+import {cn} from '@/utils/cn'
+import {CreateSprintModal} from '@/components/sprint/CreateSprintModal'
+import type {Sprint} from '@/types/sprint'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

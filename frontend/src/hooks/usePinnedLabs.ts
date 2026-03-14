@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import {useCallback, useState} from 'react'
 
 const PINNED_KEY = 'bentolab-pinned'
 const RECENT_KEY = 'bentolab-recent'

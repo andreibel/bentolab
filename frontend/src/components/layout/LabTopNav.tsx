@@ -1,7 +1,7 @@
-import { NavLink, useParams } from 'react-router-dom'
-import { useBoard } from '@/api/boards'
-import { cn } from '@/utils/cn'
-import { Loader2 } from 'lucide-react'
+import {NavLink, useParams} from 'react-router-dom'
+import {useBoard} from '@/api/boards'
+import {cn} from '@/utils/cn'
+import {Loader2} from 'lucide-react'
 
 const LAB_TABS = [
   { label: 'Board',    path: ''          },

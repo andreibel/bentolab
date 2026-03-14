@@ -1,20 +1,29 @@
-import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
+import {useQuery} from '@tanstack/react-query'
 import Fuse from 'fuse.js'
 import {
-  Search, X, ChevronDown, SlidersHorizontal,
-  ArrowUp, ArrowDown, Minus, Bug, BookOpen, CheckSquare, Zap,
-  CalendarDays, Circle,
+  ArrowDown,
+  ArrowUp,
+  BookOpen,
+  Bug,
+  CalendarDays,
+  CheckSquare,
+  ChevronDown,
+  Circle,
+  Minus,
+  Search,
+  SlidersHorizontal,
+  X,
+  Zap,
 } from 'lucide-react'
-import { issuesApi } from '@/api/issues'
-import { useBoards } from '@/api/boards'
-import { queryKeys } from '@/api/queryKeys'
-import { useAuthStore } from '@/stores/authStore'
-import { IssueDetailPanel } from '@/components/issues/IssueDetailPanel'
-import { cn } from '@/utils/cn'
-import { toDatePart } from '@/components/ui/DatePicker'
-import type { Issue, IssuePriority, IssueType } from '@/types/issue'
-import type { Board, BoardColumn } from '@/types/board'
+import {issuesApi} from '@/api/issues'
+import {useBoards} from '@/api/boards'
+import {queryKeys} from '@/api/queryKeys'
+import {useAuthStore} from '@/stores/authStore'
+import {IssueDetailPanel} from '@/components/issues/IssueDetailPanel'
+import {cn} from '@/utils/cn'
+import type {Issue, IssuePriority, IssueType} from '@/types/issue'
+import type {Board} from '@/types/board'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
