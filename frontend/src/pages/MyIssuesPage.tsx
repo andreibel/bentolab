@@ -100,7 +100,7 @@ function BoardFilter({
               className="h-2 w-2 shrink-0 rounded-full"
               style={{ backgroundColor: selected.background ?? '#6B7280' }}
             />
-            <span className="max-w-[120px] truncate">{selected.name}</span>
+            <span className="max-w-30 truncate">{selected.name}</span>
             <X className="h-3 w-3 opacity-60" onClick={(e) => { e.stopPropagation(); onChange(null) }} />
           </>
         ) : (
@@ -109,7 +109,7 @@ function BoardFilter({
       </button>
 
       {open && (
-        <div className="absolute start-0 top-full z-50 mt-1 w-56 rounded-xl border border-surface-border bg-surface shadow-xl">
+        <div className="absolute inset-s-0 top-full z-50 mt-1 w-56 rounded-xl border border-surface-border bg-surface shadow-xl">
           <div className="p-2">
             <div className="flex items-center gap-1.5 rounded-lg border border-surface-border bg-surface-muted px-2 py-1.5">
               <Search className="h-3 w-3 shrink-0 text-text-muted" />
@@ -187,7 +187,7 @@ function PillFilter<T extends string>({
         {value && <X className="h-3 w-3 opacity-60" onClick={(e) => { e.stopPropagation(); onChange(null) }} />}
       </button>
       {open && (
-        <div className="absolute start-0 top-full z-50 mt-1 min-w-[140px] rounded-xl border border-surface-border bg-surface shadow-xl py-1">
+        <div className="absolute inset-s-0 top-full z-50 mt-1 min-w-35 rounded-xl border border-surface-border bg-surface shadow-xl py-1">
           {options.map(o => (
             <button
               key={o}
@@ -254,7 +254,7 @@ function IssueRow({
       {/* Board */}
       <span className="flex shrink-0 items-center gap-1 rounded-full bg-surface-muted px-2 py-0.5 text-[11px] text-text-muted">
         <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ backgroundColor: boardColor }} />
-        <span className="max-w-[80px] truncate">{boardName}</span>
+        <span className="max-w-20 truncate">{boardName}</span>
       </span>
 
       {/* Due date */}
@@ -354,7 +354,11 @@ export default function MyIssuesPage() {
     document.addEventListener('mouseup', onUp)
   }, [panelWidth])
 
-  useEffect(() => { if (!detailIssueId) setPanelWidth(MIN_PANEL) }, [detailIssueId])
+  function closeDetail() {
+    setDetailIssueId(null)
+    setDetailBoardId(null)
+    setPanelWidth(MIN_PANEL)
+  }
 
   // Data
   const { data: boards = [] } = useBoards()
@@ -599,7 +603,7 @@ export default function MyIssuesPage() {
           boards={boards}
           panelWidth={panelWidth}
           startResize={startResize}
-          onClose={() => { setDetailIssueId(null); setDetailBoardId(null) }}
+          onClose={closeDetail}
         />
       )}
     </div>
