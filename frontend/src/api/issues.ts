@@ -25,6 +25,9 @@ export const issuesApi = {
 
   delete: (issueId: string) => client.delete(`/api/issues/${issueId}`),
 
+  assign: (issueId: string, assigneeId: string | null) =>
+    client.patch<Issue>(`/api/issues/${issueId}/assign`, { assigneeId }).then((r) => r.data),
+
   mine: (relation: 'all' | 'assigned' | 'created' = 'all', closed?: boolean) =>
     client
       .get<Page<Issue>>('/api/issues/mine', {

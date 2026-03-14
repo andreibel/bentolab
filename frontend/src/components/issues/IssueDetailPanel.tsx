@@ -24,7 +24,8 @@ function TitleEditor({ value, onSave }: { value: string; onSave: (v: string) => 
   const ref = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => { if (editing) { ref.current?.focus(); ref.current?.select() } }, [editing])
-  useEffect(() => { if (!editing) setDraft(value) }, [value, editing])
+
+  const startEditing = () => { setDraft(value); setEditing(true) }
 
   const commit = () => {
     if (draft.trim() && draft.trim() !== value) onSave(draft.trim())
@@ -50,11 +51,11 @@ function TitleEditor({ value, onSave }: { value: string; onSave: (v: string) => 
 
   return (
     <h1
-      onClick={() => setEditing(true)}
+      onClick={startEditing}
       className="group relative cursor-text rounded-md px-1 py-0.5 text-xl font-bold leading-snug text-text-primary hover:bg-surface-muted"
     >
       {value}
-      <Pencil className="absolute end-1 top-1.5 h-3.5 w-3.5 text-text-muted opacity-0 transition-opacity group-hover:opacity-100" />
+      <Pencil className="absolute inset-e-1 top-1.5 h-3.5 w-3.5 text-text-muted opacity-0 transition-opacity group-hover:opacity-100" />
     </h1>
   )
 }
@@ -137,6 +138,16 @@ export function IssueDetailPanel({
           queryClient.invalidateQueries({ queryKey: ['issues', effectiveBoardId], exact: false })
         }
       }).catch(() => toast.error('Failed to move issue'))
+      return
+    }
+    if ('assigneeId' in data) {
+      issuesApi.assign(issueId, data.assigneeId ?? null).then((updated) => {
+        queryClient.setQueryData<Issue>(queryKeys.issues.detail(issueId), updated)
+        queryClient.invalidateQueries({ queryKey: queryKeys.issues.activities(issueId) })
+        if (effectiveBoardId) {
+          queryClient.invalidateQueries({ queryKey: ['issues', effectiveBoardId], exact: false })
+        }
+      }).catch(() => toast.error('Failed to update assignee'))
       return
     }
     mutation.mutate(data)
