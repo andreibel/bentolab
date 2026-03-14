@@ -26,6 +26,10 @@ export function AppLayout() {
   const labMatch = useMatch({ path: '/boards/:boardId', end: false })
   const isLabRoute = !!labMatch
 
+  // Full-screen pages that need no padding and no outer scroll (like board routes)
+  const FULL_ROUTES = ['/calendar', '/my-issues']
+  const isFullRoute = isLabRoute || FULL_ROUTES.includes(pathname)
+
   const pageTitle = isLabRoute ? undefined : TITLE_MAP[pathname]
 
   return (
@@ -36,7 +40,7 @@ export function AppLayout() {
 
         {isLabRoute && <LabTopNav />}
 
-        {isLabRoute ? (
+        {isFullRoute ? (
           <main className="flex flex-1 flex-col overflow-hidden bg-surface-muted">
             <Outlet />
           </main>

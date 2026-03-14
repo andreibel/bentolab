@@ -102,7 +102,7 @@ function BoardFilter({
         {selected ? (
           <>
             <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: selected.background ?? '#6B7280' }} />
-            <span className="max-w-[100px] truncate">{selected.name}</span>
+            <span className="max-w-25 truncate">{selected.name}</span>
             <X className="h-3 w-3 opacity-60" onClick={e => { e.stopPropagation(); onChange(null) }} />
           </>
         ) : (
@@ -110,7 +110,7 @@ function BoardFilter({
         )}
       </button>
       {open && (
-        <div className="absolute start-0 top-full z-50 mt-1 w-52 rounded-xl border border-surface-border bg-surface shadow-xl">
+        <div className="absolute inset-s-0 top-full z-50 mt-1 w-52 rounded-xl border border-surface-border bg-surface shadow-xl">
           <div className="p-2">
             <div className="flex items-center gap-1.5 rounded-lg border border-surface-border bg-surface-muted px-2 py-1.5">
               <Search className="h-3 w-3 shrink-0 text-text-muted" />
@@ -347,7 +347,7 @@ function WeekView({
             {/* Issues — scrollable column */}
             <div className={cn(
               'flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto p-2',
-              isToday && 'bg-primary/[0.02]',
+              isToday && 'bg-primary/2',
             )}>
               {dayIssues.length === 0 ? (
                 <div className="flex flex-1 items-center justify-center">
@@ -411,7 +411,11 @@ export default function CalendarPage() {
     document.addEventListener('mouseup', onUp)
   }, [panelWidth])
 
-  useEffect(() => { if (!detailIssueId) setPanelWidth(MIN_PANEL) }, [detailIssueId])
+  function closeDetail() {
+    setDetailIssueId(null)
+    setDetailBoardId(null)
+    setPanelWidth(MIN_PANEL)
+  }
 
   // ── Navigation ────────────────────────────────────────────────────────────
 
@@ -639,7 +643,7 @@ export default function CalendarPage() {
           boardId={detailBoardId}
           panelWidth={panelWidth}
           startResize={startResize}
-          onClose={() => { setDetailIssueId(null); setDetailBoardId(null) }}
+          onClose={closeDetail}
         />
       )}
     </div>

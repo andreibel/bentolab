@@ -10,6 +10,7 @@ import {sprintsApi, useSprints} from '@/api/sprints'
 import {epicsApi, useEpics} from '@/api/epics'
 import {useBoard} from '@/api/boards'
 import {queryKeys} from '@/api/queryKeys'
+import {EpicFilter} from '@/components/board/EpicFilter'
 import {IssueDetailPanel} from '@/components/issues/IssueDetailPanel'
 import {CreateIssueModal} from '@/components/issues/CreateIssueModal'
 import {CreateSprintModal} from '@/components/sprint/CreateSprintModal'
@@ -493,7 +494,7 @@ export default function BacklogPage() {
   const allIssues = issuesPage?.content ?? []
   const epicsMap  = useMemo(() => new Map(epics.map((e) => [e.id, e])), [epics])
 
-  const [selectedEpicId,  setSelectedEpicId]  = useState<string | null>(null)
+  const [selectedEpicIds, setSelectedEpicIds] = useState<Set<string>>(new Set())
   const [detailIssueId,   setDetailIssueId]   = useState<string | null>(null)
   const MIN_PANEL = 680
   const [panelWidth, setPanelWidth] = useState(MIN_PANEL)
@@ -518,7 +519,11 @@ export default function BacklogPage() {
     document.addEventListener('mouseup', onUp)
   }, [panelWidth])
 
-  useEffect(() => { if (!detailIssueId) setPanelWidth(MIN_PANEL) }, [detailIssueId])
+  function closeDetail() {
+    setDetailIssueId(null)
+    setPanelWidth(MIN_PANEL)
+  }
+
   const [createSprintOpen, setCreateSprintOpen] = useState(false)
   const [createEpicOpen,   setCreateEpicOpen]   = useState(false)
   const [completeId,       setCompleteId]       = useState<string | null>(null)
@@ -533,8 +538,10 @@ export default function BacklogPage() {
   }, [allIssues, closedTab])
 
   const filteredIssues = useMemo(
-    () => selectedEpicId ? tabFilteredIssues.filter((i) => i.epicId === selectedEpicId) : tabFilteredIssues,
-    [tabFilteredIssues, selectedEpicId],
+    () => selectedEpicIds.size > 0
+      ? tabFilteredIssues.filter((i) => i.epicId != null && selectedEpicIds.has(i.epicId))
+      : tabFilteredIssues,
+    [tabFilteredIssues, selectedEpicIds],
   )
 
   // Sort: ACTIVE → PLANNED (by startDate) → COMPLETED
@@ -630,6 +637,9 @@ export default function BacklogPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {epics.length > 0 && (
+            <EpicFilter epics={epics} selected={selectedEpicIds} onChange={setSelectedEpicIds} />
+          )}
           <button
             onClick={() => setCreateEpicOpen(true)}
             className="flex items-center gap-1.5 rounded-lg border border-surface-border px-3 py-1.5 text-xs text-text-muted transition-colors hover:border-primary/30 hover:text-primary"
@@ -653,41 +663,6 @@ export default function BacklogPage() {
           </button>
         </div>
       </div>
-
-      {/* Epic filter bar */}
-      {epics.length > 0 && (
-        <div className="flex shrink-0 items-center gap-2 overflow-x-auto border-b border-surface-border bg-surface px-5 py-2">
-          <span className="shrink-0 text-xs font-medium text-text-muted">Epic:</span>
-          <button
-            onClick={() => setSelectedEpicId(null)}
-            className={cn(
-              'shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors',
-              selectedEpicId === null
-                ? 'bg-primary text-white'
-                : 'bg-surface-muted text-text-muted hover:text-text-primary',
-            )}
-          >
-            All
-          </button>
-          {epics.map((e) => (
-            <button
-              key={e.id}
-              onClick={() => setSelectedEpicId(selectedEpicId === e.id ? null : e.id)}
-              className={cn(
-                'flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors',
-                selectedEpicId === e.id ? 'text-white' : 'bg-surface-muted text-text-muted hover:text-text-primary',
-              )}
-              style={selectedEpicId === e.id ? { backgroundColor: e.color } : undefined}
-            >
-              <span
-                className="h-1.5 w-1.5 rounded-full"
-                style={{ backgroundColor: selectedEpicId === e.id ? 'rgba(255,255,255,0.75)' : e.color }}
-              />
-              {e.title}
-            </button>
-          ))}
-        </div>
-      )}
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
@@ -765,7 +740,7 @@ export default function BacklogPage() {
               issueId={detailIssueId}
               boardId={boardId!}
               columns={board?.columns ?? []}
-              onClose={() => setDetailIssueId(null)}
+              onClose={closeDetail}
             />
           </div>
         </>
