@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useCallback } from 'react'
+import { useState, useMemo, useRef, useCallback, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import {
   DndContext,
@@ -156,6 +156,30 @@ export default function BoardPage() {
   const [issueModal,     setIssueModal]     = useState<{ open: boolean; columnId?: string }>({ open: false })
   const [detailIssueId,  setDetailIssueId]  = useState<string | null>(null)
   const [membersOpen,    setMembersOpen]    = useState(false)
+  const MIN_PANEL = 680
+  const [panelWidth, setPanelWidth] = useState(MIN_PANEL)
+
+  const startResize = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    const startX = e.clientX
+    const startW = panelWidth
+    const onMove = (ev: MouseEvent) => {
+      const maxPanel = Math.max(window.innerWidth / 2, MIN_PANEL)
+      setPanelWidth(Math.min(maxPanel, Math.max(MIN_PANEL, startW + (startX - ev.clientX))))
+    }
+    const onUp = () => {
+      document.removeEventListener('mousemove', onMove)
+      document.removeEventListener('mouseup', onUp)
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+    }
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
+    document.addEventListener('mousemove', onMove)
+    document.addEventListener('mouseup', onUp)
+  }, [panelWidth])
+
+  useEffect(() => { if (!detailIssueId) setPanelWidth(MIN_PANEL) }, [detailIssueId])
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -366,7 +390,7 @@ export default function BoardPage() {
 
   return (
     <div className="flex h-full overflow-hidden">
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
       {/* Board header */}
       <div className="flex shrink-0 items-center justify-between border-b border-surface-border bg-surface px-5 py-3">
         <div className="flex items-center gap-2 text-sm">
@@ -509,15 +533,23 @@ export default function BoardPage() {
         boardName={board?.name}
         columnId={issueModal.columnId}
       />
+      </div>
 
       {detailIssueId && (
-        <IssueDetailPanel
-          issueId={detailIssueId}
-          columns={sortedColumns}
-          onClose={() => setDetailIssueId(null)}
-        />
+        <>
+          <div
+            onMouseDown={startResize}
+            className="w-1 shrink-0 cursor-col-resize bg-surface-border transition-colors hover:bg-primary/40"
+          />
+          <div style={{ width: panelWidth }} className="shrink-0 overflow-hidden">
+            <IssueDetailPanel
+              issueId={detailIssueId}
+              columns={sortedColumns}
+              onClose={() => setDetailIssueId(null)}
+            />
+          </div>
+        </>
       )}
-      </div>
 
       {membersOpen && (
         <BoardMembersPanel

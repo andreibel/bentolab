@@ -2,14 +2,21 @@ import { useState, useEffect, useCallback } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import { StarterKit } from '@tiptap/starter-kit'
 import { Bold, Italic, Code, List, ListOrdered } from 'lucide-react'
+import { marked } from 'marked'
 import { cn } from '@/utils/cn'
+
+function toHtml(value: string): string {
+  if (!value) return ''
+  if (value.trimStart().startsWith('<')) return value
+  return marked.parse(value, { async: false }) as string
+}
 
 export function DescriptionEditor({ value, onSave }: { value: string; onSave: (html: string) => void }) {
   const [editing, setEditing] = useState(false)
 
   const editor = useEditor({
     extensions: [StarterKit],
-    content: value || '',
+    content: toHtml(value),
     editable: false,
     editorProps: {
       attributes: {
@@ -30,7 +37,7 @@ export function DescriptionEditor({ value, onSave }: { value: string; onSave: (h
   })
 
   useEffect(() => {
-    if (editor && !editing) editor.commands.setContent(value || '')
+    if (editor && !editing) editor.commands.setContent(toHtml(value))
   }, [value, editor, editing])
 
   useEffect(() => {
@@ -45,7 +52,7 @@ export function DescriptionEditor({ value, onSave }: { value: string; onSave: (h
   }, [editor, value, onSave])
 
   const cancel = useCallback(() => {
-    editor?.commands.setContent(value || '')
+    editor?.commands.setContent(toHtml(value))
     setEditing(false)
   }, [editor, value])
 

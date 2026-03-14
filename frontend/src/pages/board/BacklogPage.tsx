@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from 'react'
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { useParams } from 'react-router-dom'
 import {
   Plus, ChevronDown, ChevronRight, Play,
@@ -15,6 +15,7 @@ import { useBoard } from '@/api/boards'
 import { queryKeys } from '@/api/queryKeys'
 import { IssueDetailPanel } from '@/components/issues/IssueDetailPanel'
 import { CreateIssueModal } from '@/components/issues/CreateIssueModal'
+import { CreateSprintModal } from '@/components/sprint/CreateSprintModal'
 import { cn } from '@/utils/cn'
 import type { Issue } from '@/types/issue'
 import type { Sprint } from '@/types/sprint'
@@ -350,112 +351,6 @@ function BacklogSection({
   )
 }
 
-// ── Create Sprint Modal ────────────────────────────────────────────────────────
-
-function CreateSprintModal({ boardId, onClose }: { boardId: string; onClose: () => void }) {
-  const queryClient = useQueryClient()
-  const [name, setName]           = useState('')
-  const [goal, setGoal]           = useState('')
-  const [startDate, setStartDate] = useState('')
-  const [endDate, setEndDate]     = useState('')
-  const [submitting, setSubmitting] = useState(false)
-
-  useEffect(() => {
-    const today    = new Date().toISOString().split('T')[0]
-    const twoWeeks = new Date(Date.now() + 14 * 86_400_000).toISOString().split('T')[0]
-    setStartDate(today)
-    setEndDate(twoWeeks)
-  }, [])
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!name.trim() || !startDate || !endDate) return
-    setSubmitting(true)
-    try {
-      await sprintsApi.create({
-        boardId,
-        name:      name.trim(),
-        goal:      goal.trim() || undefined,
-        startDate: new Date(startDate).toISOString(),
-        endDate:   new Date(endDate).toISOString(),
-      })
-      queryClient.invalidateQueries({ queryKey: queryKeys.sprints.all(boardId) })
-      toast.success('Sprint created')
-      onClose()
-    } catch {
-      toast.error('Failed to create sprint')
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative z-50 w-[440px] rounded-2xl border border-surface-border bg-surface shadow-2xl">
-        <div className="flex items-center justify-between border-b border-surface-border px-5 py-4">
-          <h2 className="text-base font-semibold text-text-primary">Create Sprint</h2>
-          <button onClick={onClose} className="rounded p-1 text-text-muted hover:bg-surface-muted">
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4 p-5">
-          <div>
-            <label className="mb-1.5 block text-xs font-medium text-text-muted">Name *</label>
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Sprint 1"
-              required autoFocus
-              className="w-full rounded-lg border border-surface-border bg-surface-muted px-3 py-2 text-sm text-text-primary outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary/20"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-text-muted">Start Date *</label>
-              <input
-                type="date" value={startDate}
-                onChange={(e) => setStartDate(e.target.value)} required
-                className="w-full rounded-lg border border-surface-border bg-surface-muted px-3 py-2 text-sm text-text-primary outline-none focus:border-primary"
-              />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-text-muted">End Date *</label>
-              <input
-                type="date" value={endDate}
-                onChange={(e) => setEndDate(e.target.value)} required
-                className="w-full rounded-lg border border-surface-border bg-surface-muted px-3 py-2 text-sm text-text-primary outline-none focus:border-primary"
-              />
-            </div>
-          </div>
-          <div>
-            <label className="mb-1.5 block text-xs font-medium text-text-muted">Sprint Goal</label>
-            <textarea
-              value={goal}
-              onChange={(e) => setGoal(e.target.value)}
-              placeholder="What do you want to achieve in this sprint?"
-              rows={2}
-              className="w-full resize-none rounded-lg border border-surface-border bg-surface-muted px-3 py-2 text-sm text-text-primary placeholder:text-text-muted outline-none focus:border-primary"
-            />
-          </div>
-          <div className="flex justify-end gap-2 pt-1">
-            <button type="button" onClick={onClose} className="rounded-md px-4 py-2 text-sm text-text-muted hover:text-text-primary">
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={submitting || !name.trim()}
-              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-light disabled:opacity-50"
-            >
-              {submitting ? 'Creating…' : 'Create Sprint'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  )
-}
-
 // ── Create Epic Modal ─────────────────────────────────────────────────────────
 
 function CreateEpicModal({ boardId, onClose }: { boardId: string; onClose: () => void }) {
@@ -603,6 +498,30 @@ export default function BacklogPage() {
 
   const [selectedEpicId,  setSelectedEpicId]  = useState<string | null>(null)
   const [detailIssueId,   setDetailIssueId]   = useState<string | null>(null)
+  const MIN_PANEL = 680
+  const [panelWidth, setPanelWidth] = useState(MIN_PANEL)
+
+  const startResize = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    const startX = e.clientX
+    const startW = panelWidth
+    const onMove = (ev: MouseEvent) => {
+      const maxPanel = Math.max(window.innerWidth / 2, MIN_PANEL)
+      setPanelWidth(Math.min(maxPanel, Math.max(MIN_PANEL, startW + (startX - ev.clientX))))
+    }
+    const onUp = () => {
+      document.removeEventListener('mousemove', onMove)
+      document.removeEventListener('mouseup', onUp)
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+    }
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
+    document.addEventListener('mousemove', onMove)
+    document.addEventListener('mouseup', onUp)
+  }, [panelWidth])
+
+  useEffect(() => { if (!detailIssueId) setPanelWidth(MIN_PANEL) }, [detailIssueId])
   const [createSprintOpen, setCreateSprintOpen] = useState(false)
   const [createEpicOpen,   setCreateEpicOpen]   = useState(false)
   const [completeId,       setCompleteId]       = useState<string | null>(null)
@@ -683,7 +602,8 @@ export default function BacklogPage() {
   const completingSprint = completeId ? sortedSprints.find((s) => s.id === completeId) : null
 
   return (
-    <div className="flex h-full flex-col overflow-hidden">
+    <div className="flex h-full overflow-hidden">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
       {/* Header */}
       <div className="flex shrink-0 items-center justify-between border-b border-surface-border bg-surface px-5 py-3">
         <div className="flex items-center gap-3">
@@ -813,7 +733,7 @@ export default function BacklogPage() {
 
       {/* Modals */}
       {createSprintOpen && (
-        <CreateSprintModal boardId={boardId!} onClose={() => setCreateSprintOpen(false)} />
+        <CreateSprintModal boardId={boardId!} existingSprints={sprints} onClose={() => setCreateSprintOpen(false)} />
       )}
       {createEpicOpen && (
         <CreateEpicModal boardId={boardId!} onClose={() => setCreateEpicOpen(false)} />
@@ -835,14 +755,23 @@ export default function BacklogPage() {
         boardName={board?.name}
         sprintId={issueModal.sprintId}
       />
+      </div>
 
       {detailIssueId && (
-        <IssueDetailPanel
-          issueId={detailIssueId}
-          boardId={boardId!}
-          columns={board?.columns ?? []}
-          onClose={() => setDetailIssueId(null)}
-        />
+        <>
+          <div
+            onMouseDown={startResize}
+            className="w-1 shrink-0 cursor-col-resize bg-surface-border transition-colors hover:bg-primary/40"
+          />
+          <div style={{ width: panelWidth }} className="shrink-0 overflow-hidden">
+            <IssueDetailPanel
+              issueId={detailIssueId}
+              boardId={boardId!}
+              columns={board?.columns ?? []}
+              onClose={() => setDetailIssueId(null)}
+            />
+          </div>
+        </>
       )}
     </div>
   )

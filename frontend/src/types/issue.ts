@@ -75,3 +75,13 @@ export interface Activity {
   details: Record<string, unknown>
   createdAt: string
 }
+
+export interface TimeLog {
+  id: string
+  issueId: string
+  userId: string
+  hoursSpent: number
+  date: string
+  description: string | null
+  createdAt: string
+}

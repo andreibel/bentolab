@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import client from './client'
 import { queryKeys } from './queryKeys'
-import type { Issue, Comment, Activity, Page } from '@/types/issue'
+import type { Issue, Comment, Activity, TimeLog, Page } from '@/types/issue'
 
 export const issuesApi = {
   list: (boardId: string, page = 0, size = 200, closed?: boolean) =>
@@ -56,6 +56,18 @@ export const issuesApi = {
       client
         .get<Page<Activity>>(`/api/issues/${issueId}/activities`, { params: { size: 50 } })
         .then((r) => r.data),
+  },
+
+  // ── Time logs ───────────────────────────────────────────────────────────────
+  timelogs: {
+    list: (issueId: string) =>
+      client.get<TimeLog[]>(`/api/issues/${issueId}/timelogs`).then((r) => r.data),
+
+    create: (issueId: string, data: { hoursSpent: number; date: string; description?: string }) =>
+      client.post<TimeLog>(`/api/issues/${issueId}/timelogs`, data).then((r) => r.data),
+
+    delete: (issueId: string, timeLogId: string) =>
+      client.delete(`/api/issues/${issueId}/timelogs/${timeLogId}`),
   },
 }
 

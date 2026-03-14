@@ -15,6 +15,8 @@ import { useSprints } from '@/api/sprints'
 import { queryKeys } from '@/api/queryKeys'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { DatePicker, toDatePart } from '@/components/ui/DatePicker'
+import { RichTextInput } from '@/components/ui/RichTextInput'
 import { cn } from '@/utils/cn'
 import type { IssueType, IssuePriority } from '@/types/issue'
 
@@ -47,6 +49,7 @@ interface FormValues {
   sprintId:      string
   parentIssueId: string
   storyPoints:   string
+  startDate:     string
   dueDate:       string
 }
 
@@ -140,7 +143,7 @@ export function CreateIssueModal({
       type: 'TASK', priority: 'MEDIUM',
       title: '', description: '',
       boardId: propBoardId ?? '', columnId: propColumnId ?? '',
-      epicId: '', sprintId: propSprintId ?? '', parentIssueId: '', storyPoints: '', dueDate: '',
+      epicId: '', sprintId: propSprintId ?? '', parentIssueId: '', storyPoints: '', startDate: '', dueDate: '',
     },
   })
 
@@ -167,7 +170,7 @@ export function CreateIssueModal({
       type: 'TASK', priority: 'MEDIUM',
       title: '', description: '',
       boardId: propBoardId ?? '', columnId: propColumnId ?? '',
-      epicId: '', sprintId: propSprintId ?? '', parentIssueId: '', storyPoints: '', dueDate: '',
+      epicId: '', sprintId: propSprintId ?? '', parentIssueId: '', storyPoints: '', startDate: '', dueDate: '',
     })
     setFullScreen(false)
   }, [open, propBoardId, propColumnId, reset])
@@ -206,7 +209,8 @@ export function CreateIssueModal({
         sprintId:      values.sprintId         || undefined,
         parentIssueId: values.parentIssueId    || undefined,
         storyPoints:   values.storyPoints ? Number(values.storyPoints) : undefined,
-        dueDate:       values.dueDate ? new Date(values.dueDate).toISOString() : undefined,
+        startDate:     values.startDate ? new Date(values.startDate + 'T12:00:00').toISOString() : undefined,
+        dueDate:       values.dueDate   ? new Date(values.dueDate   + 'T12:00:00').toISOString() : undefined,
       })
 
       queryClient.invalidateQueries({ queryKey: ['issues', effectiveBoardId], exact: false })
@@ -219,6 +223,18 @@ export function CreateIssueModal({
 
   const selectedType     = watch('type')
   const selectedPriority = watch('priority')
+  const watchedSprintId  = watch('sprintId')
+  const watchedStartDate = watch('startDate')
+  const watchedDueDate   = watch('dueDate')
+
+  const selectedSprint    = sprintsData.find(s => s.id === watchedSprintId)
+  const eligibleSprint    = selectedSprint?.status !== 'COMPLETED' ? selectedSprint : undefined
+  const sprintMin         = eligibleSprint?.startDate ? toDatePart(eligibleSprint.startDate) : undefined
+  const sprintMax         = eligibleSprint?.endDate   ? toDatePart(eligibleSprint.endDate)   : undefined
+  const startMaxCandidates = [sprintMax, watchedDueDate   || undefined].filter((v): v is string => !!v)
+  const startMax           = startMaxCandidates.length ? startMaxCandidates.sort().at(0)  : undefined
+  const dueMinCandidates   = [sprintMin, watchedStartDate || undefined].filter((v): v is string => !!v)
+  const dueMin             = dueMinCandidates.length   ? dueMinCandidates.sort().at(-1)   : undefined
   const typeInfo         = TYPES.find((t) => t.value === selectedType)!
   const priorityInfo     = PRIORITIES.find((p) => p.value === selectedPriority)!
 
@@ -305,11 +321,16 @@ export function CreateIssueModal({
                   />
                   {errors.title && <p className="mt-1 text-xs text-red-500">{errors.title.message}</p>}
                 </div>
-                <textarea
-                  {...register('description')}
-                  placeholder="Add a description… (optional)"
-                  rows={10}
-                  className="w-full flex-1 resize-none rounded-lg border border-surface-border bg-surface-muted px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted outline-none transition-colors focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
+                <Controller
+                  name="description"
+                  control={control}
+                  render={({ field }) => (
+                    <RichTextInput
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Add a description… (optional)"
+                    />
+                  )}
                 />
               </div>
 
@@ -368,11 +389,34 @@ export function CreateIssueModal({
                     className="w-full rounded-lg border border-surface-border bg-surface-muted px-2.5 py-1.5 text-sm text-text-primary placeholder:text-text-muted outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-colors"
                   />
                 </Field>
+                <Field label="Start date">
+                  <Controller
+                    name="startDate"
+                    control={control}
+                    render={({ field }) => (
+                      <DatePicker
+                        value={field.value ? toDatePart(field.value) : ''}
+                        onChange={(v) => field.onChange(v)}
+                        placeholder="No start date"
+                        minDate={sprintMin}
+                        maxDate={startMax}
+                      />
+                    )}
+                  />
+                </Field>
                 <Field label="Due date">
-                  <input
-                    {...register('dueDate')}
-                    type="date"
-                    className="w-full rounded-lg border border-surface-border bg-surface-muted px-2.5 py-1.5 text-sm text-text-primary outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-colors"
+                  <Controller
+                    name="dueDate"
+                    control={control}
+                    render={({ field }) => (
+                      <DatePicker
+                        value={field.value ? toDatePart(field.value) : ''}
+                        onChange={(v) => field.onChange(v)}
+                        placeholder="No due date"
+                        minDate={dueMin}
+                        maxDate={sprintMax}
+                      />
+                    )}
                   />
                 </Field>
               </div>

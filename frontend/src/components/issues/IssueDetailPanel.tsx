@@ -11,6 +11,7 @@ import { cn } from '@/utils/cn'
 import { IssueTypeBadge } from '@/components/ui/Badge'
 import { IssueMetaPanel } from './detail/IssueMetaPanel'
 import { DescriptionEditor } from './detail/DescriptionEditor'
+import { IssueTimeTracking } from './detail/IssueTimeTracking'
 import { IssueActivity } from './detail/IssueActivity'
 import type { Issue } from '@/types/issue'
 import type { BoardColumn } from '@/types/board'
@@ -150,8 +151,8 @@ export function IssueDetailPanel({
   return (
     <div
       className={cn(
-        'fixed end-0 top-0 z-50 flex h-screen w-[680px] max-w-full flex-col',
-        'border-s border-surface-border bg-surface shadow-2xl',
+        'flex h-full w-full flex-col',
+        'border-s border-surface-border bg-surface',
         'transition-transform duration-300 ease-out',
         visible ? 'translate-x-0' : 'translate-x-full',
       )}
@@ -237,6 +238,7 @@ export function IssueDetailPanel({
 
               <IssueMetaPanel
                 issue={issue}
+                boardId={effectiveBoardId}
                 columns={columns}
                 epics={epics}
                 sprints={sprints}
@@ -252,6 +254,8 @@ export function IssueDetailPanel({
                   onSave={(description) => handleUpdate({ description })}
                 />
               </section>
+
+              <IssueTimeTracking issue={issue} onUpdate={handleUpdate} />
 
               {childIssues.length > 0 && (
                 <section className="mb-6">
@@ -275,7 +279,7 @@ export function IssueDetailPanel({
                 </section>
               )}
 
-              <IssueActivity issueId={issueId} currentUser={user} />
+              <IssueActivity issueId={issueId} currentUser={user} columns={columns} epics={epics} sprints={sprints} />
 
             </div>
           </div>
