@@ -77,6 +77,26 @@
     );
 }
 
+/* ── Command palette entrance ─────────────────────────────────────────────── */
+
+@keyframes palette-in {
+  from { opacity: 0; transform: scale(0.96) translateY(-10px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0);     }
+}
+.animate-palette-in {
+  animation: palette-in 0.15s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ── Backdrop fade ────────────────────────────────────────────────────────── */
+
+@keyframes backdrop-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.animate-backdrop-in {
+  animation: backdrop-in 0.1s ease-out forwards;
+}
+
 /* Hide the default resize handle image */
 .react-resizable-handle {
   background-image: none !important;

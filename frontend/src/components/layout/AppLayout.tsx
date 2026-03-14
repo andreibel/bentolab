@@ -1,8 +1,9 @@
-import {useState} from 'react'
+import {useEffect, useState} from 'react'
 import {Outlet, useLocation, useMatch} from 'react-router-dom'
 import {Sidebar} from './Sidebar'
 import {Header} from './Header'
 import {LabTopNav} from './LabTopNav'
+import {CommandPalette} from './CommandPalette'
 import {CreateIssueModal} from '@/components/issues/CreateIssueModal'
 
 const TITLE_MAP: Record<string, string> = {
@@ -20,7 +21,22 @@ const TITLE_MAP: Record<string, string> = {
 
 export function AppLayout() {
   const { pathname } = useLocation()
-  const [createOpen, setCreateOpen] = useState(false)
+  const [createOpen,  setCreateOpen]  = useState(false)
+  const [commandOpen, setCommandOpen] = useState(false)
+
+  // Global shortcut: `/` or ⌘K opens the command palette
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement
+      const inInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable
+      if ((e.key === '/' && !inInput) || (e.key === 'k' && (e.metaKey || e.ctrlKey))) {
+        e.preventDefault()
+        setCommandOpen(true)
+      }
+    }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [])
 
   // Detect any /boards/:boardId route (including sub-routes like /backlog, /cycles…)
   const labMatch = useMatch({ path: '/boards/:boardId', end: false })
@@ -36,7 +52,11 @@ export function AppLayout() {
     <div className="flex h-screen overflow-hidden bg-surface">
       <Sidebar />
       <div className="flex flex-1 flex-col overflow-hidden">
-        <Header title={pageTitle} onCreateClick={() => setCreateOpen(true)} />
+        <Header
+          title={pageTitle}
+          onCreateClick={() => setCreateOpen(true)}
+          onSearchClick={() => setCommandOpen(true)}
+        />
 
         {isLabRoute && <LabTopNav />}
 
@@ -52,6 +72,11 @@ export function AppLayout() {
       </div>
 
       <CreateIssueModal open={createOpen} onClose={() => setCreateOpen(false)} />
+      <CommandPalette
+        open={commandOpen}
+        onClose={() => setCommandOpen(false)}
+        onCreateIssue={() => setCreateOpen(true)}
+      />
     </div>
   )
 }

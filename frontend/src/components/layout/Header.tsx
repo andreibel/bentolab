@@ -5,9 +5,10 @@ import {useUIStore} from '@/stores/uiStore'
 interface HeaderProps {
   title?: string
   onCreateClick?: () => void
+  onSearchClick?: () => void
 }
 
-export function Header({ title, onCreateClick }: HeaderProps) {
+export function Header({ title, onCreateClick, onSearchClick }: HeaderProps) {
   const { user, orgSlug } = useAuthStore()
   const { theme, toggleTheme } = useUIStore()
 
@@ -16,9 +17,10 @@ export function Header({ title, onCreateClick }: HeaderProps) {
     : '?'
 
   return (
-    <header className="flex h-14 shrink-0 items-center justify-between border-b border-surface-border bg-surface px-5">
+    <header className="flex h-14 shrink-0 items-center border-b border-surface-border bg-surface px-5">
+
       {/* Left: breadcrumb */}
-      <div className="flex items-center gap-2 text-sm">
+      <div className="flex flex-1 items-center gap-2 text-sm">
         {orgSlug && (
           <>
             <span className="font-medium text-text-muted">{orgSlug}</span>
@@ -32,17 +34,25 @@ export function Header({ title, onCreateClick }: HeaderProps) {
         )}
       </div>
 
-      {/* Right: actions */}
-      <div className="flex items-center gap-2">
-        {/* Search */}
-        <button className="flex h-8 items-center gap-2 rounded-lg border border-surface-border bg-surface-muted px-3 text-sm text-text-muted transition-colors hover:border-primary/30 hover:text-text-secondary">
-          <Search className="h-3.5 w-3.5" />
-          <span className="hidden md:inline">Search…</span>
-          <kbd className="hidden rounded border border-surface-border bg-surface px-1 text-[10px] text-text-muted md:inline">
-            ⌘K
+      {/* Center: search bar — GitLab style */}
+      <div className="flex w-[420px] shrink-0 justify-center">
+        <button
+          onClick={onSearchClick}
+          className="flex h-9 w-full items-center gap-2.5 rounded-lg border border-surface-border bg-surface-muted px-3.5 text-sm text-text-muted transition-colors hover:border-primary/40 hover:bg-surface hover:text-text-secondary"
+        >
+          <Search className="h-4 w-4 shrink-0" />
+          <span className="flex-1 text-start">Search or jump to…</span>
+          <kbd
+            className="rounded border border-surface-border bg-surface px-1.5 py-0.5 font-mono text-[10px] text-text-muted"
+            style={{ boxShadow: '0 2px 0 0 var(--color-surface-border)' }}
+          >
+            /
           </kbd>
         </button>
+      </div>
 
+      {/* Right: actions */}
+      <div className="flex flex-1 items-center justify-end gap-2">
         {/* Create */}
         <button
           onClick={onCreateClick}
