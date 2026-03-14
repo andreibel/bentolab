@@ -25,6 +25,13 @@ export const issuesApi = {
 
   delete: (issueId: string) => client.delete(`/api/issues/${issueId}`),
 
+  mine: (relation: 'all' | 'assigned' | 'created' = 'all', closed?: boolean) =>
+    client
+      .get<Page<Issue>>('/api/issues/mine', {
+        params: { relation, size: 200, ...(closed !== undefined ? { closed } : {}) },
+      })
+      .then((r) => r.data),
+
   close: (issueId: string) =>
     client.patch<Issue>(`/api/issues/${issueId}/close`).then((r) => r.data),
 

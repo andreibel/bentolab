@@ -34,6 +34,26 @@ public class IssueService {
     private final ActivityService activityService;
     private final MongoTemplate mongoTemplate;
 
+    public Page<Issue> getMyIssues(String orgId, String userId, String relation, Boolean closed, Pageable pageable) {
+        return switch (relation) {
+            case "assigned" -> closed == null
+                    ? issueRepository.findAllByOrgIdAndAssigneeId(orgId, userId, pageable)
+                    : closed
+                        ? issueRepository.findAllClosedByOrgIdAndAssigneeId(orgId, userId, pageable)
+                        : issueRepository.findAllOpenByOrgIdAndAssigneeId(orgId, userId, pageable);
+            case "created" -> closed == null
+                    ? issueRepository.findAllByOrgIdAndReporterId(orgId, userId, pageable)
+                    : closed
+                        ? issueRepository.findAllClosedByOrgIdAndReporterId(orgId, userId, pageable)
+                        : issueRepository.findAllOpenByOrgIdAndReporterId(orgId, userId, pageable);
+            default -> closed == null
+                    ? issueRepository.findAllByOrgIdAndUserId(orgId, userId, pageable)
+                    : closed
+                        ? issueRepository.findAllClosedByOrgIdAndUserId(orgId, userId, pageable)
+                        : issueRepository.findAllOpenByOrgIdAndUserId(orgId, userId, pageable);
+        };
+    }
+
     public Page<Issue> getIssues(String orgId, String boardId, Boolean closed, Pageable pageable) {
         if (closed != null) {
             if (closed) {

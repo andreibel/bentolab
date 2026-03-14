@@ -39,4 +39,33 @@ public interface IssueRepository extends MongoRepository<Issue, String> {
     Page<Issue> findAllByOrgIdAndEpicId(String orgId, String epicId, Pageable pageable);
 
     boolean existsByOrgIdAndIssueKey(String orgId, String issueKey);
+
+    // ── My Issues (cross-board by userId) ─────────────────────────────────────
+
+    @Query("{'orgId': ?0, 'assigneeId': ?1}")
+    Page<Issue> findAllByOrgIdAndAssigneeId(String orgId, String assigneeId, Pageable pageable);
+
+    @Query("{'orgId': ?0, 'assigneeId': ?1, 'closed': {$ne: true}}")
+    Page<Issue> findAllOpenByOrgIdAndAssigneeId(String orgId, String assigneeId, Pageable pageable);
+
+    @Query("{'orgId': ?0, 'assigneeId': ?1, 'closed': true}")
+    Page<Issue> findAllClosedByOrgIdAndAssigneeId(String orgId, String assigneeId, Pageable pageable);
+
+    @Query("{'orgId': ?0, 'reporterId': ?1}")
+    Page<Issue> findAllByOrgIdAndReporterId(String orgId, String reporterId, Pageable pageable);
+
+    @Query("{'orgId': ?0, 'reporterId': ?1, 'closed': {$ne: true}}")
+    Page<Issue> findAllOpenByOrgIdAndReporterId(String orgId, String reporterId, Pageable pageable);
+
+    @Query("{'orgId': ?0, 'reporterId': ?1, 'closed': true}")
+    Page<Issue> findAllClosedByOrgIdAndReporterId(String orgId, String reporterId, Pageable pageable);
+
+    @Query("{'orgId': ?0, '$or': [{'assigneeId': ?1}, {'reporterId': ?1}]}")
+    Page<Issue> findAllByOrgIdAndUserId(String orgId, String userId, Pageable pageable);
+
+    @Query("{'orgId': ?0, '$or': [{'assigneeId': ?1}, {'reporterId': ?1}], 'closed': {$ne: true}}")
+    Page<Issue> findAllOpenByOrgIdAndUserId(String orgId, String userId, Pageable pageable);
+
+    @Query("{'orgId': ?0, '$or': [{'assigneeId': ?1}, {'reporterId': ?1}], 'closed': true}")
+    Page<Issue> findAllClosedByOrgIdAndUserId(String orgId, String userId, Pageable pageable);
 }

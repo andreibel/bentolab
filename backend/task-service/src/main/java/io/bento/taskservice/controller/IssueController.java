@@ -24,6 +24,18 @@ public class IssueController {
     private final IssueService issueService;
     private final TaskAccessService accessService;
 
+    @GetMapping("/mine")
+    public ResponseEntity<Page<Issue>> getMyIssues(
+            @RequestHeader("X-User-Id") String userId,
+            @RequestHeader("X-Org-Id") String orgId,
+            @RequestHeader("X-Org-Role") String orgRole,
+            @RequestParam(defaultValue = "all") String relation,
+            @RequestParam(required = false) Boolean closed,
+            @PageableDefault(size = 200) Pageable pageable) {
+        accessService.requireOrgMember(orgRole);
+        return ResponseEntity.ok(issueService.getMyIssues(orgId, userId, relation, closed, pageable));
+    }
+
     // Any org member can list issues
     @GetMapping
     public ResponseEntity<Page<Issue>> getIssues(

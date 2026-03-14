@@ -19,6 +19,7 @@ import BacklogPage from '@/pages/board/BacklogPage'
 import SprintsPage from '@/pages/board/SprintsPage'
 import SummaryPageComponent from '@/pages/board/SummaryPage'
 import CalendarPage from '@/pages/CalendarPage'
+import MyIssuesPage from '@/pages/MyIssuesPage'
 import InboxPage from '@/pages/InboxPage'
 import AutomationsPage from '@/pages/settings/AutomationsPage'
 import SecurityPage from '@/pages/settings/SecurityPage'
@@ -88,7 +89,7 @@ export default function App() {
           <Route path="/boards/:boardId/reports"  element={<LabReports />} />
 
           {/* Personal */}
-          <Route path="/my-issues" element={<div className="p-6 text-sm text-text-muted">My Issues — coming soon</div>} />
+          <Route path="/my-issues" element={<MyIssuesPage />} />
           <Route path="/inbox"     element={<InboxPage />} />
           <Route path="/calendar"  element={<CalendarPage />} />
 
