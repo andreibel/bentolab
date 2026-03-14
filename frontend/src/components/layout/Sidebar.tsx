@@ -278,10 +278,10 @@ function LabItem({
           <Tooltip.Content
             side="right"
             sideOffset={12}
-            className="rounded-md bg-text-primary px-2 py-1 text-xs text-white shadow-md"
+            className="rounded-md border border-surface-border bg-surface px-2 py-1 text-xs text-text-primary shadow-lg"
           >
             {board.name}
-            <Tooltip.Arrow className="fill-text-primary" />
+            <Tooltip.Arrow className="fill-surface-border" />
           </Tooltip.Content>
         </Tooltip.Portal>
       </Tooltip.Root>
@@ -491,7 +491,7 @@ function GlobalNavItem({
           collapsed && 'justify-center',
           isActive
             ? 'bg-primary-subtle text-primary'
-            : 'text-text-muted hover:bg-surface-border hover:text-text-primary'
+            : 'text-text-secondary hover:bg-surface-border hover:text-text-primary'
         )
       }
     >
@@ -508,10 +508,10 @@ function GlobalNavItem({
           <Tooltip.Content
             side="right"
             sideOffset={12}
-            className="rounded-md bg-text-primary px-2 py-1 text-xs text-white shadow-md"
+            className="rounded-md border border-surface-border bg-surface px-2 py-1 text-xs text-text-primary shadow-lg"
           >
             {label}
-            <Tooltip.Arrow className="fill-text-primary" />
+            <Tooltip.Arrow className="fill-surface-border" />
           </Tooltip.Content>
         </Tooltip.Portal>
       </Tooltip.Root>

@@ -46,6 +46,8 @@
 
 :root {
   font-family: 'Inter', system-ui, sans-serif;
+  color: var(--color-text-primary);
+  background-color: var(--color-surface);
 }
 
 :root[lang="he"] {
