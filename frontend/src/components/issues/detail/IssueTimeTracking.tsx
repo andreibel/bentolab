@@ -1,4 +1,4 @@
-import {useEffect, useMemo, useState} from 'react'
+import {useMemo, useState} from 'react'
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query'
 import {Clock, Plus, Trash2} from 'lucide-react'
 import {toast} from 'sonner'
@@ -32,7 +32,10 @@ function EstimateField({ value, onSave }: { value: number | null | undefined; on
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(value?.toString() ?? '')
 
-  useEffect(() => { if (!editing) setDraft(value?.toString() ?? '') }, [value, editing])
+  const startEdit = () => {
+    setDraft(value?.toString() ?? '')
+    setEditing(true)
+  }
 
   const commit = () => {
     const n = draft.trim() ? parseFloat(draft.trim()) : null
@@ -54,7 +57,7 @@ function EstimateField({ value, onSave }: { value: number | null | undefined; on
   }
 
   return (
-    <button onClick={() => setEditing(true)} className="rounded px-1 py-0.5 text-xs hover:bg-surface-muted">
+    <button onClick={startEdit} className="rounded px-1 py-0.5 text-xs hover:bg-surface-muted">
       {value != null
         ? <span className="font-semibold text-text-primary">{fmtHours(value)}</span>
         : <span className="text-text-muted">Set estimate</span>}
@@ -77,8 +80,8 @@ function LogTimeForm({ issueId, onDone }: { issueId: string; onDone: () => void 
       description: desc.trim() || undefined,
     }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.issues.timelogs(issueId) })
-      queryClient.invalidateQueries({ queryKey: queryKeys.issues.detail(issueId) })
+      void queryClient.invalidateQueries({ queryKey: queryKeys.issues.timelogs(issueId) })
+      void queryClient.invalidateQueries({ queryKey: queryKeys.issues.detail(issueId) })
       toast.success('Time logged')
       onDone()
     },
@@ -108,7 +111,7 @@ function LogTimeForm({ issueId, onDone }: { issueId: string; onDone: () => void 
             placeholder="Today"
           />
         </div>
-        <div className="flex flex-1 flex-col gap-1 min-w-[120px]">
+        <div className="flex flex-1 flex-col gap-1 min-w-30">
           <label className="text-[10px] font-semibold uppercase tracking-wide text-text-muted">Note (optional)</label>
           <input
             type="text" placeholder="What did you work on?"
@@ -172,8 +175,8 @@ export function IssueTimeTracking({ issue, onUpdate }: { issue: Issue; onUpdate:
   const deleteMutation = useMutation({
     mutationFn: (timeLogId: string) => issuesApi.timelogs.delete(issue.id, timeLogId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.issues.timelogs(issue.id) })
-      queryClient.invalidateQueries({ queryKey: queryKeys.issues.detail(issue.id) })
+      void queryClient.invalidateQueries({ queryKey: queryKeys.issues.timelogs(issue.id) })
+      void queryClient.invalidateQueries({ queryKey: queryKeys.issues.detail(issue.id) })
     },
     onError: () => toast.error('Failed to delete log'),
   })
@@ -237,7 +240,7 @@ export function IssueTimeTracking({ issue, onUpdate }: { issue: Issue; onUpdate:
 
             return (
               <div key={log.id} className="group flex items-center gap-3 py-2">
-                <span className="min-w-[28px] text-center text-xs font-semibold text-primary">{fmtHours(log.hoursSpent)}</span>
+                <span className="min-w-7 text-center text-xs font-semibold text-primary">{fmtHours(log.hoursSpent)}</span>
                 <div className="flex-1 min-w-0">
                   <span className="text-xs font-medium text-text-primary">{name}</span>
                   {log.description && (

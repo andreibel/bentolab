@@ -1,4 +1,4 @@
-import {useMemo, useRef, useState} from 'react'
+import {useCallback, useMemo, useRef, useState} from 'react'
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query'
 import {Bold, ChevronDown, Code, GitCommitHorizontal, Italic, List, Pencil, Trash2} from 'lucide-react'
 import {toast} from 'sonner'
@@ -47,28 +47,19 @@ function insertMdAt(el: HTMLTextAreaElement, setValue: (v: string) => void, pref
 
 // ─── Markdown toolbar ─────────────────────────────────────────────────────────
 
-function MdToolbar({
-  textareaRef,
-  setValue,
-}: {
-  textareaRef: React.RefObject<HTMLTextAreaElement | null>
-  setValue: (v: string) => void
-}) {
-  const wrap = (prefix: string, suffix = prefix) => {
-    if (textareaRef.current) insertMdAt(textareaRef.current, setValue, prefix, suffix)
-  }
+function MdToolbar({ onWrap }: { onWrap: (prefix: string, suffix?: string) => void }) {
   return (
     <div className="flex items-center gap-0.5 px-1.5 py-1">
       {([
-        { icon: Bold,   tip: 'Bold',   fn: () => wrap('**') },
-        { icon: Italic, tip: 'Italic', fn: () => wrap('*') },
-        { icon: Code,   tip: 'Code',   fn: () => wrap('`') },
-        { icon: List,   tip: 'List',   fn: () => wrap('\n- ', '') },
-      ] as const).map(({ icon: Icon, tip, fn }) => (
+        { icon: Bold,   tip: 'Bold',   prefix: '**',   suffix: undefined as string | undefined },
+        { icon: Italic, tip: 'Italic', prefix: '*',    suffix: undefined as string | undefined },
+        { icon: Code,   tip: 'Code',   prefix: '`',    suffix: undefined as string | undefined },
+        { icon: List,   tip: 'List',   prefix: '\n- ', suffix: ''                              },
+      ] as const).map(({ icon: Icon, tip, prefix, suffix }) => (
         <button
           key={tip}
           type="button"
-          onMouseDown={(e) => { e.preventDefault(); fn() }}
+          onMouseDown={(e) => { e.preventDefault(); onWrap(prefix, suffix) }}
           title={tip}
           className="rounded p-1 text-text-muted hover:bg-surface-border hover:text-text-primary"
         >
@@ -152,6 +143,7 @@ function formatActivityMessage(
       }
       if (field === 'title')       return <>changed title</>
       if (field === 'description') return <>updated description</>
+      // cspell:ignore storypoints duedate startdate
       if (field === 'storypoints' || field === 'story_points') {
         if (newVal) return <>changed story points to {B(newVal)}</>
         return <>changed story points</>
@@ -234,6 +226,11 @@ function CommentItem({
   const [draft, setDraft] = useState(comment.text)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const isOwn = comment.userId === currentUserId
+
+  const wrap = useCallback((prefix: string, suffix = prefix) => {
+    const el = textareaRef.current
+    if (el) insertMdAt(el, setDraft, prefix, suffix)
+  }, [])
   const commentProfile = profileMap.get(comment.userId)
   const commentAuthorName = commentProfile
     ? [commentProfile.firstName, commentProfile.lastName].filter(Boolean).join(' ') || commentProfile.email
@@ -243,14 +240,14 @@ function CommentItem({
     mutationFn: (text: string) => issuesApi.comments.update(issueId, comment.id, text),
     onSuccess: () => {
       setEditing(false)
-      queryClient.invalidateQueries({ queryKey: queryKeys.issues.comments(issueId) })
+      void queryClient.invalidateQueries({ queryKey: queryKeys.issues.comments(issueId) })
     },
     onError: () => toast.error('Failed to update comment'),
   })
 
   const deleteMutation = useMutation({
     mutationFn: () => issuesApi.comments.delete(issueId, comment.id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.issues.comments(issueId) }),
+    onSuccess: () => { void queryClient.invalidateQueries({ queryKey: queryKeys.issues.comments(issueId) }) },
     onError: () => toast.error('Failed to delete comment'),
   })
 
@@ -267,7 +264,7 @@ function CommentItem({
         {editing ? (
           <div>
             <div className="rounded-t-md border border-b-0 border-surface-border bg-surface-muted">
-              <MdToolbar textareaRef={textareaRef} setValue={setDraft} />
+              <MdToolbar onWrap={wrap} />
             </div>
             <textarea
               ref={textareaRef}
@@ -341,12 +338,17 @@ function AddCommentForm({
   const [focused, setFocused] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
+  const wrap = useCallback((prefix: string, suffix = prefix) => {
+    const el = textareaRef.current
+    if (el) insertMdAt(el, setDraft, prefix, suffix)
+  }, [])
+
   const addMutation = useMutation({
     mutationFn: (text: string) => issuesApi.comments.create(issueId, text),
     onSuccess: () => {
       setDraft(''); setFocused(false)
-      queryClient.invalidateQueries({ queryKey: queryKeys.issues.comments(issueId) })
-      queryClient.invalidateQueries({ queryKey: queryKeys.issues.activities(issueId) })
+      void queryClient.invalidateQueries({ queryKey: queryKeys.issues.comments(issueId) })
+      void queryClient.invalidateQueries({ queryKey: queryKeys.issues.activities(issueId) })
     },
     onError: () => toast.error('Failed to post comment'),
   })
@@ -364,7 +366,7 @@ function AddCommentForm({
       <div className="flex-1">
         {active && (
           <div className="rounded-t-md border border-b-0 border-surface-border bg-surface-muted">
-            <MdToolbar textareaRef={textareaRef} setValue={setDraft} />
+            <MdToolbar onWrap={wrap} />
           </div>
         )}
         <textarea

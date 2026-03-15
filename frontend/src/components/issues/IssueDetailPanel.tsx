@@ -100,7 +100,7 @@ export function IssueDetailPanel({
     onSuccess: (updated) => {
       queryClient.setQueryData<Issue>(queryKeys.issues.detail(issueId), updated)
       if (effectiveBoardId) {
-        queryClient.invalidateQueries({ queryKey: ['issues', effectiveBoardId], exact: false })
+        void queryClient.invalidateQueries({ queryKey: ['issues', effectiveBoardId], exact: false })
       }
       toast.success(updated.closed ? 'Issue closed' : 'Issue reopened')
     },
@@ -120,12 +120,12 @@ export function IssueDetailPanel({
       toast.error('Failed to update issue')
     },
     onSettled: (_data, _err, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.issues.detail(issueId) })
-      queryClient.invalidateQueries({ queryKey: queryKeys.issues.activities(issueId) })
+      void queryClient.invalidateQueries({ queryKey: queryKeys.issues.detail(issueId) })
+      void queryClient.invalidateQueries({ queryKey: queryKeys.issues.activities(issueId) })
       if (effectiveBoardId) {
-        queryClient.invalidateQueries({ queryKey: ['issues', effectiveBoardId], exact: false })
-        if ('sprintId' in variables) queryClient.invalidateQueries({ queryKey: queryKeys.sprints.all(effectiveBoardId) })
-        if ('epicId'   in variables) queryClient.invalidateQueries({ queryKey: queryKeys.epics.list(effectiveBoardId) })
+        void queryClient.invalidateQueries({ queryKey: ['issues', effectiveBoardId], exact: false })
+        if ('sprintId' in variables) void queryClient.invalidateQueries({ queryKey: queryKeys.sprints.all(effectiveBoardId) })
+        if ('epicId'   in variables) void queryClient.invalidateQueries({ queryKey: queryKeys.epics.list(effectiveBoardId) })
       }
     },
   })
@@ -135,7 +135,7 @@ export function IssueDetailPanel({
       issuesApi.move(issueId, data.columnId, 0).then((updated) => {
         queryClient.setQueryData<Issue>(queryKeys.issues.detail(issueId), updated)
         if (effectiveBoardId) {
-          queryClient.invalidateQueries({ queryKey: ['issues', effectiveBoardId], exact: false })
+          void queryClient.invalidateQueries({ queryKey: ['issues', effectiveBoardId], exact: false })
         }
       }).catch(() => toast.error('Failed to move issue'))
       return
@@ -143,9 +143,9 @@ export function IssueDetailPanel({
     if ('assigneeId' in data) {
       issuesApi.assign(issueId, data.assigneeId ?? null).then((updated) => {
         queryClient.setQueryData<Issue>(queryKeys.issues.detail(issueId), updated)
-        queryClient.invalidateQueries({ queryKey: queryKeys.issues.activities(issueId) })
+        void queryClient.invalidateQueries({ queryKey: queryKeys.issues.activities(issueId) })
         if (effectiveBoardId) {
-          queryClient.invalidateQueries({ queryKey: ['issues', effectiveBoardId], exact: false })
+          void queryClient.invalidateQueries({ queryKey: ['issues', effectiveBoardId], exact: false })
         }
       }).catch(() => toast.error('Failed to update assignee'))
       return
@@ -195,7 +195,7 @@ export function IssueDetailPanel({
             <div className="ms-auto flex items-center gap-1">
               <button
                 onClick={() => {
-                  navigator.clipboard.writeText(`${window.location.origin}/issues/${issueId}`)
+                  void navigator.clipboard.writeText(`${window.location.origin}/issues/${issueId}`)
                   toast.success('Link copied')
                 }}
                 title="Copy link"

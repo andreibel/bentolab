@@ -1,6 +1,7 @@
-import {useEffect, useRef, useState} from 'react'
+import React, {useEffect, useRef, useState} from 'react'
 import {createPortal} from 'react-dom'
 import {Controller, useForm} from 'react-hook-form'
+import type {Control} from 'react-hook-form'
 import {
   ArrowDown,
   ArrowUp,
@@ -102,7 +103,7 @@ function useDraggable() {
   const origin = useRef({ mx: 0, my: 0, ox: 0, oy: 0 })
 
   const onPointerDown = (e: React.PointerEvent<HTMLElement>) => {
-    // Only drag on left click on the handle itself, not buttons inside it
+    // Only drag on left-click on the handle itself, not buttons inside it
     if (e.button !== 0) return
     if ((e.target as HTMLElement).closest('button')) return
     isDragging.current = true
@@ -180,7 +181,7 @@ export function CreateIssueModal({
       epicId: '', sprintId: propSprintId ?? '', parentIssueId: '', storyPoints: '', startDate: '', dueDate: '',
     })
     setFullScreen(false)
-  }, [open, propBoardId, propColumnId, reset])
+  }, [open, propBoardId, propColumnId, propSprintId, reset])
 
   // Close on Escape
   useEffect(() => {
@@ -220,7 +221,7 @@ export function CreateIssueModal({
         dueDate:       values.dueDate   ? new Date(values.dueDate   + 'T12:00:00').toISOString() : undefined,
       })
 
-      queryClient.invalidateQueries({ queryKey: ['issues', effectiveBoardId], exact: false })
+      void queryClient.invalidateQueries({ queryKey: ['issues', effectiveBoardId], exact: false })
       toast.success('Issue created')
       onClose()
     } catch {
@@ -440,7 +441,7 @@ export function CreateIssueModal({
   return createPortal(
     <div
       style={{ transform: `translate(${drag.offset.x}px, ${drag.offset.y}px)` }}
-      className="fixed bottom-4 end-4 z-50 flex w-[460px] flex-col rounded-2xl border border-surface-border bg-surface shadow-2xl"
+      className="fixed bottom-4 inset-e-4 z-50 flex w-115 flex-col rounded-2xl border border-surface-border bg-surface shadow-2xl"
     >
       {header}
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col">
@@ -475,7 +476,7 @@ export function CreateIssueModal({
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
-function TypePicker({ control }: { control: Parameters<typeof Controller>[0]['control'] }) {
+function TypePicker({ control }: { control: Control<FormValues> }) {
   return (
     <Controller
       name="type"
@@ -505,7 +506,7 @@ function TypePicker({ control }: { control: Parameters<typeof Controller>[0]['co
   )
 }
 
-function PriorityPicker({ control }: { control: Parameters<typeof Controller>[0]['control'] }) {
+function PriorityPicker({ control }: { control: Control<FormValues> }) {
   return (
     <Controller
       name="priority"
