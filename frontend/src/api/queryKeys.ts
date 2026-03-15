@@ -37,4 +37,8 @@ export const queryKeys = {
     list:   (boardId: string) => ['epics', boardId],
     detail: (epicId: string)  => ['epics', 'detail', epicId],
   },
+  notifications: {
+    list:        (unreadOnly?: boolean) => ['notifications', 'list', unreadOnly] as const,
+    unreadCount: ()                     => ['notifications', 'unread-count'] as const,
+  },
 }

@@ -1,6 +1,7 @@
-import {Bell, Moon, Plus, Search, Sun} from 'lucide-react'
+import {Moon, Plus, Search, Sun} from 'lucide-react'
 import {useAuthStore} from '@/stores/authStore'
 import {useUIStore} from '@/stores/uiStore'
+import {NotificationBell} from './NotificationBell'
 
 interface HeaderProps {
   title?: string
@@ -72,10 +73,7 @@ export function Header({ title, onCreateClick, onSearchClick }: HeaderProps) {
         </button>
 
         {/* Notifications */}
-        <button className="relative flex h-8 w-8 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-surface-muted hover:text-text-primary">
-          <Bell className="h-4 w-4" />
-          <span className="absolute inset-e-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-primary" />
-        </button>
+        <NotificationBell />
 
         {/* User avatar */}
         <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary-subtle text-xs font-semibold text-primary">

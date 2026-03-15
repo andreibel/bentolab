@@ -1,12 +1,14 @@
 package io.bento.notificationservice.event;
 
-import java.time.Instant;
+import java.util.List;
 
 public record SprintStartedEvent(
+        String eventType,
         String sprintId,
         String boardId,
         String orgId,
         String sprintName,
-        Instant startDate,
-        Instant endDate
+        String startDate,
+        String endDate,
+        List<String> memberIds
 ) {}

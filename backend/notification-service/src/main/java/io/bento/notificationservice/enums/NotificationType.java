@@ -13,7 +13,14 @@ public enum NotificationType {
     // Issue
     ISSUE_ASSIGNED,
     ISSUE_COMMENTED,
+    ISSUE_MENTIONED,
+    ISSUE_STATUS_CHANGED,
+    ISSUE_CLOSED,
+    ISSUE_PRIORITY_CHANGED,
     // Sprint
     SPRINT_STARTED,
-    SPRINT_COMPLETED
+    SPRINT_COMPLETED,
+    SPRINT_DUE_SOON,
+    // Epic
+    EPIC_COMPLETED
 }

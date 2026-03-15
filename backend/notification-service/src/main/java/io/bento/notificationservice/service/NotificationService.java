@@ -60,7 +60,7 @@ public class NotificationService {
         notificationRepository.saveAll(unread);
     }
 
-    // ── Create from Kafka events ──────────────────────────────────────────────
+    // ── Org events ────────────────────────────────────────────────────────────
 
     public void createMemberJoinedNotification(MemberJoinedEvent event) {
         save(Notification.builder()
@@ -73,10 +73,39 @@ public class NotificationService {
                 .build());
     }
 
+    // ── Board events ──────────────────────────────────────────────────────────
+
+    public void createBoardMemberAddedNotification(BoardMemberAddedEvent event) {
+        save(Notification.builder()
+                .orgId(null) // board events don't carry orgId
+                .userId(event.userId())
+                .type(NotificationType.BOARD_MEMBER_ADDED)
+                .title("You were added to " + event.boardName())
+                .message("You now have access to board: " + event.boardName())
+                .boardId(event.boardId())
+                .triggeredBy(event.addedByUserId())
+                .createdAt(Instant.now())
+                .build());
+    }
+
+    public void createBoardMemberRemovedNotification(BoardMemberRemovedEvent event) {
+        save(Notification.builder()
+                .orgId(null)
+                .userId(event.userId())
+                .type(NotificationType.BOARD_MEMBER_REMOVED)
+                .title("You were removed from " + event.boardName())
+                .message("Your access to board " + event.boardName() + " has been revoked")
+                .boardId(event.boardId())
+                .createdAt(Instant.now())
+                .build());
+    }
+
+    // ── Issue events ──────────────────────────────────────────────────────────
+
     public void createIssueAssignedNotification(IssueAssignedEvent event) {
         save(Notification.builder()
                 .orgId(event.orgId())
-                .userId(event.assigneeUserId())
+                .userId(event.assigneeId())
                 .type(NotificationType.ISSUE_ASSIGNED)
                 .title("Issue assigned to you")
                 .message(event.issueKey() + ": " + event.issueTitle())
@@ -88,50 +117,110 @@ public class NotificationService {
                 .build());
     }
 
-    public void createIssueCommentedNotification(IssueCommentedEvent event) {
-        if (event.assigneeUserId() == null ||
-                event.assigneeUserId().equals(event.commentAuthorUserId())) {
-            return;
-        }
+    public void createIssueCommentedNotification(IssueCommentedEvent event, String recipientUserId) {
         save(Notification.builder()
                 .orgId(event.orgId())
-                .userId(event.assigneeUserId())
+                .userId(recipientUserId)
                 .type(NotificationType.ISSUE_COMMENTED)
                 .title("New comment on " + event.issueKey())
                 .message(event.issueTitle())
                 .issueId(event.issueId())
                 .issueKey(event.issueKey())
                 .boardId(event.boardId())
-                .triggeredBy(event.commentAuthorUserId())
+                .triggeredBy(event.authorUserId())
                 .createdAt(Instant.now())
                 .build());
     }
 
-    public void createSprintStartedNotification(SprintStartedEvent event) {
+    public void createIssueMentionedNotification(IssueCommentedEvent event, String recipientUserId) {
         save(Notification.builder()
                 .orgId(event.orgId())
-                .userId(null) // board-wide — will be fanned out to members when board membership is available
+                .userId(recipientUserId)
+                .type(NotificationType.ISSUE_MENTIONED)
+                .title("You were mentioned in " + event.issueKey())
+                .message(event.authorUserId() + " mentioned you in a comment on: " + event.issueTitle())
+                .issueId(event.issueId())
+                .issueKey(event.issueKey())
+                .boardId(event.boardId())
+                .triggeredBy(event.authorUserId())
+                .createdAt(Instant.now())
+                .build());
+    }
+
+    public void createIssueStatusChangedNotification(IssueStatusChangedEvent event, String recipientUserId) {
+        save(Notification.builder()
+                .orgId(event.orgId())
+                .userId(recipientUserId)
+                .type(NotificationType.ISSUE_STATUS_CHANGED)
+                .title(event.issueKey() + " moved to " + event.toColumnName())
+                .message(event.issueTitle() + " was moved from " + event.fromColumnName() + " to " + event.toColumnName())
+                .issueId(event.issueId())
+                .issueKey(event.issueKey())
+                .boardId(event.boardId())
+                .triggeredBy(event.changedByUserId())
+                .createdAt(Instant.now())
+                .build());
+    }
+
+    public void createIssueClosedNotification(IssueClosedEvent event, String recipientUserId) {
+        save(Notification.builder()
+                .orgId(event.orgId())
+                .userId(recipientUserId)
+                .type(NotificationType.ISSUE_CLOSED)
+                .title(event.issueKey() + " was closed")
+                .message(event.issueTitle() + " has been closed")
+                .issueId(event.issueId())
+                .issueKey(event.issueKey())
+                .boardId(event.boardId())
+                .triggeredBy(event.closedByUserId())
+                .createdAt(Instant.now())
+                .build());
+    }
+
+    public void createIssuePriorityChangedNotification(IssuePriorityChangedEvent event) {
+        save(Notification.builder()
+                .orgId(event.orgId())
+                .userId(event.assigneeId())
+                .type(NotificationType.ISSUE_PRIORITY_CHANGED)
+                .title(event.issueKey() + " priority changed to " + event.newPriority())
+                .message(event.issueTitle() + " priority escalated from " + event.oldPriority() + " to " + event.newPriority())
+                .issueId(event.issueId())
+                .issueKey(event.issueKey())
+                .boardId(event.boardId())
+                .triggeredBy(event.changedByUserId())
+                .createdAt(Instant.now())
+                .build());
+    }
+
+    // ── Sprint events ─────────────────────────────────────────────────────────
+
+    public void createSprintStartedNotification(SprintStartedEvent event, String recipientUserId) {
+        save(Notification.builder()
+                .orgId(event.orgId())
+                .userId(recipientUserId)
                 .type(NotificationType.SPRINT_STARTED)
                 .title("Sprint started: " + event.sprintName())
-                .message("Sprint ends on " + event.endDate())
+                .message(event.sprintName() + " has started. Ends on " + event.endDate())
                 .boardId(event.boardId())
                 .sprintId(event.sprintId())
                 .createdAt(Instant.now())
                 .build());
     }
 
-    public void createSprintCompletedNotification(SprintCompletedEvent event) {
+    public void createSprintCompletedNotification(SprintCompletedEvent event, String recipientUserId) {
         save(Notification.builder()
                 .orgId(event.orgId())
-                .userId(null)
+                .userId(recipientUserId)
                 .type(NotificationType.SPRINT_COMPLETED)
                 .title("Sprint completed: " + event.sprintName())
-                .message(event.completedIssues() + " issues completed, " + event.remainingIssues() + " remaining")
+                .message(event.completedIssues() + " issues completed, " + event.remainingIssues() + " carried over")
                 .boardId(event.boardId())
                 .sprintId(event.sprintId())
                 .createdAt(Instant.now())
                 .build());
     }
+
+    // ── Internal ──────────────────────────────────────────────────────────────
 
     private void save(Notification notification) {
         try {

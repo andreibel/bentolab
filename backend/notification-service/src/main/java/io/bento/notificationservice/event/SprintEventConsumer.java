@@ -8,6 +8,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
+import java.util.List;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -25,16 +28,22 @@ public class SprintEventConsumer {
                 log.debug("Skipping legacy event without eventType: {}", payload);
                 return;
             }
-            String eventType = eventTypeNode.asString();
+            String eventType = eventTypeNode.asText();
 
             switch (eventType) {
                 case "SprintStartedEvent" -> {
-                    SprintStartedEvent event = kafkaObjectMapper.treeToValue(node, SprintStartedEvent.class);
-                    notificationService.createSprintStartedNotification(event);
+                    SprintStartedEvent e = kafkaObjectMapper.treeToValue(node, SprintStartedEvent.class);
+                    List<String> memberIds = e.memberIds() != null ? e.memberIds() : Collections.emptyList();
+                    for (String memberId : memberIds) {
+                        notificationService.createSprintStartedNotification(e, memberId);
+                    }
                 }
                 case "SprintCompletedEvent" -> {
-                    SprintCompletedEvent event = kafkaObjectMapper.treeToValue(node, SprintCompletedEvent.class);
-                    notificationService.createSprintCompletedNotification(event);
+                    SprintCompletedEvent e = kafkaObjectMapper.treeToValue(node, SprintCompletedEvent.class);
+                    List<String> memberIds = e.memberIds() != null ? e.memberIds() : Collections.emptyList();
+                    for (String memberId : memberIds) {
+                        notificationService.createSprintCompletedNotification(e, memberId);
+                    }
                 }
                 default -> log.debug("Unhandled sprint event type: {}", eventType);
             }
