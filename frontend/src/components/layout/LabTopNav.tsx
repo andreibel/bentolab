@@ -50,7 +50,7 @@ export function LabTopNav() {
                 cn(
                   'relative h-10 px-3 text-sm font-medium transition-colors',
                   'flex items-center',
-                  'after:absolute after:bottom-0 after:start-0 after:end-0 after:h-0.5 after:rounded-t-full after:transition-all',
+                  'after:absolute after:bottom-0 after:inset-s-0 after:inset-e-0 after:h-0.5 after:rounded-t-full after:transition-all',
                   isActive
                     ? 'text-primary after:bg-primary'
                     : 'text-text-muted hover:text-text-primary after:bg-transparent'

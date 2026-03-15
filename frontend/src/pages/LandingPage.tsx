@@ -1,15 +1,18 @@
 import {motion} from 'framer-motion'
-import {ArrowRight, BarChart2, Boxes, CheckCircle2, Cpu, Github, Kanban, ShieldCheck, Users, Zap,} from 'lucide-react'
+import {ArrowRight, BarChart2, Boxes, CheckCircle2, Cpu, Github, Kanban, Moon, ShieldCheck, Sun, Users, Zap} from 'lucide-react'
 import {Link} from 'react-router-dom'
+import {useUIStore} from '@/stores/uiStore'
 
 // ─── Animation variants ───────────────────────────────────────────────────────
+
+const easeOutExpo: [number, number, number, number] = [0.22, 1, 0.36, 1]
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
   visible: (delay = 0) => ({
     opacity: 1,
     y: 0,
-    transition: { duration: 0.5, delay, ease: [0.22, 1, 0.36, 1] },
+    transition: { duration: 0.5, delay, ease: easeOutExpo },
   }),
 }
 
@@ -92,6 +95,8 @@ const steps = [
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function Nav() {
+  const { theme, toggleTheme } = useUIStore()
+
   return (
     <header className="fixed inset-x-0 top-0 z-50 border-b border-surface-border bg-surface/80 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
@@ -119,6 +124,13 @@ function Nav() {
         </nav>
 
         <div className="flex items-center gap-3">
+          <button
+            onClick={toggleTheme}
+            aria-label="Toggle theme"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-surface-muted hover:text-text-primary"
+          >
+            {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </button>
           <Link
             to="/login"
             className="text-sm font-medium text-text-secondary transition-colors hover:text-text-primary"
@@ -152,7 +164,7 @@ function Hero() {
       />
       {/* Radial glow */}
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-        <div className="h-[600px] w-[600px] rounded-full bg-primary opacity-[0.06] blur-[120px]" />
+        <div className="h-150 w-150 rounded-full bg-primary opacity-[0.06] blur-[120px]" />
       </div>
 
       <motion.div
@@ -226,51 +238,19 @@ function Hero() {
       <motion.div
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7, delay: 0.35, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ duration: 0.7, delay: 0.35, ease: easeOutExpo }}
         className="relative z-10 mx-auto mt-16 w-full max-w-5xl"
       >
-        <div className="overflow-hidden rounded-xl border border-surface-border bg-surface shadow-xl shadow-black/5">
-          {/* Window chrome */}
-          <div className="flex h-9 items-center gap-1.5 border-b border-surface-border bg-surface-muted px-4">
-            <div className="h-2.5 w-2.5 rounded-full bg-red-400" />
-            <div className="h-2.5 w-2.5 rounded-full bg-amber-400" />
-            <div className="h-2.5 w-2.5 rounded-full bg-green-400" />
-            <div className="ms-3 h-4 w-40 rounded bg-surface-border" />
-          </div>
-          {/* Kanban board skeleton */}
-          <div className="flex gap-4 p-5">
-            {[
-              { label: 'To Do', count: 4, color: 'bg-surface-border' },
-              { label: 'In Progress', count: 2, color: 'bg-primary/10' },
-              { label: 'In Review', count: 1, color: 'bg-accent/10' },
-              { label: 'Done', count: 6, color: 'bg-emerald-50' },
-            ].map((col) => (
-              <div key={col.label} className="flex-1">
-                <div className="mb-3 flex items-center justify-between">
-                  <span className="text-xs font-semibold text-text-secondary">{col.label}</span>
-                  <span className="rounded-full bg-surface-muted px-1.5 py-0.5 text-xs text-text-muted">
-                    {col.count}
-                  </span>
-                </div>
-                <div className="flex flex-col gap-2">
-                  {Array.from({ length: col.count > 3 ? 3 : col.count }).map((_, i) => (
-                    <div
-                      key={i}
-                      className={`rounded-lg border border-surface-border ${col.color} p-3`}
-                    >
-                      <div className="mb-2 h-2 w-3/4 rounded bg-surface-border" />
-                      <div className="h-2 w-1/2 rounded bg-surface-border opacity-60" />
-                      <div className="mt-3 flex items-center justify-between">
-                        <div className="h-5 w-5 rounded-full bg-surface-border" />
-                        <div className="h-2 w-8 rounded bg-surface-border opacity-40" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        <img
+          src="/hero_light.png"
+          alt="Bento board"
+          className="block w-full rounded-xl shadow-xl shadow-black/10 dark:hidden"
+        />
+        <img
+          src="/hero_dark.png"
+          alt="Bento board"
+          className="hidden w-full rounded-xl shadow-xl shadow-black/40 dark:block"
+        />
       </motion.div>
     </section>
   )
@@ -446,7 +426,7 @@ function HowItWorks() {
           {steps.map((step, i) => (
             <motion.div key={step.number} variants={fadeUp} custom={i * 0.05} className="relative">
               {i < steps.length - 1 && (
-                <div className="absolute start-full top-5 hidden h-px w-6 bg-surface-border lg:block" />
+                <div className="absolute inset-s-full top-5 hidden h-px w-6 bg-surface-border lg:block" />
               )}
               <div className="mb-4 text-3xl font-bold text-primary/20">{step.number}</div>
               <h3 className="mb-2 text-base font-semibold text-text-primary">{step.title}</h3>
@@ -461,7 +441,7 @@ function HowItWorks() {
 
 function ComingSoonRibbon() {
   return (
-    <div className="absolute -end-8 top-5 z-10 w-36 rotate-45 bg-red-500 py-1 text-center text-[10px] font-bold uppercase tracking-widest text-white shadow-md">
+    <div className="absolute -inset-e-8 top-5 z-10 w-36 rotate-45 bg-red-500 py-1 text-center text-[10px] font-bold uppercase tracking-widest text-white shadow-md">
       Coming soon
     </div>
   )
@@ -506,7 +486,7 @@ function Pricing() {
             <ul className="mb-8 flex flex-col gap-2.5 text-sm text-text-secondary">
               {['Unlimited users', 'Unlimited boards', 'All features', 'Optimized local build', 'Docker · K8s · Terraform'].map((item) => (
                 <li key={item} className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-primary" />
+                  <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />
                   {item}
                 </li>
               ))}
@@ -536,7 +516,7 @@ function Pricing() {
             <ul className="mb-8 flex flex-col gap-2.5 text-sm text-text-secondary">
               {['Up to 20 users', '10 boards', 'All features', 'Automatic backups', 'Email notifications'].map((item) => (
                 <li key={item} className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-primary" />
+                  <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />
                   {item}
                 </li>
               ))}
@@ -560,7 +540,7 @@ function Pricing() {
             <ul className="mb-8 flex flex-col gap-2.5 text-sm text-text-secondary">
               {['Unlimited everything', 'SSO / SAML', 'Priority support', 'Custom SLA', 'On-premise'].map((item) => (
                 <li key={item} className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-primary" />
+                  <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />
                   {item}
                 </li>
               ))}

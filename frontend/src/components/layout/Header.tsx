@@ -35,7 +35,7 @@ export function Header({ title, onCreateClick, onSearchClick }: HeaderProps) {
       </div>
 
       {/* Center: search bar — GitLab style */}
-      <div className="flex w-[420px] shrink-0 justify-center">
+      <div className="flex w-105 shrink-0 justify-center">
         <button
           onClick={onSearchClick}
           className="flex h-9 w-full items-center gap-2.5 rounded-lg border border-surface-border bg-surface-muted px-3.5 text-sm text-text-muted transition-colors hover:border-primary/40 hover:bg-surface hover:text-text-secondary"
@@ -74,7 +74,7 @@ export function Header({ title, onCreateClick, onSearchClick }: HeaderProps) {
         {/* Notifications */}
         <button className="relative flex h-8 w-8 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-surface-muted hover:text-text-primary">
           <Bell className="h-4 w-4" />
-          <span className="absolute end-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-primary" />
+          <span className="absolute inset-e-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-primary" />
         </button>
 
         {/* User avatar */}

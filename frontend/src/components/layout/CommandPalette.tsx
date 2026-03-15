@@ -1,4 +1,4 @@
-import {useEffect, useMemo, useRef, useState} from 'react'
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import {createPortal} from 'react-dom'
 import {useNavigate} from 'react-router-dom'
 import Fuse from 'fuse.js'
@@ -117,7 +117,7 @@ function parseNewBoard(query: string): ParsedNewBoard | null {
 function Kbd({ children }: { children: React.ReactNode }) {
   return (
     <kbd
-      className="inline-flex min-h-[18px] min-w-[18px] items-center justify-center rounded border border-surface-border bg-surface px-1.5 font-mono text-[10px] font-medium text-text-secondary"
+      className="inline-flex min-h-4.5 min-w-4.5 items-center justify-center rounded border border-surface-border bg-surface px-1.5 font-mono text-[10px] font-medium text-text-secondary"
       style={{ boxShadow: '0 2px 0 0 var(--color-surface-border)' }}
     >
       {children}
@@ -143,7 +143,7 @@ function CreateBoardRow({
   return (
     <div className={cn(
       'flex items-start gap-3 px-4 py-3 transition-colors',
-      active ? 'bg-primary/[0.08]' : 'bg-surface-muted/40',
+      active ? 'bg-primary/8' : 'bg-surface-muted/40',
     )}>
       <span className={cn(
         'mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg',
@@ -239,13 +239,14 @@ export function CommandPalette({
   const createBoard = useMutation({
     mutationFn: boardsApi.create,
     onSuccess: (board) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.boards.all('') })
+      void queryClient.invalidateQueries({ queryKey: queryKeys.boards.all('') })
       toast.success(`Board "${board.name}" created`)
       navigate(`/boards/${board.id}`)
-      onClose()
+      handleClose()
     },
-    onError: (err: any, variables) => {
-      if (err?.response?.status === 409) {
+    onError: (err: unknown, variables) => {
+      const status = (err as { response?: { status?: number } }).response?.status
+      if (status === 409) {
         toast.error(`Key "${variables.boardKey}" already exists — pick a different key`)
       } else {
         toast.error('Failed to create board')
@@ -253,17 +254,22 @@ export function CommandPalette({
     },
   })
 
-  // ── Reset on open ──────────────────────────────────────────────────────────
+  // ── Reset state on close so the palette is clean next time it opens ────────
+
+  const handleClose = useCallback(() => {
+    setQuery('')
+    setCategory('all')
+    setActiveIdx(0)
+    setCreateTemplate('KANBAN')
+    onClose()
+  }, [onClose])
+
+  // ── Focus input when palette opens ─────────────────────────────────────────
 
   useEffect(() => {
-    if (open) {
-      setQuery('')
-      setCategory('all')
-      setActiveIdx(0)
-      setCreateTemplate('KANBAN')
-      const t = setTimeout(() => inputRef.current?.focus(), 20)
-      return () => clearTimeout(t)
-    }
+    if (!open) return
+    const t = setTimeout(() => inputRef.current?.focus(), 20)
+    return () => clearTimeout(t)
   }, [open])
 
   // ── Board commands ─────────────────────────────────────────────────────────
@@ -280,9 +286,9 @@ export function CommandPalette({
       iconNode: <BoardDot bg={b.background ?? '#6B7280'} />,
       label:       b.name,
       description: b.boardKey,
-      action: () => { navigate(`/boards/${b.id}`); onClose() },
+      action: () => { navigate(`/boards/${b.id}`); handleClose() },
     })),
-    [boards, navigate, onClose],
+    [boards, navigate, handleClose],
   )
 
   // ── Static commands ────────────────────────────────────────────────────────
@@ -300,36 +306,36 @@ export function CommandPalette({
       icon: CirclePlus, label: 'Create Issue',
       description: 'Open the create issue dialog',
       shortcut: ['C'],
-      action: () => { onClose(); onCreateIssue?.() },
+      action: () => { handleClose(); onCreateIssue?.() },
     },
     // ── Navigate ──────────────────────────────────────────────────────────────
     {
       id: 'nav-all-boards', group: 'Navigate',
       icon: LayoutGrid, label: 'All Boards',
       description: 'Browse all your boards',
-      action: () => { navigate('/boards'); onClose() },
+      action: () => { navigate('/boards'); handleClose() },
     },
     {
       id: 'nav-my-issues', group: 'Navigate',
       icon: Layers, label: 'My Issues',
-      action: () => { navigate('/my-issues'); onClose() },
+      action: () => { navigate('/my-issues'); handleClose() },
     },
     {
       id: 'nav-calendar', group: 'Navigate',
       icon: CalendarDays, label: 'Calendar',
-      action: () => { navigate('/calendar'); onClose() },
+      action: () => { navigate('/calendar'); handleClose() },
     },
     {
       id: 'nav-inbox', group: 'Navigate',
       icon: Inbox, label: 'Inbox',
-      action: () => { navigate('/inbox'); onClose() },
+      action: () => { navigate('/inbox'); handleClose() },
     },
     {
       id: 'nav-profile', group: 'Navigate',
       icon: UserCircle, label: 'Profile Settings',
-      action: () => { navigate('/settings/profile'); onClose() },
+      action: () => { navigate('/settings/profile'); handleClose() },
     },
-  ], [navigate, onClose, onCreateIssue])
+  ], [navigate, handleClose, onCreateIssue])
 
   // ── Inline "new board" detection ───────────────────────────────────────────
 
@@ -423,11 +429,9 @@ export function CommandPalette({
   // The flat list for arrow navigation includes the preview item at index 0
   const flat = results
 
-  // ── Keep activeIdx in bounds ───────────────────────────────────────────────
+  // ── Keep activeIdx in bounds (derived, not state) ─────────────────────────
 
-  useEffect(() => {
-    setActiveIdx(i => Math.min(i, Math.max(0, flat.length - 1)))
-  }, [flat.length])
+  const safeActiveIdx = flat.length === 0 ? 0 : Math.min(activeIdx, flat.length - 1)
 
   // ── Scroll active item into view ───────────────────────────────────────────
 
@@ -435,7 +439,7 @@ export function CommandPalette({
     if (!listRef.current) return
     listRef.current.querySelector<HTMLElement>('[data-active="true"]')
       ?.scrollIntoView({ block: 'nearest' })
-  }, [activeIdx])
+  }, [safeActiveIdx])
 
   // ── Keyboard handler ───────────────────────────────────────────────────────
 
@@ -468,9 +472,9 @@ export function CommandPalette({
       setActiveIdx(0)
     } else if (e.key === 'Enter') {
       e.preventDefault()
-      flat[activeIdx]?.action()
+      flat[safeActiveIdx]?.action()
     } else if (e.key === 'Escape') {
-      onClose()
+      handleClose()
     }
   }
 
@@ -480,8 +484,8 @@ export function CommandPalette({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[200] flex items-start justify-center pt-[11vh]"
-      onMouseDown={e => { if (e.target === e.currentTarget) onClose() }}
+      className="fixed inset-0 z-200 flex items-start justify-center pt-[11vh]"
+      onMouseDown={e => { if (e.target === e.currentTarget) handleClose() }}
     >
       {/* Backdrop */}
       <div className="animate-backdrop-in absolute inset-0 bg-black/50 backdrop-blur-sm" />
@@ -518,7 +522,7 @@ export function CommandPalette({
             </button>
           )}
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="rounded-lg border border-surface-border px-2 py-1 text-[11px] text-text-muted hover:bg-surface-muted hover:text-text-primary"
           >
             Esc
@@ -565,13 +569,13 @@ export function CommandPalette({
             {/* Inline create-board preview — always on top when present */}
             {createPreviewItem && (
               <div
-                data-active={activeIdx === flat.indexOf(createPreviewItem)}
+                data-active={safeActiveIdx === flat.indexOf(createPreviewItem)}
                 onMouseEnter={() => setActiveIdx(flat.indexOf(createPreviewItem))}
                 onClick={createPreviewItem.action}
                 className="cursor-pointer border-b border-surface-border/60"
               >
                 <CreateBoardRow
-                  active={activeIdx === flat.indexOf(createPreviewItem)}
+                  active={safeActiveIdx === flat.indexOf(createPreviewItem)}
                   parsed={newBoardParsed!}
                   template={effectiveTemplate}
                   onTemplate={setCreateTemplate}
@@ -606,7 +610,7 @@ export function CommandPalette({
                     {/* Items */}
                     {items.map(cmd => {
                       const idx    = flat.indexOf(cmd)
-                      const active = idx === activeIdx
+                      const active = idx === safeActiveIdx
                       const Icon   = cmd.icon
                       return (
                         <button
@@ -617,7 +621,7 @@ export function CommandPalette({
                           className={cn(
                             'flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors',
                             active
-                              ? 'bg-primary/[0.08] text-text-primary'
+                              ? 'bg-primary/8 text-text-primary'
                               : 'text-text-secondary hover:bg-surface-muted',
                           )}
                         >

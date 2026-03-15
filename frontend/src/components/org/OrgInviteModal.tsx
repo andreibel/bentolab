@@ -1,4 +1,4 @@
-import {KeyboardEvent, useRef, useState} from 'react'
+import {type KeyboardEvent, useRef, useState} from 'react'
 import {toast} from 'sonner'
 import {Check, ChevronRight, Copy, Link2, Loader2, Mail, X} from 'lucide-react'
 import {orgsApi} from '@/api/orgs'

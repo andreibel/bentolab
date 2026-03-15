@@ -278,14 +278,12 @@ function IssueRow({
 function IssueDetailPanelWrapper({
   issueId,
   boardId,
-  boards,
   panelWidth,
   startResize,
   onClose,
 }: {
   issueId: string
   boardId: string
-  boards: Board[]
   panelWidth: number
   startResize: (e: React.MouseEvent) => void
   onClose: () => void
@@ -600,7 +598,6 @@ export default function MyIssuesPage() {
         <IssueDetailPanelWrapper
           issueId={detailIssueId}
           boardId={detailBoardId}
-          boards={boards}
           panelWidth={panelWidth}
           startResize={startResize}
           onClose={closeDetail}

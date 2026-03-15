@@ -1,4 +1,4 @@
-import {useEffect} from 'react'
+import React, {useEffect} from 'react'
 import {NavLink, useLocation, useMatch, useNavigate} from 'react-router-dom'
 import {useQuery, useQueryClient} from '@tanstack/react-query'
 import {orgsApi} from '@/api/orgs'
@@ -146,7 +146,7 @@ function OrgSwitcher({ collapsed }: { collapsed: boolean }) {
     try {
       const { accessToken } = await authApi.switchOrg(org.id)
       setOrgContext(org.id, '', org.slug, accessToken, org.name)
-      queryClient.invalidateQueries()
+      await queryClient.invalidateQueries()
       navigate('/boards')
     } catch {
       toast.error('Failed to switch organization')
@@ -182,7 +182,7 @@ function OrgSwitcher({ collapsed }: { collapsed: boolean }) {
           side="right"
           align="start"
           sideOffset={8}
-          className="z-50 min-w-[220px] rounded-lg border border-surface-border bg-surface p-1 shadow-lg"
+          className="z-50 min-w-55 rounded-lg border border-surface-border bg-surface p-1 shadow-lg"
         >
           <div className="mb-1 px-2 py-1.5">
             <p className="text-[10px] font-semibold uppercase tracking-widest text-text-muted">
@@ -307,7 +307,7 @@ function LabItem({
       <button
         onClick={(e) => { e.preventDefault(); onPinToggle(board.id) }}
         title={isPinned ? 'Unpin' : 'Pin'}
-        className="absolute end-1.5 top-1/2 -translate-y-1/2 rounded p-1 text-text-muted opacity-0 transition-opacity group-hover:opacity-100 hover:text-text-primary"
+        className="absolute inset-e-1.5 top-1/2 -translate-y-1/2 rounded p-1 text-text-muted opacity-0 transition-opacity group-hover:opacity-100 hover:text-text-primary"
       >
         {isPinned ? <PinOff className="h-3 w-3" /> : <Pin className="h-3 w-3" />}
       </button>
@@ -446,7 +446,7 @@ function UserPanel({ collapsed }: { collapsed: boolean }) {
           side="right"
           align="end"
           sideOffset={8}
-          className="z-50 min-w-[180px] rounded-lg border border-surface-border bg-surface p-1 shadow-lg"
+          className="z-50 min-w-45 rounded-lg border border-surface-border bg-surface p-1 shadow-lg"
         >
           <DropdownMenu.Item
             onSelect={() => navigate('/settings/profile')}

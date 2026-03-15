@@ -7,7 +7,7 @@ interface FeaturePlaceholderProps {
   description: string
   badge?: string
   badgeColor?: string
-  preview: React.ReactNode
+  preview?: React.ReactNode
   actions?: React.ReactNode
 }
 

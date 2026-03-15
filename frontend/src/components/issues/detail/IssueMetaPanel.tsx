@@ -364,7 +364,7 @@ interface IssueMetaPanelProps {
   onUpdate: (data: Partial<Issue>) => void
 }
 
-export function IssueMetaPanel({ issue, boardId, columns, epics, sprints, parentIssue, childIssues = [], onUpdate }: IssueMetaPanelProps) {
+export function IssueMetaPanel({ issue, boardId, columns, epics, sprints, parentIssue, onUpdate }: IssueMetaPanelProps) {
   const { data: boardMembers = [] } = useQuery({
     queryKey: ['board-members', boardId],
     queryFn: () => boardsApi.listMembers(boardId),

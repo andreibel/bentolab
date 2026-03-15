@@ -1,6 +1,6 @@
 import {useCallback, useState} from 'react'
 import {useParams} from 'react-router-dom'
-import GridLayout, {type Layout} from 'react-grid-layout'
+import GridLayout, {type Layout, type LayoutItem} from 'react-grid-layout'
 import {useResizeObserver} from '@/hooks/useResizeObserver'
 import {GripHorizontal, LayoutGrid, Plus, RefreshCw, Settings2, X,} from 'lucide-react'
 import {cn} from '@/utils/cn'
@@ -97,7 +97,7 @@ interface DashboardWidget {
 
 interface StoredLayout {
   widgets: DashboardWidget[]
-  layout:  Layout[]
+  layout:  LayoutItem[]
 }
 
 // ── Defaults ──────────────────────────────────────────────────────────────────
@@ -108,7 +108,7 @@ const DEFAULT_WIDGETS: DashboardWidget[] = [
   { id: 'w-workload',  type: 'WORKLOAD'         },
 ]
 
-const DEFAULT_LAYOUT: Layout[] = [
+const DEFAULT_LAYOUT: LayoutItem[] = [
   { i: 'w-sprint',    x: 0,  y: 0, w: 14, h: 6, minW: 3, minH: 3 },
   { i: 'w-breakdown', x: 14, y: 0, w: 10, h: 6, minW: 3, minH: 3 },
   { i: 'w-workload',  x: 0,  y: 6, w: 12, h: 6, minW: 3, minH: 3 },
@@ -271,16 +271,17 @@ export default function SummaryPage() {
   const stored = loadLayout(bid)
 
   const [widgets,   setWidgets]   = useState<DashboardWidget[]>(stored?.widgets ?? DEFAULT_WIDGETS)
-  const [layout,    setLayout]    = useState<Layout[]>(stored?.layout ?? DEFAULT_LAYOUT)
+  const [layout,    setLayout]    = useState<LayoutItem[]>(stored?.layout ?? DEFAULT_LAYOUT)
   const [editMode,  setEditMode]  = useState(false)
   const [addOpen,   setAddOpen]   = useState(false)
 
   const [containerRef, containerWidth] = useResizeObserver<HTMLDivElement>()
 
   // Sync layout changes (drag/resize)
-  const handleLayoutChange = useCallback((next: Layout[]) => {
-    setLayout(next)
-    saveLayout(bid, { widgets, layout: next })
+  const handleLayoutChange = useCallback((next: Layout) => {
+    const items = [...next]
+    setLayout(items)
+    saveLayout(bid, { widgets, layout: items })
   }, [bid, widgets])
 
   const addWidget = useCallback((type: WidgetType) => {
@@ -289,7 +290,7 @@ export default function SummaryPage() {
 
     // Place below existing content
     const maxY = layout.reduce((m, l) => Math.max(m, l.y + l.h), 0)
-    const newItem: Layout = {
+    const newItem: LayoutItem = {
       i: id, x: 0, y: maxY,
       w: meta.defaultW, h: meta.defaultH,
       minW: meta.minW, minH: meta.minH,
@@ -378,16 +379,11 @@ export default function SummaryPage() {
           {colWidth > 0 && (
             <GridLayout
               layout={layout}
-              cols={COLS}
-              rowHeight={ROW_HEIGHT}
               width={colWidth}
-              isDraggable={editMode}
-              isResizable={editMode}
-              draggableHandle=".drag-handle"
+              gridConfig={{ cols: COLS, rowHeight: ROW_HEIGHT, margin: [12, 12] as [number, number], containerPadding: [0, 0] as [number, number] }}
+              dragConfig={{ enabled: editMode, handle: '.drag-handle' }}
+              resizeConfig={{ enabled: editMode, handles: ['se'] }}
               onLayoutChange={handleLayoutChange}
-              margin={[12, 12]}
-              containerPadding={[0, 0]}
-              resizeHandles={['se']}
             >
               {widgets.map((widget) => {
                 const Component = WIDGET_COMPONENTS[widget.type]

@@ -16,7 +16,7 @@ export function TeamActivityWidget({ boardId: _ }: { boardId: string }) {
         <span className="text-center">Closed</span>
         <span className="text-center">Comments</span>
       </div>
-      {MOCK.sort((a, b) => (b.issuesClosed * 3 + b.comments) - (a.issuesClosed * 3 + a.comments)).map((m, i) => {
+      {MOCK.sort((a, b) => (b.issuesClosed * 3 + b.comments) - (a.issuesClosed * 3 + a.comments)).map((m) => {
         const score = m.issuesClosed * 3 + m.comments + m.commits
         const pct   = (score / maxScore) * 100
         return (

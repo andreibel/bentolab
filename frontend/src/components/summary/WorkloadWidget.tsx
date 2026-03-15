@@ -23,7 +23,6 @@ export function WorkloadWidget({ boardId: _ }: { boardId: string }) {
 
       <div className="flex flex-col gap-2">
         {MOCK_MEMBERS.map((m) => {
-          const total    = m.open + m.inProgress + m.done
           const openPct  = (m.open / maxTotal) * 100
           const inPct    = (m.inProgress / maxTotal) * 100
           const overloaded = m.open >= HIGH_LOAD
