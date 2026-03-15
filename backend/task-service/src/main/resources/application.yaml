@@ -34,7 +34,11 @@ spring:
             value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
         producer:
             key-serializer: org.apache.kafka.common.serialization.StringSerializer
-            value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+            value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+services:
+    board-service:
+        url: http://localhost:8083
 
 ---
 spring:
@@ -61,4 +65,8 @@ spring:
             value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
         producer:
             key-serializer: org.apache.kafka.common.serialization.StringSerializer
-            value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+            value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+services:
+    board-service:
+        url: http://board-service:8083

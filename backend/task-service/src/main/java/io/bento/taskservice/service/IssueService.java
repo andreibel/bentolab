@@ -9,6 +9,12 @@ import io.bento.taskservice.entity.embedded.ActivityDetails;
 import io.bento.taskservice.entity.embedded.ColumnHistoryEntry;
 import io.bento.taskservice.enums.ActivityAction;
 import io.bento.taskservice.enums.EntityType;
+import io.bento.taskservice.enums.IssuePriority;
+import io.bento.taskservice.event.IssueAssignedEvent;
+import io.bento.taskservice.event.IssueClosedEvent;
+import io.bento.taskservice.event.IssueEventPublisher;
+import io.bento.taskservice.event.IssuePriorityChangedEvent;
+import io.bento.taskservice.event.IssueStatusChangedEvent;
 import io.bento.taskservice.exception.IssueNotFoundException;
 import io.bento.taskservice.repository.IssueRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +30,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -33,6 +40,7 @@ public class IssueService {
     private final IssueRepository issueRepository;
     private final ActivityService activityService;
     private final MongoTemplate mongoTemplate;
+    private final IssueEventPublisher issueEventPublisher;
 
     public Page<Issue> getMyIssues(String orgId, String userId, String relation, Boolean closed, Pageable pageable) {
         return switch (relation) {
@@ -115,6 +123,8 @@ public class IssueService {
     public Issue updateIssue(String orgId, String userId, String issueId, UpdateIssueRequest request) {
         Issue issue = getIssue(orgId, issueId);
 
+        IssuePriority oldPriority = issue.getPriority();
+
         if (request.type() != null) issue.setType(request.type());
         if (request.priority() != null) issue.setPriority(request.priority());
         if (request.severity() != null) issue.setSeverity(request.severity());
@@ -136,6 +146,21 @@ public class IssueService {
 
         activityService.log(orgId, issueId, issue.getBoardId(), issue.getSprintId(),
                 userId, EntityType.ISSUE, ActivityAction.UPDATED, null);
+
+        // Publish priority change event if escalated to CRITICAL or HIGH
+        if (request.priority() != null && request.priority() != oldPriority) {
+            IssuePriority newPriority = request.priority();
+            if (newPriority == IssuePriority.CRITICAL || newPriority == IssuePriority.HIGH) {
+                issueEventPublisher.publishIssuePriorityChanged(new IssuePriorityChangedEvent(
+                        issue.getId(), issue.getBoardId(), orgId, issue.getIssueKey(),
+                        issue.getTitle(),
+                        oldPriority != null ? oldPriority.name() : null,
+                        newPriority.name(),
+                        userId, issue.getAssigneeId(),
+                        Instant.now().toString()
+                ));
+            }
+        }
 
         return issue;
     }
@@ -186,6 +211,18 @@ public class IssueService {
                         .newValue(request.columnId())
                         .build());
 
+        // Publish status changed event if column names are provided
+        if (request.fromColumnName() != null && request.toColumnName() != null) {
+            issueEventPublisher.publishIssueStatusChanged(new IssueStatusChangedEvent(
+                    issue.getId(), issue.getBoardId(), orgId, issue.getIssueKey(),
+                    issue.getTitle(),
+                    request.fromColumnName(), request.toColumnName(),
+                    userId, issue.getAssigneeId(), issue.getReporterId(),
+                    issue.getWatcherIds() != null ? issue.getWatcherIds() : Collections.emptyList(),
+                    Instant.now().toString()
+            ));
+        }
+
         return issue;
     }
 
@@ -206,6 +243,15 @@ public class IssueService {
                         .newValue(request.assigneeId())
                         .build());
 
+        // Publish assignment event (only when actually assigning someone)
+        if (request.assigneeId() != null && !request.assigneeId().equals(userId)) {
+            issueEventPublisher.publishIssueAssigned(new IssueAssignedEvent(
+                    issue.getId(), issue.getBoardId(), orgId, issue.getIssueKey(),
+                    issue.getTitle(), request.assigneeId(), userId,
+                    Instant.now().toString()
+            ));
+        }
+
         return issue;
     }
 
@@ -215,8 +261,16 @@ public class IssueService {
         issue.setClosedAt(Instant.now());
         issue.setUpdatedAt(Instant.now());
         issue = issueRepository.save(issue);
+
         activityService.log(orgId, issueId, issue.getBoardId(), issue.getSprintId(),
                 userId, EntityType.ISSUE, ActivityAction.CLOSED, null);
+
+        issueEventPublisher.publishIssueClosed(new IssueClosedEvent(
+                issue.getId(), issue.getBoardId(), orgId, issue.getIssueKey(),
+                issue.getTitle(), userId, issue.getAssigneeId(), issue.getReporterId(),
+                issue.getClosedAt().toString()
+        ));
+
         return issue;
     }
 
@@ -236,6 +290,7 @@ public class IssueService {
         Update update = new Update().inc("seq", 1).setOnInsert("boardKey", boardKey);
         FindAndModifyOptions options = FindAndModifyOptions.options().upsert(true).returnNew(true);
         BoardCounter counter = mongoTemplate.findAndModify(query, update, options, BoardCounter.class);
+        assert counter != null;
         return boardKey + "-" + counter.getSeq();
     }
 }
