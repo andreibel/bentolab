@@ -1,4 +1,5 @@
 import {useEffect, useMemo, useRef, useState} from 'react'
+import type {ReactNode} from 'react'
 import Fuse from 'fuse.js'
 import {Check, ChevronDown, Pencil, Search, X} from 'lucide-react'
 import {cn} from '@/utils/cn'
@@ -45,7 +46,7 @@ export function EpicFilter({
 
   // ── Trigger label ──────────────────────────────────────────────────────────
 
-  let triggerContent: React.ReactNode
+  let triggerContent: ReactNode
 
   if (selected.size === 0) {
     triggerContent = (
@@ -58,7 +59,7 @@ export function EpicFilter({
     triggerContent = epic ? (
       <>
         <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: epic.color }} />
-        <span className="max-w-[110px] truncate">{epic.title}</span>
+        <span className="max-w-27.5 truncate">{epic.title}</span>
         <X
           className="h-3 w-3 shrink-0 opacity-60 hover:opacity-100"
           onClick={e => { e.stopPropagation(); clearAll() }}
@@ -104,7 +105,7 @@ export function EpicFilter({
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute start-0 top-full z-50 mt-1 w-64 rounded-xl border border-surface-border bg-surface shadow-xl">
+        <div className="absolute inset-s-0 top-full z-50 mt-1 w-64 rounded-xl border border-surface-border bg-surface shadow-xl">
 
           {/* Search box */}
           <div className="p-2">

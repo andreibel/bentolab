@@ -11,6 +11,7 @@ import {IssueCard} from './IssueCard'
 import type {BoardColumn as BoardColumnType} from '@/types/board'
 import type {Issue} from '@/types/issue'
 import type {Epic} from '@/types/epic'
+import * as React from "react";
 
 const COL_COLORS = [
   '#6B7280', '#EF4444', '#F97316', '#EAB308',
@@ -43,7 +44,7 @@ function EditColumnPopover({
     return () => document.removeEventListener('mousedown', handler)
   }, [onClose])
 
-  const handleSave = async (e: React.FormEvent) => {
+  const handleSave = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (!name.trim()) return
     setSaving(true)
@@ -53,7 +54,7 @@ function EditColumnPopover({
         color,
         wipLimit: wipLimit ? parseInt(wipLimit, 10) : null,
       })
-      queryClient.invalidateQueries({ queryKey: queryKeys.boards.detail(column.boardId) })
+      await queryClient.invalidateQueries({queryKey: queryKeys.boards.detail(column.boardId)})
       toast.success('Column updated')
       onClose()
     } catch {
@@ -66,7 +67,7 @@ function EditColumnPopover({
   return (
     <div
       ref={ref}
-      className="absolute start-0 top-full z-50 mt-1 w-64 rounded-xl border border-surface-border bg-surface p-4 shadow-2xl"
+      className="absolute inset-s-0 top-full z-50 mt-1 w-64 rounded-xl border border-surface-border bg-surface p-4 shadow-2xl"
     >
       <form onSubmit={handleSave} className="flex flex-col gap-3">
         <div>

@@ -39,8 +39,8 @@ export function BoardSettingsPanel({ board, onClose }: Props) {
         description: description.trim() || undefined,
         background,
       })
-      queryClient.invalidateQueries({ queryKey: queryKeys.boards.detail(board.id) })
-      queryClient.invalidateQueries({ queryKey: queryKeys.boards.all('') })
+      await queryClient.invalidateQueries({queryKey: queryKeys.boards.detail(board.id)})
+      await queryClient.invalidateQueries({queryKey: queryKeys.boards.all('')})
       toast.success('Board updated')
       onClose()
     } catch {

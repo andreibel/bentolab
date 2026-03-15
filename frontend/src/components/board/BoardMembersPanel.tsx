@@ -7,6 +7,7 @@ import {boardsApi} from '@/api/boards'
 import {orgsApi} from '@/api/orgs'
 import {usersApi} from '@/api/users'
 import {useAuthStore} from '@/stores/authStore'
+import type {ReactNode} from 'react'
 import type {BoardRole, UserProfile} from '@/types/board'
 
 interface Props {
@@ -14,16 +15,13 @@ interface Props {
   onClose: () => void
 }
 
-const ROLE_OPTIONS: { value: BoardRole; label: string; icon: React.ReactNode }[] = [
+const ROLE_OPTIONS: { value: BoardRole; label: string; icon: ReactNode }[] = [
   { value: 'PRODUCT_OWNER', label: 'Product Owner', icon: <Crown className="h-3.5 w-3.5" /> },
   { value: 'SCRUM_MASTER',  label: 'Scrum Master',  icon: <Shield className="h-3.5 w-3.5" /> },
   { value: 'DEVELOPER',     label: 'Developer',     icon: <Code2 className="h-3.5 w-3.5" /> },
   { value: 'VIEWER',        label: 'Viewer',        icon: <Eye className="h-3.5 w-3.5" /> },
 ]
 
-function roleLabel(role: BoardRole) {
-  return ROLE_OPTIONS.find((o) => o.value === role)?.label ?? role
-}
 
 function UserAvatar({ profile, size = 8 }: { profile: UserProfile | null; size?: number }) {
   const initials = profile
@@ -110,7 +108,7 @@ export function BoardMembersPanel({ boardId, onClose }: Props) {
         email: p?.email ?? '',
         firstName: p?.firstName ?? '',
         lastName: p?.lastName ?? '',
-        fullName: fullName(p),
+        fullName: fullName(p ?? null),
         profile: p ?? null,
       }
     }),
@@ -137,7 +135,7 @@ export function BoardMembersPanel({ boardId, onClose }: Props) {
     mutationFn: ({ userId }: { userId: string }) =>
       boardsApi.addMember(boardId, userId, addRole),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: membersKey })
+      void queryClient.invalidateQueries({ queryKey: membersKey })
       toast.success('Member added')
     },
     onError: () => toast.error('Could not add member'),
@@ -147,7 +145,7 @@ export function BoardMembersPanel({ boardId, onClose }: Props) {
     mutationFn: ({ userId, role }: { userId: string; role: BoardRole }) =>
       boardsApi.updateMemberRole(boardId, userId, role),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: membersKey })
+      void queryClient.invalidateQueries({ queryKey: membersKey })
       toast.success('Role updated')
     },
     onError: () => toast.error('Could not update role'),
@@ -156,7 +154,7 @@ export function BoardMembersPanel({ boardId, onClose }: Props) {
   const removeMutation = useMutation({
     mutationFn: (userId: string) => boardsApi.removeMember(boardId, userId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: membersKey })
+      void queryClient.invalidateQueries({ queryKey: membersKey })
       toast.success('Member removed')
     },
     onError: () => toast.error('Could not remove member'),
@@ -237,7 +235,7 @@ export function BoardMembersPanel({ boardId, onClose }: Props) {
           {/* Search + role selector */}
           <div className="mb-2 flex items-center gap-2">
             <div className="relative flex-1">
-              <Search className="absolute start-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-muted" />
+              <Search className="absolute inset-s-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-muted" />
               <input
                 ref={searchRef}
                 type="text"
@@ -310,7 +308,6 @@ function RoleDropdown({
   disabled?: boolean
   compact?: boolean
 }) {
-  const opt = ROLE_OPTIONS.find((o) => o.value === value)!
   return (
     <div className="relative">
       <select
@@ -325,7 +322,7 @@ function RoleDropdown({
           <option key={o.value} value={o.value}>{o.label}</option>
         ))}
       </select>
-      <ChevronDown className="pointer-events-none absolute end-1.5 top-1/2 h-3 w-3 -translate-y-1/2 text-text-muted" />
+      <ChevronDown className="pointer-events-none absolute inset-e-1.5 top-1/2 h-3 w-3 -translate-y-1/2 text-text-muted" />
     </div>
   )
 }
