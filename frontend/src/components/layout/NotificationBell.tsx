@@ -1,6 +1,7 @@
 import {useEffect, useRef, useState} from 'react'
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query'
 import {useNavigate} from 'react-router-dom'
+import {useAuthStore} from '@/stores/authStore'
 import {
   AlertTriangle,
   ArrowRight,
@@ -241,16 +242,69 @@ function NotificationDrawer({ onClose }: { onClose: () => void }) {
   )
 }
 
+// ─── Real-time SSE hook ───────────────────────────────────────────────────────
+
+function useNotificationStream(onNotification: () => void) {
+  const accessToken  = useAuthStore((s) => s.accessToken)
+  const baseUrl      = import.meta.env.VITE_API_URL ?? 'http://localhost:8080'
+  const callbackRef  = useRef(onNotification)
+  callbackRef.current = onNotification
+
+  useEffect(() => {
+    if (!accessToken) return
+
+    let active = true
+    const abortController = new AbortController()
+
+    const connect = async () => {
+      try {
+        const response = await fetch(`${baseUrl}/api/notifications/stream`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          signal: abortController.signal,
+        })
+
+        if (!response.ok || !response.body) return
+
+        const reader  = response.body.getReader()
+        const decoder = new TextDecoder()
+
+        while (active) {
+          const { done, value } = await reader.read()
+          if (done) break
+          const text = decoder.decode(value, { stream: true })
+          if (text.includes('notification')) {
+            callbackRef.current()
+          }
+        }
+      } catch {
+        // connection closed or aborted — ignore
+      }
+    }
+
+    void connect()
+
+    return () => {
+      active = false
+      abortController.abort()
+    }
+  }, [accessToken, baseUrl])
+}
+
 // ─── Public: bell + drawer ────────────────────────────────────────────────────
 
 export function NotificationBell() {
   const [open, setOpen] = useState(false)
   const ref             = useRef<HTMLDivElement>(null)
+  const queryClient     = useQueryClient()
+
+  useNotificationStream(() => {
+    void queryClient.invalidateQueries({ queryKey: queryKeys.notifications.list() })
+    void queryClient.invalidateQueries({ queryKey: queryKeys.notifications.unreadCount() })
+  })
 
   const { data } = useQuery({
-    queryKey:       queryKeys.notifications.unreadCount(),
-    queryFn:        notificationsApi.unreadCount,
-    refetchInterval: 30_000,
+    queryKey: queryKeys.notifications.unreadCount(),
+    queryFn:  notificationsApi.unreadCount,
   })
 
   const count = data?.count ?? 0

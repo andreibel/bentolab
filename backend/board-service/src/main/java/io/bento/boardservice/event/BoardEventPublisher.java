@@ -1,5 +1,9 @@
 package io.bento.boardservice.event;
 
+import io.bento.kafka.event.BoardColumnDeletedEvent;
+import io.bento.kafka.event.BoardDeletedEvent;
+import io.bento.kafka.event.BoardMemberAddedEvent;
+import io.bento.kafka.event.BoardMemberRemovedEvent;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

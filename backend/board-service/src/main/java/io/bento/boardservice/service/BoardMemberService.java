@@ -7,8 +7,8 @@ import io.bento.boardservice.entity.Board;
 import io.bento.boardservice.entity.BoardMember;
 import io.bento.boardservice.enums.BoardRole;
 import io.bento.boardservice.event.BoardEventPublisher;
-import io.bento.boardservice.event.BoardMemberAddedEvent;
-import io.bento.boardservice.event.BoardMemberRemovedEvent;
+import io.bento.kafka.event.BoardMemberAddedEvent;
+import io.bento.kafka.event.BoardMemberRemovedEvent;
 import io.bento.boardservice.exception.BoardMemberAlreadyExistsException;
 import io.bento.boardservice.exception.BoardMemberNotFoundException;
 import io.bento.boardservice.exception.BoardNotFoundException;
@@ -59,7 +59,7 @@ public class BoardMemberService {
 
         BoardMemberResponse response = boardMemberMapper.toResponse(boardMemberRepository.save(member));
         boardEventPublisher.publishBoardMemberAdded(new BoardMemberAddedEvent(
-                boardId, board.getName(), request.userId(), userId, request.boardRole()
+                boardId, board.getName(), board.getOrgId(), request.userId(), userId, request.boardRole().name()
         ));
         return response;
     }
@@ -83,7 +83,8 @@ public class BoardMemberService {
         BoardMember member = boardMemberRepository.findByBoard_IdAndUserId(boardId, targetUserId)
                 .orElseThrow(() -> new BoardMemberNotFoundException("Member not found for user: " + targetUserId));
         String boardName = member.getBoard().getName();
+        UUID orgId = member.getBoard().getOrgId();
         boardMemberRepository.delete(member);
-        boardEventPublisher.publishBoardMemberRemoved(new BoardMemberRemovedEvent(boardId, boardName, targetUserId));
+        boardEventPublisher.publishBoardMemberRemoved(new BoardMemberRemovedEvent(boardId, boardName, orgId, targetUserId));
     }
 }

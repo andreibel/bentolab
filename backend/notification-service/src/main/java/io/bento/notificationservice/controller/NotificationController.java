@@ -3,13 +3,16 @@ package io.bento.notificationservice.controller;
 import io.bento.notificationservice.dto.response.NotificationResponse;
 import io.bento.notificationservice.mapper.NotificationMapper;
 import io.bento.notificationservice.service.NotificationService;
+import io.bento.notificationservice.service.SseEmitterRegistry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.Map;
 
@@ -20,6 +23,7 @@ public class NotificationController {
 
     private final NotificationService notificationService;
     private final NotificationMapper notificationMapper;
+    private final SseEmitterRegistry sseEmitterRegistry;
 
     @GetMapping
     public ResponseEntity<Page<NotificationResponse>> getNotifications(
@@ -58,5 +62,10 @@ public class NotificationController {
 
         notificationService.markAllAsRead(orgId, userId);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter stream(@AuthenticationPrincipal String userId) {
+        return sseEmitterRegistry.subscribe(userId);
     }
 }

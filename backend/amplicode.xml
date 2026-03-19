@@ -1,28 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="AmplicodeDatabaseMigrationSettings" lastSelectedDirectory="db/changelog/#date(&quot;yyyy&quot;)/#date(&quot;MM&quot;)">
-    <database-infos>
-      <database-info>
-        <option name="enabled" value="true" />
-        <dbms-id>postgres</dbms-id>
-      </database-info>
-    </database-infos>
-  </component>
   <component name="AmplicodePersistenceUnitSettings">
     <persistence-units>
-      <persistence-unit moduleName="auth-service.main" name="Default">
+      <persistence-unit moduleName="bento-backend.auth-service.main" name="Default">
         <packages>
           <package value="io.bento.authservice" />
         </packages>
       </persistence-unit>
-      <persistence-unit moduleName="org-service.main" name="Default">
-        <packages>
-          <package value="io.bento.orgservice" />
-        </packages>
-      </persistence-unit>
-      <persistence-unit moduleName="board-service.main" name="Default">
+      <persistence-unit moduleName="bento-backend.board-service.main" name="Default">
         <packages>
           <package value="io.bento.boardservice" />
+        </packages>
+      </persistence-unit>
+      <persistence-unit moduleName="bento-backend.org-service.main" name="Default">
+        <packages>
+          <package value="io.bento.orgservice" />
         </packages>
       </persistence-unit>
     </persistence-units>

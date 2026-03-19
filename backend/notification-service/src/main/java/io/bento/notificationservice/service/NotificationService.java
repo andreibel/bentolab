@@ -1,9 +1,11 @@
 package io.bento.notificationservice.service;
 
+import io.bento.notificationservice.dto.response.SprintEndingSoonDto;
 import io.bento.notificationservice.entity.Notification;
 import io.bento.notificationservice.enums.NotificationType;
-import io.bento.notificationservice.event.*;
+import io.bento.kafka.event.*;
 import io.bento.notificationservice.exception.NotificationNotFoundException;
+import io.bento.notificationservice.mapper.NotificationMapper;
 import io.bento.notificationservice.repository.NotificationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +21,8 @@ import java.time.Instant;
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
+    private final NotificationMapper notificationMapper;
+    private final SseEmitterRegistry sseEmitterRegistry;
 
     // ── Read ─────────────────────────────────────────────────────────────────
 
@@ -64,8 +68,8 @@ public class NotificationService {
 
     public void createMemberJoinedNotification(MemberJoinedEvent event) {
         save(Notification.builder()
-                .orgId(event.orgId())
-                .userId(event.newMemberId())
+                .orgId(event.orgId().toString())
+                .userId(event.newMemberId().toString())
                 .type(NotificationType.ORG_MEMBER_JOINED)
                 .title("Welcome to " + event.orgName())
                 .message("You have joined " + event.orgName() + " as " + event.role())
@@ -77,25 +81,25 @@ public class NotificationService {
 
     public void createBoardMemberAddedNotification(BoardMemberAddedEvent event) {
         save(Notification.builder()
-                .orgId(null) // board events don't carry orgId
-                .userId(event.userId())
+                .orgId(event.orgId().toString())
+                .userId(event.userId().toString())
                 .type(NotificationType.BOARD_MEMBER_ADDED)
                 .title("You were added to " + event.boardName())
                 .message("You now have access to board: " + event.boardName())
-                .boardId(event.boardId())
-                .triggeredBy(event.addedByUserId())
+                .boardId(event.boardId().toString())
+                .triggeredBy(event.addedByUserId().toString())
                 .createdAt(Instant.now())
                 .build());
     }
 
     public void createBoardMemberRemovedNotification(BoardMemberRemovedEvent event) {
         save(Notification.builder()
-                .orgId(null)
-                .userId(event.userId())
+                .orgId(event.orgId().toString())
+                .userId(event.userId().toString())
                 .type(NotificationType.BOARD_MEMBER_REMOVED)
                 .title("You were removed from " + event.boardName())
                 .message("Your access to board " + event.boardName() + " has been revoked")
-                .boardId(event.boardId())
+                .boardId(event.boardId().toString())
                 .createdAt(Instant.now())
                 .build());
     }
@@ -192,6 +196,21 @@ public class NotificationService {
                 .build());
     }
 
+    // ── Sprint due soon ───────────────────────────────────────────────────────
+
+    public void createSprintDueSoonNotification(SprintEndingSoonDto sprint, String userId) {
+        save(Notification.builder()
+                .orgId(sprint.orgId())
+                .userId(userId)
+                .type(NotificationType.SPRINT_DUE_SOON)
+                .title("Sprint ending soon: " + sprint.sprintName())
+                .message(sprint.sprintName() + " ends on " + sprint.endDate())
+                .boardId(sprint.boardId())
+                .sprintId(sprint.sprintId())
+                .createdAt(Instant.now())
+                .build());
+    }
+
     // ── Sprint events ─────────────────────────────────────────────────────────
 
     public void createSprintStartedNotification(SprintStartedEvent event, String recipientUserId) {
@@ -224,7 +243,8 @@ public class NotificationService {
 
     private void save(Notification notification) {
         try {
-            notificationRepository.save(notification);
+            Notification saved = notificationRepository.save(notification);
+            sseEmitterRegistry.emit(saved.getUserId(), notificationMapper.toResponse(saved));
         } catch (Exception e) {
             log.error("Failed to save notification: type={} userId={}", notification.getType(), notification.getUserId(), e);
         }

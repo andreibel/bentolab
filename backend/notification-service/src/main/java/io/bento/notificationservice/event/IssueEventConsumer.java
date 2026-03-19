@@ -1,5 +1,10 @@
 package io.bento.notificationservice.event;
 
+import io.bento.kafka.event.IssueAssignedEvent;
+import io.bento.kafka.event.IssueClosedEvent;
+import io.bento.kafka.event.IssueCommentedEvent;
+import io.bento.kafka.event.IssuePriorityChangedEvent;
+import io.bento.kafka.event.IssueStatusChangedEvent;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import io.bento.notificationservice.service.NotificationService;

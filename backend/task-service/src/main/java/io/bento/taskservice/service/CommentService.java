@@ -4,7 +4,7 @@ import io.bento.taskservice.dto.request.CreateCommentRequest;
 import io.bento.taskservice.dto.request.UpdateCommentRequest;
 import io.bento.taskservice.entity.Comment;
 import io.bento.taskservice.entity.Issue;
-import io.bento.taskservice.event.IssueCommentedEvent;
+import io.bento.kafka.event.IssueCommentedEvent;
 import io.bento.taskservice.event.IssueEventPublisher;
 import io.bento.taskservice.exception.CommentNotFoundException;
 import io.bento.taskservice.repository.CommentRepository;

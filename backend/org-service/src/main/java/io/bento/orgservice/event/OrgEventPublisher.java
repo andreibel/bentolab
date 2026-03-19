@@ -1,5 +1,9 @@
 package io.bento.orgservice.event;
 
+import io.bento.kafka.event.InvitationCreatedEvent;
+import io.bento.kafka.event.MemberJoinedEvent;
+import io.bento.kafka.event.MemberRemovedEvent;
+import io.bento.kafka.event.MemberRoleChangedEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;

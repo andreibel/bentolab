@@ -10,8 +10,8 @@ import io.bento.orgservice.entity.Organization;
 import io.bento.orgservice.entity.OrganizationMember;
 import io.bento.orgservice.enums.OrgRoles;
 import io.bento.orgservice.enums.Status;
-import io.bento.orgservice.event.InvitationCreatedEvent;
-import io.bento.orgservice.event.MemberJoinedEvent;
+import io.bento.kafka.event.InvitationCreatedEvent;
+import io.bento.kafka.event.MemberJoinedEvent;
 import io.bento.orgservice.event.OrgEventPublisher;
 import io.bento.orgservice.exception.InvalidInvitationStatusException;
 import io.bento.orgservice.exception.InvitationAlreadyExistsException;
@@ -72,7 +72,7 @@ public class OrgInvitationService {
                 organization.getName(),
                 adminId,
                 saved.getEmail(),
-                saved.getOrgRole(),
+                saved.getOrgRole().name(),
                 saved.getToken(),
                 saved.getExpiresAt().toString()
         ));
@@ -172,7 +172,7 @@ public class OrgInvitationService {
                 org.getId(),
                 org.getName(),
                 saved.getUserId(),
-                saved.getOrgRole(),
+                saved.getOrgRole().name(),
                 saved.getJoinedAt().toString()
         ));
 

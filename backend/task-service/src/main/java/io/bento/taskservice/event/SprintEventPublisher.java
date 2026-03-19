@@ -1,5 +1,7 @@
 package io.bento.taskservice.event;
 
+import io.bento.kafka.event.SprintCompletedEvent;
+import io.bento.kafka.event.SprintStartedEvent;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

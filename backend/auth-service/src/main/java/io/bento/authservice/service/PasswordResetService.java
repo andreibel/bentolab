@@ -3,7 +3,7 @@ package io.bento.authservice.service;
 import io.bento.authservice.config.AuthProperties;
 import io.bento.authservice.entity.PasswordResetToken;
 import io.bento.authservice.entity.User;
-import io.bento.authservice.event.PasswordResetRequestedEvent;
+import io.bento.kafka.event.PasswordResetRequestedEvent;
 import io.bento.authservice.event.UserEventPublisher;
 import io.bento.authservice.exception.InvalidTokenException;
 import io.bento.authservice.repository.PasswordResetTokenRepository;

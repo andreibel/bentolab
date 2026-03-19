@@ -1,8 +1,8 @@
 package io.bento.orgservice;
 
 import io.bento.orgservice.enums.OrgRoles;
-import io.bento.orgservice.event.InvitationCreatedEvent;
-import io.bento.orgservice.event.MemberJoinedEvent;
+import io.bento.kafka.event.InvitationCreatedEvent;
+import io.bento.kafka.event.MemberJoinedEvent;
 import io.bento.orgservice.event.OrgEventPublisher;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -75,9 +75,9 @@ class OrgEventPublisherTest {
                 "Acme Corp",
                 UUID.randomUUID(),
                 "newuser@example.com",
-                OrgRoles.ORG_MEMBER,
+                OrgRoles.ORG_MEMBER.name(),
                 UUID.randomUUID().toString(),
-                Instant.now().plusSeconds(7 * 24 * 60 * 60)
+                Instant.now().plusSeconds(7 * 24 * 60 * 60).toString()
         );
 
         orgEventPublisher.publishInvitationCreated(event);
@@ -97,8 +97,8 @@ class OrgEventPublisherTest {
                 orgId,
                 "Acme Corp",
                 UUID.randomUUID(),
-                OrgRoles.ORG_MEMBER,
-                Instant.now()
+                OrgRoles.ORG_MEMBER.name(),
+                Instant.now().toString()
         );
 
         orgEventPublisher.publishMemberJoined(event);

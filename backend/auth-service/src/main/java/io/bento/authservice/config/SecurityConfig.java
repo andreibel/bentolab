@@ -1,6 +1,7 @@
 package io.bento.authservice.config;
 
-import io.bento.authservice.security.GatewayAuthFilter;
+import io.bento.security.GatewayAuthFilter;
+import io.bento.security.GatewayAuthProperties;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;

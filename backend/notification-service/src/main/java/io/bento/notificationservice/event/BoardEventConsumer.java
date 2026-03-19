@@ -1,5 +1,7 @@
 package io.bento.notificationservice.event;
 
+import io.bento.kafka.event.BoardMemberAddedEvent;
+import io.bento.kafka.event.BoardMemberRemovedEvent;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import io.bento.notificationservice.service.NotificationService;

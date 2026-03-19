@@ -1,6 +1,6 @@
 package io.bento.taskservice.client;
 
-import io.bento.taskservice.config.GatewayAuthProperties;
+import io.bento.security.GatewayAuthProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;

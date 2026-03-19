@@ -1,10 +1,10 @@
 package io.bento.notificationservice.service;
 
 import io.bento.notificationservice.config.NotificationProperties;
-import io.bento.notificationservice.event.EmailVerificationRequestedEvent;
-import io.bento.notificationservice.event.InvitationCreatedEvent;
-import io.bento.notificationservice.event.PasswordResetRequestedEvent;
-import io.bento.notificationservice.event.UserRegisteredEvent;
+import io.bento.kafka.event.EmailVerificationRequestedEvent;
+import io.bento.kafka.event.InvitationCreatedEvent;
+import io.bento.kafka.event.PasswordResetRequestedEvent;
+import io.bento.kafka.event.UserRegisteredEvent;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;

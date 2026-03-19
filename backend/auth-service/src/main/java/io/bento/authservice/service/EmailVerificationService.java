@@ -2,7 +2,7 @@ package io.bento.authservice.service;
 
 import io.bento.authservice.entity.EmailVerificationToken;
 import io.bento.authservice.entity.User;
-import io.bento.authservice.event.EmailVerificationRequestedEvent;
+import io.bento.kafka.event.EmailVerificationRequestedEvent;
 import io.bento.authservice.event.UserEventPublisher;
 import io.bento.authservice.exception.InvalidTokenException;
 import io.bento.authservice.repository.EmailVerificationTokenRepository;

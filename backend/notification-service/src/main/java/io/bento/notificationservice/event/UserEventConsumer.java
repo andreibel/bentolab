@@ -1,5 +1,8 @@
 package io.bento.notificationservice.event;
 
+import io.bento.kafka.event.EmailVerificationRequestedEvent;
+import io.bento.kafka.event.PasswordResetRequestedEvent;
+import io.bento.kafka.event.UserRegisteredEvent;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import io.bento.notificationservice.service.EmailService;
@@ -27,7 +30,7 @@ public class UserEventConsumer {
                 log.debug("Skipping legacy event without eventType: {}", payload);
                 return;
             }
-            String eventType = eventTypeNode.asText();
+            String eventType = eventTypeNode.asString();
 
             switch (eventType) {
                 case "UserRegisteredEvent" -> {

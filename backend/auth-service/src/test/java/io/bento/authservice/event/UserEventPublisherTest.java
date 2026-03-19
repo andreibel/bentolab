@@ -1,5 +1,10 @@
 package io.bento.authservice.event;
 
+import io.bento.kafka.event.EmailVerificationRequestedEvent;
+import io.bento.kafka.event.PasswordResetRequestedEvent;
+import io.bento.kafka.event.UserLoggedInEvent;
+import io.bento.kafka.event.UserRegisteredEvent;
+import io.bento.kafka.event.UserUpdatedEvent;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;

@@ -1,5 +1,10 @@
 package io.bento.taskservice.event;
 
+import io.bento.kafka.event.IssueAssignedEvent;
+import io.bento.kafka.event.IssueClosedEvent;
+import io.bento.kafka.event.IssueCommentedEvent;
+import io.bento.kafka.event.IssuePriorityChangedEvent;
+import io.bento.kafka.event.IssueStatusChangedEvent;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
