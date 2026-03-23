@@ -1,6 +1,5 @@
 package io.bento.authservice.controller;
 
-import io.bento.security.GatewayAuthFilter;
 import io.bento.security.GatewayAuthProperties;
 import io.bento.authservice.config.SecurityConfig;
 import io.bento.authservice.dto.response.AuthResponse;
@@ -16,7 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.TestPropertySource;
@@ -66,12 +64,7 @@ class AuthControllerTest {
 
     @TestConfiguration
     @EnableConfigurationProperties(GatewayAuthProperties.class)
-    static class TestConfig {
-        @Bean
-        GatewayAuthFilter gatewayAuthFilter(GatewayAuthProperties props) {
-            return new GatewayAuthFilter(props);
-        }
-    }
+    static class TestConfig {}
 
     // =========================================================================
     // POST /api/auth/register

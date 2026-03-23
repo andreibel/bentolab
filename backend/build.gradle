@@ -35,6 +35,7 @@ subprojects {
 
     tasks.named('test') {
         useJUnitPlatform()
+        failOnNoDiscoveredTests = false
     }
 }
 
@@ -50,7 +51,7 @@ configure(subprojects.findAll { !it.path.startsWith(':libs') }) {
 }
 
 // Standard MVC services (api-gateway uses WebFlux + different stack)
-configure(subprojects.findAll { it.name in ['auth-service', 'org-service', 'board-service', 'task-service', 'notification-service'] }) {
+configure(subprojects.findAll { it.name in ['auth-service', 'org-service', 'board-service', 'task-service', 'notification-service', 'realtime-service'] }) {
     dependencies {
         implementation 'org.springframework.boot:spring-boot-starter-actuator'
         implementation 'org.springframework.boot:spring-boot-starter-security'

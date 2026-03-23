@@ -1,7 +1,7 @@
-package io.bento.orgservice;
+package io.bento.realtimeservice;
 
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class OrgServiceApplicationTests {
+class RealtimeServiceApplicationTests {
 }

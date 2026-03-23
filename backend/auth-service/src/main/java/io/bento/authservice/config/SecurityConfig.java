@@ -21,7 +21,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final GatewayAuthFilter gatewayAuthFilter;
+    private final GatewayAuthProperties gatewayAuthProperties;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -31,15 +31,10 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
-                // No CSRF needed — stateless API, no browser sessions
                 .csrf(AbstractHttpConfigurer::disable)
-                // No sessions — every request is self-contained via headers
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                // permitAll at Spring Security level — the gateway already enforces which
-                // endpoints require auth. GatewayAuthFilter rejects non-gateway requests,
-                // and service code rejects missing/insufficient X-User-Id via exceptions.
                 .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
-                .addFilterBefore(gatewayAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(new GatewayAuthFilter(gatewayAuthProperties), UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
 }
