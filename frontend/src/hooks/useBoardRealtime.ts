@@ -10,6 +10,7 @@ interface IssueEvent {
   issueId: string
   boardId: string
   changedByUserId?: string
+  createdByUserId?: string
   // IssueStatusChangedEvent fields
   toColumnName?: string
 }
@@ -35,6 +36,14 @@ export function useBoardRealtime(boardId: string, columns: BoardColumn[]) {
     (body) => {
       const event = body as IssueEvent
       if (!event?.eventType) return
+
+      if (event.eventType === 'IssueCreatedEvent') {
+        void queryClient.invalidateQueries({
+          queryKey: queryKeys.issues.list(boardId, undefined, false),
+          refetchType: 'active',
+        })
+        return
+      }
 
       if (event.eventType === 'IssueStatusChangedEvent' && event.toColumnName) {
         const targetCol = columns.find(c => c.name === event.toColumnName)

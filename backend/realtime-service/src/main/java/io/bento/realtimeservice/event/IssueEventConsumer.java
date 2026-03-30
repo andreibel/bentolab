@@ -1,6 +1,11 @@
 package io.bento.realtimeservice.event;
 
-import io.bento.kafka.event.*;
+import io.bento.kafka.event.IssueAssignedEvent;
+import io.bento.kafka.event.IssueClosedEvent;
+import io.bento.kafka.event.IssueCommentedEvent;
+import io.bento.kafka.event.IssueCreatedEvent;
+import io.bento.kafka.event.IssuePriorityChangedEvent;
+import io.bento.kafka.event.IssueStatusChangedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -25,6 +30,10 @@ public class IssueEventConsumer {
             if (typeNode == null) return;
 
             switch (typeNode.asText()) {
+                case "IssueCreatedEvent" -> {
+                    IssueCreatedEvent e = kafkaObjectMapper.treeToValue(node, IssueCreatedEvent.class);
+                    messaging.convertAndSend("/topic/board/" + e.boardId() + "/issues", node);
+                }
                 case "IssueStatusChangedEvent" -> {
                     IssueStatusChangedEvent e = kafkaObjectMapper.treeToValue(node, IssueStatusChangedEvent.class);
                     // Notify all viewers of the board — issue moved to a new column

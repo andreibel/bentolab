@@ -1,4 +1,4 @@
-import {useCallback, useMemo, useRef, useState} from 'react'
+import {useCallback, useLayoutEffect, useMemo, useRef, useState} from 'react'
 import {Link, useParams} from 'react-router-dom'
 import {
   closestCenter,
@@ -117,7 +117,7 @@ export default function BoardPage() {
 
   // Keep a live ref to serverIssues so handlers can read it without deps
   const serverIssuesRef = useRef(serverIssues)
-  serverIssuesRef.current = serverIssues
+  useLayoutEffect(() => { serverIssuesRef.current = serverIssues })
 
   // ── Columns ──────────────────────────────────────────────────────────────────
   const serverCols = useMemo(
@@ -125,7 +125,7 @@ export default function BoardPage() {
     [board?.columns],
   )
   const serverColsRef = useRef(serverCols)
-  serverColsRef.current = serverCols
+  useLayoutEffect(() => { serverColsRef.current = serverCols })
 
   const sortedColumns = useMemo(() => {
     if (!localColOrder) return serverCols
@@ -359,6 +359,11 @@ export default function BoardPage() {
         .sort((a, b) => a.position - b.position)
       const position = colIssues.findIndex((i) => i.id === movedIssue.id)
 
+      // Look up column names for the real-time event
+      const originalIssue = serverIssuesRef.current.find((i) => i.id === movedIssue.id)
+      const fromColumnName = serverColsRef.current.find((c) => c.id === originalIssue?.columnId)?.name
+      const toColumnName = serverColsRef.current.find((c) => c.id === movedIssue.columnId)?.name
+
       // Commit to React Query cache before clearing local state
       queryClient.setQueryData(
         queryKeys.issues.list(boardId!, undefined, false),
@@ -367,7 +372,7 @@ export default function BoardPage() {
       )
 
       try {
-        await issuesApi.move(movedIssue.id, movedIssue.columnId, position)
+        await issuesApi.move(movedIssue.id, movedIssue.columnId, position, fromColumnName, toColumnName)
       } catch {
         toast.error('Failed to move issue')
         queryClient.invalidateQueries({ queryKey: queryKeys.issues.list(boardId!, undefined, false) })

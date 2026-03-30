@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef } from 'react'
 import { useAuthStore } from '@/stores/authStore'
 import { stompManager } from '@/lib/stomp'
 
@@ -17,7 +17,7 @@ export function useStompSubscription(
   const accessToken = useAuthStore(s => s.accessToken)
   const apiUrl = import.meta.env.VITE_API_URL ?? 'http://localhost:8080'
   const handlerRef = useRef(handler)
-  handlerRef.current = handler
+  useLayoutEffect(() => { handlerRef.current = handler })
 
   // Connect / reconnect whenever the token changes
   useEffect(() => {
