@@ -3,6 +3,11 @@ spring:
         name: org-service
     liquibase:
         change-log: classpath:/db/changelog/db.changelog-master.xml
+    jpa:
+        properties:
+            hibernate:
+                type:
+                    json_format_mapper: io.bento.orgservice.config.JacksonFormatMapper
 server:
     port: 8082
 

@@ -1,4 +1,5 @@
-import { cn } from '@/utils/cn'
+import {cn} from '@/utils/cn'
+import * as React from "react";
 
 interface FeaturePlaceholderProps {
   icon: React.ElementType
@@ -6,7 +7,7 @@ interface FeaturePlaceholderProps {
   description: string
   badge?: string
   badgeColor?: string
-  preview: React.ReactNode
+  preview?: React.ReactNode
   actions?: React.ReactNode
 }
 

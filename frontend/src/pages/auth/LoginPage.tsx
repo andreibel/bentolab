@@ -1,12 +1,12 @@
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { Link, useNavigate } from 'react-router-dom'
-import { toast } from 'sonner'
-import { authApi } from '@/api/auth'
-import { useAuthStore } from '@/stores/authStore'
-import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
+import {useForm} from 'react-hook-form'
+import {zodResolver} from '@hookform/resolvers/zod'
+import {z} from 'zod'
+import {Link, useNavigate, useSearchParams} from 'react-router-dom'
+import {toast} from 'sonner'
+import {authApi} from '@/api/auth'
+import {useAuthStore} from '@/stores/authStore'
+import {Button} from '@/components/ui/Button'
+import {Input} from '@/components/ui/Input'
 
 const schema = z.object({
   email: z.string().email('Enter a valid email'),
@@ -17,6 +17,8 @@ type FormValues = z.infer<typeof schema>
 
 export default function LoginPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const redirect = searchParams.get('redirect')
   const setAuth = useAuthStore((s) => s.setAuth)
 
   const {
@@ -29,7 +31,11 @@ export default function LoginPage() {
     try {
       const data = await authApi.login(values.email, values.password)
       setAuth(data)
-      navigate(data.user.currentOrgId ? '/boards' : '/org/new')
+      if (redirect) {
+        navigate(redirect)
+      } else {
+        navigate(data.user.currentOrgId ? '/boards' : '/org/new')
+      }
     } catch (err: unknown) {
       const msg =
         err instanceof Error ? err.message : 'Invalid email or password'
@@ -80,7 +86,7 @@ export default function LoginPage() {
                   Password
                 </label>
                 <Link
-                  to="/reset-password"
+                  to="/forgot-password"
                   className="text-xs text-text-muted hover:text-primary"
                 >
                   Forgot password?

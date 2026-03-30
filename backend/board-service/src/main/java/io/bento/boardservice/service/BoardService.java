@@ -10,7 +10,7 @@ import io.bento.boardservice.entity.BoardColumn;
 import io.bento.boardservice.entity.BoardMember;
 import io.bento.boardservice.enums.BoardRole;
 import io.bento.boardservice.enums.BoardType;
-import io.bento.boardservice.event.BoardDeletedEvent;
+import io.bento.kafka.event.BoardDeletedEvent;
 import io.bento.boardservice.event.BoardEventPublisher;
 import io.bento.boardservice.exception.BoardAccessDeniedException;
 import io.bento.boardservice.exception.BoardKeyAlreadyExistsException;

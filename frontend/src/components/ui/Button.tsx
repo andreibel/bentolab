@@ -1,6 +1,6 @@
-import { forwardRef } from 'react'
-import { cn } from '@/utils/cn'
-import { Loader2 } from 'lucide-react'
+import {forwardRef} from 'react'
+import {cn} from '@/utils/cn'
+import {Loader2} from 'lucide-react'
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger'

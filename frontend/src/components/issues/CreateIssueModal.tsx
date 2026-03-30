@@ -1,22 +1,32 @@
-import { useState, useEffect, useRef } from 'react'
-import { createPortal } from 'react-dom'
-import { useForm, Controller } from 'react-hook-form'
+import React, {useEffect, useRef, useState} from 'react'
+import {createPortal} from 'react-dom'
+import {Controller, useForm} from 'react-hook-form'
+import type {Control} from 'react-hook-form'
 import {
-  X, Maximize2, Minimize2,
-  Bug, BookOpen, CheckSquare, Zap,
-  ArrowUp, ArrowDown, Minus, GripHorizontal,
+  ArrowDown,
+  ArrowUp,
+  BookOpen,
+  Bug,
+  CheckSquare,
+  GripHorizontal,
+  Maximize2,
+  Minimize2,
+  Minus,
+  X,
+  Zap,
 } from 'lucide-react'
-import { useQueryClient } from '@tanstack/react-query'
-import { toast } from 'sonner'
-import { issuesApi, useIssues } from '@/api/issues'
-import { useBoards, useBoard } from '@/api/boards'
-import { useEpics } from '@/api/epics'
-import { useSprints } from '@/api/sprints'
-import { queryKeys } from '@/api/queryKeys'
-import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
-import { cn } from '@/utils/cn'
-import type { IssueType, IssuePriority } from '@/types/issue'
+import {useQueryClient} from '@tanstack/react-query'
+import {toast} from 'sonner'
+import {issuesApi, useIssues} from '@/api/issues'
+import {useBoard, useBoards} from '@/api/boards'
+import {useEpics} from '@/api/epics'
+import {useSprints} from '@/api/sprints'
+import {Button} from '@/components/ui/Button'
+import {Input} from '@/components/ui/Input'
+import {DatePicker, toDatePart} from '@/components/ui/DatePicker'
+import {RichTextInput} from '@/components/ui/RichTextInput'
+import {cn} from '@/utils/cn'
+import type {IssuePriority, IssueType} from '@/types/issue'
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
@@ -47,6 +57,7 @@ interface FormValues {
   sprintId:      string
   parentIssueId: string
   storyPoints:   string
+  startDate:     string
   dueDate:       string
 }
 
@@ -92,7 +103,7 @@ function useDraggable() {
   const origin = useRef({ mx: 0, my: 0, ox: 0, oy: 0 })
 
   const onPointerDown = (e: React.PointerEvent<HTMLElement>) => {
-    // Only drag on left click on the handle itself, not buttons inside it
+    // Only drag on left-click on the handle itself, not buttons inside it
     if (e.button !== 0) return
     if ((e.target as HTMLElement).closest('button')) return
     isDragging.current = true
@@ -140,7 +151,7 @@ export function CreateIssueModal({
       type: 'TASK', priority: 'MEDIUM',
       title: '', description: '',
       boardId: propBoardId ?? '', columnId: propColumnId ?? '',
-      epicId: '', sprintId: propSprintId ?? '', parentIssueId: '', storyPoints: '', dueDate: '',
+      epicId: '', sprintId: propSprintId ?? '', parentIssueId: '', storyPoints: '', startDate: '', dueDate: '',
     },
   })
 
@@ -167,10 +178,10 @@ export function CreateIssueModal({
       type: 'TASK', priority: 'MEDIUM',
       title: '', description: '',
       boardId: propBoardId ?? '', columnId: propColumnId ?? '',
-      epicId: '', sprintId: propSprintId ?? '', parentIssueId: '', storyPoints: '', dueDate: '',
+      epicId: '', sprintId: propSprintId ?? '', parentIssueId: '', storyPoints: '', startDate: '', dueDate: '',
     })
     setFullScreen(false)
-  }, [open, propBoardId, propColumnId, reset])
+  }, [open, propBoardId, propColumnId, propSprintId, reset])
 
   // Close on Escape
   useEffect(() => {
@@ -206,10 +217,11 @@ export function CreateIssueModal({
         sprintId:      values.sprintId         || undefined,
         parentIssueId: values.parentIssueId    || undefined,
         storyPoints:   values.storyPoints ? Number(values.storyPoints) : undefined,
-        dueDate:       values.dueDate          || undefined,
+        startDate:     values.startDate ? new Date(values.startDate + 'T12:00:00').toISOString() : undefined,
+        dueDate:       values.dueDate   ? new Date(values.dueDate   + 'T12:00:00').toISOString() : undefined,
       })
 
-      queryClient.invalidateQueries({ queryKey: queryKeys.issues.list(effectiveBoardId) })
+      void queryClient.invalidateQueries({ queryKey: ['issues', effectiveBoardId], exact: false })
       toast.success('Issue created')
       onClose()
     } catch {
@@ -219,6 +231,18 @@ export function CreateIssueModal({
 
   const selectedType     = watch('type')
   const selectedPriority = watch('priority')
+  const watchedSprintId  = watch('sprintId')
+  const watchedStartDate = watch('startDate')
+  const watchedDueDate   = watch('dueDate')
+
+  const selectedSprint    = sprintsData.find(s => s.id === watchedSprintId)
+  const eligibleSprint    = selectedSprint?.status !== 'COMPLETED' ? selectedSprint : undefined
+  const sprintMin         = eligibleSprint?.startDate ? toDatePart(eligibleSprint.startDate) : undefined
+  const sprintMax         = eligibleSprint?.endDate   ? toDatePart(eligibleSprint.endDate)   : undefined
+  const startMaxCandidates = [sprintMax, watchedDueDate   || undefined].filter((v): v is string => !!v)
+  const startMax           = startMaxCandidates.length ? startMaxCandidates.sort().at(0)  : undefined
+  const dueMinCandidates   = [sprintMin, watchedStartDate || undefined].filter((v): v is string => !!v)
+  const dueMin             = dueMinCandidates.length   ? dueMinCandidates.sort().at(-1)   : undefined
   const typeInfo         = TYPES.find((t) => t.value === selectedType)!
   const priorityInfo     = PRIORITIES.find((p) => p.value === selectedPriority)!
 
@@ -305,11 +329,16 @@ export function CreateIssueModal({
                   />
                   {errors.title && <p className="mt-1 text-xs text-red-500">{errors.title.message}</p>}
                 </div>
-                <textarea
-                  {...register('description')}
-                  placeholder="Add a description… (optional)"
-                  rows={10}
-                  className="w-full flex-1 resize-none rounded-lg border border-surface-border bg-surface-muted px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted outline-none transition-colors focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
+                <Controller
+                  name="description"
+                  control={control}
+                  render={({ field }) => (
+                    <RichTextInput
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Add a description… (optional)"
+                    />
+                  )}
                 />
               </div>
 
@@ -368,11 +397,34 @@ export function CreateIssueModal({
                     className="w-full rounded-lg border border-surface-border bg-surface-muted px-2.5 py-1.5 text-sm text-text-primary placeholder:text-text-muted outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-colors"
                   />
                 </Field>
+                <Field label="Start date">
+                  <Controller
+                    name="startDate"
+                    control={control}
+                    render={({ field }) => (
+                      <DatePicker
+                        value={field.value ? toDatePart(field.value) : ''}
+                        onChange={(v) => field.onChange(v)}
+                        placeholder="No start date"
+                        minDate={sprintMin}
+                        maxDate={startMax}
+                      />
+                    )}
+                  />
+                </Field>
                 <Field label="Due date">
-                  <input
-                    {...register('dueDate')}
-                    type="date"
-                    className="w-full rounded-lg border border-surface-border bg-surface-muted px-2.5 py-1.5 text-sm text-text-primary outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-colors"
+                  <Controller
+                    name="dueDate"
+                    control={control}
+                    render={({ field }) => (
+                      <DatePicker
+                        value={field.value ? toDatePart(field.value) : ''}
+                        onChange={(v) => field.onChange(v)}
+                        placeholder="No due date"
+                        minDate={dueMin}
+                        maxDate={sprintMax}
+                      />
+                    )}
                   />
                 </Field>
               </div>
@@ -389,7 +441,7 @@ export function CreateIssueModal({
   return createPortal(
     <div
       style={{ transform: `translate(${drag.offset.x}px, ${drag.offset.y}px)` }}
-      className="fixed bottom-4 end-4 z-50 flex w-[460px] flex-col rounded-2xl border border-surface-border bg-surface shadow-2xl"
+      className="fixed bottom-4 inset-e-4 z-50 flex w-115 flex-col rounded-2xl border border-surface-border bg-surface shadow-2xl"
     >
       {header}
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col">
@@ -424,7 +476,7 @@ export function CreateIssueModal({
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
-function TypePicker({ control }: { control: Parameters<typeof Controller>[0]['control'] }) {
+function TypePicker({ control }: { control: Control<FormValues> }) {
   return (
     <Controller
       name="type"
@@ -454,13 +506,13 @@ function TypePicker({ control }: { control: Parameters<typeof Controller>[0]['co
   )
 }
 
-function PriorityPicker({ control }: { control: Parameters<typeof Controller>[0]['control'] }) {
+function PriorityPicker({ control }: { control: Control<FormValues> }) {
   return (
     <Controller
       name="priority"
       control={control}
       render={({ field }) => (
-        <div className="flex gap-1">
+        <div className="flex flex-wrap gap-1">
           {PRIORITIES.map((p) => (
             <button
               key={p.value}

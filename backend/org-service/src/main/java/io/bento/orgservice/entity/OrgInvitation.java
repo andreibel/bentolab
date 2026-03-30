@@ -27,7 +27,8 @@ public class OrgInvitation {
     @JoinColumn(name = "organization_id", nullable = false)
     private Organization organization;
 
-    @Column(name = "email", nullable = false)
+    /** Null for open-link invites (anyone can accept); non-null for email-specific invites. */
+    @Column(name = "email")
     private String email;
 
     @Enumerated(EnumType.STRING)

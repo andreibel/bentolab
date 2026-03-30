@@ -89,6 +89,11 @@ public class Issue {
     @Builder.Default
     private Integer statusChangeCount = 0;
 
+    // Lifecycle
+    @Builder.Default
+    private Boolean closed = false;
+    private Instant closedAt;
+
     // Metadata
     private String createdBy;
     private Instant createdAt;

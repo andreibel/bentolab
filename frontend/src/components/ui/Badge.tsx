@@ -2,9 +2,9 @@
  * Shared badge / icon components for issues.
  * Single source of truth for type colors, priority icons, and epic tags.
  */
-import { BookOpen, Bug, CheckSquare, Zap, ArrowUp, ArrowDown, Minus } from 'lucide-react'
-import { cn } from '@/utils/cn'
-import type { IssueType, IssuePriority } from '@/types/issue'
+import {ArrowDown, ArrowUp, BookOpen, Bug, CheckSquare, Minus, Zap} from 'lucide-react'
+import {cn} from '@/utils/cn'
+import type {IssuePriority, IssueType} from '@/types/issue'
 
 // ── Issue Type ─────────────────────────────────────────────────────────────────
 

@@ -5,7 +5,7 @@ import io.bento.authservice.dto.response.UserDto;
 import io.bento.authservice.entity.User;
 import io.bento.authservice.enums.SystemRole;
 import io.bento.authservice.event.UserEventPublisher;
-import io.bento.authservice.event.UserUpdatedEvent;
+import io.bento.kafka.event.UserUpdatedEvent;
 import io.bento.authservice.exception.UserNotFoundException;
 import io.bento.authservice.mapper.UserMapper;
 import io.bento.authservice.repository.UserRepository;

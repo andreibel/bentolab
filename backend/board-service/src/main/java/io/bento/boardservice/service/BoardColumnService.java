@@ -7,7 +7,7 @@ import io.bento.boardservice.dto.response.BoardColumnResponse;
 import io.bento.boardservice.entity.Board;
 import io.bento.boardservice.entity.BoardColumn;
 import io.bento.boardservice.enums.BoardRole;
-import io.bento.boardservice.event.BoardColumnDeletedEvent;
+import io.bento.kafka.event.BoardColumnDeletedEvent;
 import io.bento.boardservice.event.BoardEventPublisher;
 import io.bento.boardservice.exception.BoardColumnNotFoundException;
 import io.bento.boardservice.exception.BoardNotFoundException;

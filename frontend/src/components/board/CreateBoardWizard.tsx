@@ -1,19 +1,19 @@
-import { useState, useEffect } from 'react'
+import {useEffect, useState} from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
-import { useForm, Controller } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { X, ArrowLeft, Check } from 'lucide-react'
-import { useQueryClient } from '@tanstack/react-query'
-import { useNavigate } from 'react-router-dom'
-import { toast } from 'sonner'
-import { boardsApi } from '@/api/boards'
-import { queryKeys } from '@/api/queryKeys'
-import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
-import { ColorPicker } from '@/components/common/ColorPicker'
-import { cn } from '@/utils/cn'
-import type { Board } from '@/types/board'
+import {Controller, useForm, useWatch} from 'react-hook-form'
+import {zodResolver} from '@hookform/resolvers/zod'
+import {z} from 'zod'
+import {ArrowLeft, Check, X} from 'lucide-react'
+import {useQueryClient} from '@tanstack/react-query'
+import {useNavigate} from 'react-router-dom'
+import {toast} from 'sonner'
+import {boardsApi} from '@/api/boards'
+import {queryKeys} from '@/api/queryKeys'
+import {Button} from '@/components/ui/Button'
+import {Input} from '@/components/ui/Input'
+import {ColorPicker} from '@/components/common/ColorPicker'
+import {cn} from '@/utils/cn'
+import type {Board} from '@/types/board'
 
 // ─── Template definitions ─────────────────────────────────────────────────────
 
@@ -88,15 +88,10 @@ export function CreateBoardWizard({ open, onClose }: CreateBoardWizardProps) {
   const [step, setStep]     = useState<'template' | 'details'>('template')
   const [selected, setSelected] = useState<BoardType>('SCRUM')
 
-  // Reset when modal closes
-  useEffect(() => {
-    if (!open) { setStep('template'); setSelected('SCRUM') }
-  }, [open])
 
   const {
     register,
     handleSubmit,
-    watch,
     setValue,
     control,
     reset,
@@ -106,7 +101,7 @@ export function CreateBoardWizard({ open, onClose }: CreateBoardWizardProps) {
     defaultValues: { background: BOARD_COLORS[0] },
   })
 
-  const nameValue = watch('name', '')
+  const nameValue = useWatch({ control, name: 'name', defaultValue: '' })
   useEffect(() => {
     const key = toKey(nameValue)
     if (key) setValue('boardKey', key, { shouldValidate: false })
@@ -134,7 +129,7 @@ export function CreateBoardWizard({ open, onClose }: CreateBoardWizardProps) {
   const selectedTemplate = TEMPLATES.find((t) => t.type === selected)!
 
   return (
-    <Dialog.Root open={open} onOpenChange={(o) => !o && onClose()}>
+    <Dialog.Root open={open} onOpenChange={(o) => { if (!o) { setStep('template'); setSelected('SCRUM'); onClose() } }}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" />
         <Dialog.Content className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -198,7 +193,7 @@ export function CreateBoardWizard({ open, onClose }: CreateBoardWizardProps) {
                     >
                       {/* Selected checkmark */}
                       {selected === type && (
-                        <div className="absolute end-2.5 top-2.5 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-primary shadow-md">
+                        <div className="absolute inset-e-2.5 top-2.5 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-primary shadow-md">
                           <Check className="h-3.5 w-3.5 text-white" />
                         </div>
                       )}

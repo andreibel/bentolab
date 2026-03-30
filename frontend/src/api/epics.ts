@@ -1,9 +1,8 @@
-import { useQuery } from '@tanstack/react-query'
+import {useQuery} from '@tanstack/react-query'
 import client from './client'
-import { queryKeys } from './queryKeys'
-import type { Epic, CreateEpicData, UpdateEpicData } from '@/types/epic'
-import type { Page } from '@/types/issue'
-import type { Issue } from '@/types/issue'
+import {queryKeys} from './queryKeys'
+import type {CreateEpicData, Epic, UpdateEpicData} from '@/types/epic'
+import type {Issue, Page} from '@/types/issue'
 
 export const epicsApi = {
   list: (boardId: string) =>

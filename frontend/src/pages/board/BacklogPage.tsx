@@ -1,24 +1,23 @@
-import { useState, useMemo, useRef, useEffect } from 'react'
-import { useParams } from 'react-router-dom'
-import {
-  Plus, ChevronDown, ChevronRight, Play,
-  Loader2, X,
-} from 'lucide-react'
-import { IssueTypeIcon, PriorityIcon, EpicTag } from '@/components/ui/Badge'
-import { Avatar } from '@/components/ui/Avatar'
-import { useQueryClient } from '@tanstack/react-query'
-import { toast } from 'sonner'
-import { useIssues, issuesApi } from '@/api/issues'
-import { useSprints, sprintsApi } from '@/api/sprints'
-import { useEpics, epicsApi } from '@/api/epics'
-import { useBoard } from '@/api/boards'
-import { queryKeys } from '@/api/queryKeys'
-import { IssueDetailPanel } from '@/components/issues/IssueDetailPanel'
-import { CreateIssueModal } from '@/components/issues/CreateIssueModal'
-import { cn } from '@/utils/cn'
-import type { Issue } from '@/types/issue'
-import type { Sprint } from '@/types/sprint'
-import type { Epic } from '@/types/epic'
+import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
+import {useParams} from 'react-router-dom'
+import {ChevronDown, ChevronRight, Loader2, Pencil, Play, Plus, X,} from 'lucide-react'
+import {EpicTag, IssueTypeIcon, PriorityIcon} from '@/components/ui/Badge'
+import {Avatar} from '@/components/ui/Avatar'
+import {useQueryClient} from '@tanstack/react-query'
+import {toast} from 'sonner'
+import {issuesApi, useIssues} from '@/api/issues'
+import {sprintsApi, useSprints} from '@/api/sprints'
+import {epicsApi, useEpics} from '@/api/epics'
+import {useBoard} from '@/api/boards'
+import {queryKeys} from '@/api/queryKeys'
+import {EpicFilter} from '@/components/board/EpicFilter'
+import {IssueDetailPanel} from '@/components/issues/IssueDetailPanel'
+import {CreateIssueModal} from '@/components/issues/CreateIssueModal'
+import {CreateSprintModal} from '@/components/sprint/CreateSprintModal'
+import {cn} from '@/utils/cn'
+import type {Issue} from '@/types/issue'
+import type {Sprint} from '@/types/sprint'
+import type {Epic} from '@/types/epic'
 
 const EPIC_COLORS = ['#EF4444', '#F97316', '#EAB308', '#22C55E', '#06B6D4', '#3B82F6', '#8B5CF6', '#EC4899']
 
@@ -128,6 +127,12 @@ function IssueRow({
 
       {epic && <EpicTag title={epic.title} color={epic.color} />}
 
+      {issue.closed && (
+        <span className="shrink-0 rounded-full bg-surface-muted px-1.5 py-0.5 text-[10px] font-semibold text-text-muted">
+          Closed
+        </span>
+      )}
+
       <div className="shrink-0"><PriorityIcon priority={issue.priority} /></div>
 
       {issue.storyPoints != null && (
@@ -153,6 +158,7 @@ function IssueRow({
 function SprintSection({
   sprint,
   issues,
+  allSprintIssues,
   epicsMap,
   allSprints,
   onOpen,
@@ -160,9 +166,11 @@ function SprintSection({
   onStart,
   onComplete,
   onAddIssue,
+  onEdit,
 }: {
   sprint: Sprint
-  issues: Issue[]
+  issues: Issue[]            // tab-filtered, for display
+  allSprintIssues: Issue[]   // all issues in sprint, for progress/counts
   epicsMap: Map<string, Epic>
   allSprints: Sprint[]
   onOpen: (id: string) => void
@@ -170,16 +178,20 @@ function SprintSection({
   onStart: (sprintId: string) => void
   onComplete: (sprintId: string) => void
   onAddIssue: (sprintId: string) => void
+  onEdit: (sprintId: string) => void
 }) {
   const [collapsed, setCollapsed] = useState(false)
-  const totalPts = issues.reduce((s, i) => s + (i.storyPoints ?? 0), 0)
-  const doneCount = issues.filter((i) => i.completedAt).length
-  const progress = issues.length > 0 ? Math.round((doneCount / issues.length) * 100) : 0
+  // Progress/counts always from ALL sprint issues regardless of open/closed tab filter
+  const totalPts  = allSprintIssues.reduce((s, i) => s + (i.storyPoints ?? 0), 0)
+  const doneCount = allSprintIssues.filter((i) => i.closed).length
+  const progress  = allSprintIssues.length > 0
+    ? Math.round((doneCount / allSprintIssues.length) * 100)
+    : 0
   const dateRange = fmtDateRange(sprint.startDate, sprint.endDate)
 
   return (
     <div className="mb-3">
-      <div className="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-surface-muted/40">
+      <div className="group flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-surface-muted/40">
         <button
           onClick={() => setCollapsed((v) => !v)}
           className="shrink-0 text-text-muted hover:text-text-primary"
@@ -212,11 +224,13 @@ function SprintSection({
         )}
 
         <span className="shrink-0 text-xs text-text-muted">
-          {issues.length} issue{issues.length !== 1 ? 's' : ''}
+          {doneCount > 0
+            ? `${doneCount}/${allSprintIssues.length} done`
+            : `${allSprintIssues.length} issue${allSprintIssues.length !== 1 ? 's' : ''}`}
           {totalPts > 0 && ` · ${totalPts} pts`}
         </span>
 
-        {sprint.status === 'ACTIVE' && issues.length > 0 && (
+        {sprint.status === 'ACTIVE' && allSprintIssues.length > 0 && (
           <div className="flex shrink-0 items-center gap-1.5">
             <div className="h-1.5 w-16 overflow-hidden rounded-full bg-surface-border">
               <div
@@ -229,6 +243,13 @@ function SprintSection({
         )}
 
         <div className="ms-auto flex shrink-0 items-center gap-1">
+          <button
+            onClick={(e) => { e.stopPropagation(); onEdit(sprint.id) }}
+            className="rounded p-1 text-text-muted opacity-0 transition-all hover:bg-surface-muted hover:text-text-primary group-hover:opacity-100"
+            aria-label="Edit sprint"
+          >
+            <Pencil className="h-3.5 w-3.5" />
+          </button>
           {sprint.status === 'PLANNED' && (
             <button
               onClick={(e) => { e.stopPropagation(); onStart(sprint.id) }}
@@ -344,112 +365,6 @@ function BacklogSection({
   )
 }
 
-// ── Create Sprint Modal ────────────────────────────────────────────────────────
-
-function CreateSprintModal({ boardId, onClose }: { boardId: string; onClose: () => void }) {
-  const queryClient = useQueryClient()
-  const [name, setName]           = useState('')
-  const [goal, setGoal]           = useState('')
-  const [startDate, setStartDate] = useState('')
-  const [endDate, setEndDate]     = useState('')
-  const [submitting, setSubmitting] = useState(false)
-
-  useEffect(() => {
-    const today    = new Date().toISOString().split('T')[0]
-    const twoWeeks = new Date(Date.now() + 14 * 86_400_000).toISOString().split('T')[0]
-    setStartDate(today)
-    setEndDate(twoWeeks)
-  }, [])
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!name.trim() || !startDate || !endDate) return
-    setSubmitting(true)
-    try {
-      await sprintsApi.create({
-        boardId,
-        name:      name.trim(),
-        goal:      goal.trim() || undefined,
-        startDate: new Date(startDate).toISOString(),
-        endDate:   new Date(endDate).toISOString(),
-      })
-      queryClient.invalidateQueries({ queryKey: queryKeys.sprints.all(boardId) })
-      toast.success('Sprint created')
-      onClose()
-    } catch {
-      toast.error('Failed to create sprint')
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative z-50 w-[440px] rounded-2xl border border-surface-border bg-surface shadow-2xl">
-        <div className="flex items-center justify-between border-b border-surface-border px-5 py-4">
-          <h2 className="text-base font-semibold text-text-primary">Create Sprint</h2>
-          <button onClick={onClose} className="rounded p-1 text-text-muted hover:bg-surface-muted">
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4 p-5">
-          <div>
-            <label className="mb-1.5 block text-xs font-medium text-text-muted">Name *</label>
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Sprint 1"
-              required autoFocus
-              className="w-full rounded-lg border border-surface-border bg-surface-muted px-3 py-2 text-sm text-text-primary outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary/20"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-text-muted">Start Date *</label>
-              <input
-                type="date" value={startDate}
-                onChange={(e) => setStartDate(e.target.value)} required
-                className="w-full rounded-lg border border-surface-border bg-surface-muted px-3 py-2 text-sm text-text-primary outline-none focus:border-primary"
-              />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-text-muted">End Date *</label>
-              <input
-                type="date" value={endDate}
-                onChange={(e) => setEndDate(e.target.value)} required
-                className="w-full rounded-lg border border-surface-border bg-surface-muted px-3 py-2 text-sm text-text-primary outline-none focus:border-primary"
-              />
-            </div>
-          </div>
-          <div>
-            <label className="mb-1.5 block text-xs font-medium text-text-muted">Sprint Goal</label>
-            <textarea
-              value={goal}
-              onChange={(e) => setGoal(e.target.value)}
-              placeholder="What do you want to achieve in this sprint?"
-              rows={2}
-              className="w-full resize-none rounded-lg border border-surface-border bg-surface-muted px-3 py-2 text-sm text-text-primary placeholder:text-text-muted outline-none focus:border-primary"
-            />
-          </div>
-          <div className="flex justify-end gap-2 pt-1">
-            <button type="button" onClick={onClose} className="rounded-md px-4 py-2 text-sm text-text-muted hover:text-text-primary">
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={submitting || !name.trim()}
-              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-light disabled:opacity-50"
-            >
-              {submitting ? 'Creating…' : 'Create Sprint'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  )
-}
-
 // ── Create Epic Modal ─────────────────────────────────────────────────────────
 
 function CreateEpicModal({ boardId, onClose }: { boardId: string; onClose: () => void }) {
@@ -531,6 +446,185 @@ function CreateEpicModal({ boardId, onClose }: { boardId: string; onClose: () =>
   )
 }
 
+// ── Edit Epic Modal ────────────────────────────────────────────────────────────
+
+function EditEpicModal({ epic, boardId, onClose }: { epic: Epic; boardId: string; onClose: () => void }) {
+  const queryClient = useQueryClient()
+  const [title,     setTitle]     = useState(epic.title)
+  const [color,     setColor]     = useState(epic.color)
+  const [submitting, setSubmitting] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!title.trim()) return
+    setSubmitting(true)
+    try {
+      await epicsApi.update(epic.id, { title: title.trim(), color })
+      queryClient.invalidateQueries({ queryKey: queryKeys.epics.list(boardId) })
+      toast.success('Epic updated')
+      onClose()
+    } catch {
+      toast.error('Failed to update epic')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative z-50 w-[400px] rounded-2xl border border-surface-border bg-surface shadow-2xl">
+        <div className="flex items-center justify-between border-b border-surface-border px-5 py-4">
+          <h2 className="text-base font-semibold text-text-primary">Edit Epic</h2>
+          <button onClick={onClose} className="rounded p-1 text-text-muted hover:bg-surface-muted">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4 p-5">
+          <div>
+            <label className="mb-1.5 block text-xs font-medium text-text-muted">Name *</label>
+            <input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              autoFocus
+              className="w-full rounded-lg border border-surface-border bg-surface-muted px-3 py-2 text-sm text-text-primary outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary/20"
+            />
+          </div>
+          <div>
+            <label className="mb-2 block text-xs font-medium text-text-muted">Color</label>
+            <div className="flex gap-2">
+              {EPIC_COLORS.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setColor(c)}
+                  className="h-6 w-6 rounded-full transition-transform hover:scale-110"
+                  style={{
+                    backgroundColor: c,
+                    boxShadow: color === c ? `0 0 0 2px var(--color-surface), 0 0 0 4px ${c}` : 'none',
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 pt-1">
+            <button type="button" onClick={onClose} className="rounded-md px-4 py-2 text-sm text-text-muted hover:text-text-primary">
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={submitting || !title.trim()}
+              className="rounded-md px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+              style={{ backgroundColor: color }}
+            >
+              {submitting ? 'Saving…' : 'Save'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+// ── Edit Sprint Modal ──────────────────────────────────────────────────────────
+
+function EditSprintModal({ sprint, boardId, onClose }: { sprint: Sprint; boardId: string; onClose: () => void }) {
+  const queryClient = useQueryClient()
+  const [name,       setName]       = useState(sprint.name)
+  const [goal,       setGoal]       = useState(sprint.goal ?? '')
+  const [startDate,  setStartDate]  = useState(sprint.startDate?.slice(0, 10) ?? '')
+  const [endDate,    setEndDate]    = useState(sprint.endDate?.slice(0, 10) ?? '')
+  const [submitting, setSubmitting] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!name.trim()) return
+    setSubmitting(true)
+    try {
+      await sprintsApi.update(sprint.id, {
+        name:      name.trim(),
+        goal:      goal.trim() || undefined,
+        startDate: startDate || undefined,
+        endDate:   endDate   || undefined,
+      })
+      queryClient.invalidateQueries({ queryKey: queryKeys.sprints.all(boardId) })
+      toast.success('Sprint updated')
+      onClose()
+    } catch {
+      toast.error('Failed to update sprint')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative z-50 w-[440px] rounded-2xl border border-surface-border bg-surface shadow-2xl">
+        <div className="flex items-center justify-between border-b border-surface-border px-5 py-4">
+          <h2 className="text-base font-semibold text-text-primary">Edit Sprint</h2>
+          <button onClick={onClose} className="rounded p-1 text-text-muted hover:bg-surface-muted">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4 p-5">
+          <div>
+            <label className="mb-1.5 block text-xs font-medium text-text-muted">Name *</label>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              autoFocus
+              className="w-full rounded-lg border border-surface-border bg-surface-muted px-3 py-2 text-sm text-text-primary outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
+            />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-xs font-medium text-text-muted">Goal</label>
+            <textarea
+              value={goal}
+              onChange={(e) => setGoal(e.target.value)}
+              rows={2}
+              placeholder="Sprint goal…"
+              className="w-full resize-none rounded-lg border border-surface-border bg-surface-muted px-3 py-2 text-sm text-text-primary outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
+            />
+          </div>
+          <div className="flex gap-3">
+            <div className="flex-1">
+              <label className="mb-1.5 block text-xs font-medium text-text-muted">Start date</label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full rounded-lg border border-surface-border bg-surface-muted px-3 py-2 text-sm text-text-primary outline-none focus:border-primary"
+              />
+            </div>
+            <div className="flex-1">
+              <label className="mb-1.5 block text-xs font-medium text-text-muted">End date</label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="w-full rounded-lg border border-surface-border bg-surface-muted px-3 py-2 text-sm text-text-primary outline-none focus:border-primary"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 pt-1">
+            <button type="button" onClick={onClose} className="rounded-md px-4 py-2 text-sm text-text-muted hover:text-text-primary">
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={submitting || !name.trim()}
+              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-light disabled:opacity-40"
+            >
+              {submitting ? 'Saving…' : 'Save'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
 // ── Complete Sprint Modal ──────────────────────────────────────────────────────
 
 function CompleteSprintModal({
@@ -595,17 +689,56 @@ export default function BacklogPage() {
   const allIssues = issuesPage?.content ?? []
   const epicsMap  = useMemo(() => new Map(epics.map((e) => [e.id, e])), [epics])
 
-  const [selectedEpicId,  setSelectedEpicId]  = useState<string | null>(null)
+  const [selectedEpicIds, setSelectedEpicIds] = useState<Set<string>>(new Set())
   const [detailIssueId,   setDetailIssueId]   = useState<string | null>(null)
+  const MIN_PANEL = 680
+  const [panelWidth, setPanelWidth] = useState(MIN_PANEL)
+
+  const startResize = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    const startX = e.clientX
+    const startW = panelWidth
+    const onMove = (ev: MouseEvent) => {
+      const maxPanel = Math.max(window.innerWidth / 2, MIN_PANEL)
+      setPanelWidth(Math.min(maxPanel, Math.max(MIN_PANEL, startW + (startX - ev.clientX))))
+    }
+    const onUp = () => {
+      document.removeEventListener('mousemove', onMove)
+      document.removeEventListener('mouseup', onUp)
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+    }
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
+    document.addEventListener('mousemove', onMove)
+    document.addEventListener('mouseup', onUp)
+  }, [panelWidth])
+
+  function closeDetail() {
+    setDetailIssueId(null)
+    setPanelWidth(MIN_PANEL)
+  }
+
   const [createSprintOpen, setCreateSprintOpen] = useState(false)
   const [createEpicOpen,   setCreateEpicOpen]   = useState(false)
   const [completeId,       setCompleteId]       = useState<string | null>(null)
+  const [editSprintId,     setEditSprintId]     = useState<string | null>(null)
+  const [editEpicId,       setEditEpicId]       = useState<string | null>(null)
   const [issueModal, setIssueModal] = useState<{ open: boolean; sprintId?: string }>({ open: false })
+  const [closedTab, setClosedTab] = useState<'open' | 'closed' | 'all'>('open')
 
-  // Apply epic filter
+  // Apply closed tab filter first, then epic filter
+  const tabFilteredIssues = useMemo(() => {
+    if (closedTab === 'open')   return allIssues.filter((i) => !i.closed)
+    if (closedTab === 'closed') return allIssues.filter((i) => i.closed)
+    return allIssues
+  }, [allIssues, closedTab])
+
   const filteredIssues = useMemo(
-    () => selectedEpicId ? allIssues.filter((i) => i.epicId === selectedEpicId) : allIssues,
-    [allIssues, selectedEpicId],
+    () => selectedEpicIds.size > 0
+      ? tabFilteredIssues.filter((i) => i.epicId != null && selectedEpicIds.has(i.epicId))
+      : tabFilteredIssues,
+    [tabFilteredIssues, selectedEpicIds],
   )
 
   // Sort: ACTIVE → PLANNED (by startDate) → COMPLETED
@@ -618,7 +751,7 @@ export default function BacklogPage() {
     [sprints],
   )
 
-  // Group issues by sprint
+  // Group filtered issues by sprint (for display, respects open/closed tab)
   const issuesBySprint = useMemo(() => {
     const map = new Map<string | null, Issue[]>()
     map.set(null, [])
@@ -630,6 +763,17 @@ export default function BacklogPage() {
     }
     return map
   }, [filteredIssues, sortedSprints])
+
+  // Group ALL issues by sprint (for progress/counts, ignores tab filter)
+  const allIssuesBySprint = useMemo(() => {
+    const map = new Map<string, Issue[]>()
+    for (const issue of allIssues) {
+      if (!issue.sprintId) continue
+      if (!map.has(issue.sprintId)) map.set(issue.sprintId, [])
+      map.get(issue.sprintId)!.push(issue)
+    }
+    return map
+  }, [allIssues])
 
   const handleMove = async (issueId: string, sprintId: string | null) => {
     try {
@@ -666,20 +810,49 @@ export default function BacklogPage() {
 
   const visibleSprints = sortedSprints.filter((s) => s.status !== 'COMPLETED')
   const backlogIssues  = issuesBySprint.get(null) ?? []
-  const backlogTotal   = allIssues.filter((i) => !i.sprintId).length
+  const backlogTotal   = tabFilteredIssues.filter((i) => !i.sprintId).length
   const completingSprint = completeId ? sortedSprints.find((s) => s.id === completeId) : null
 
   return (
-    <div className="flex h-full flex-col overflow-hidden">
+    <div className="flex h-full overflow-hidden">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
       {/* Header */}
       <div className="flex shrink-0 items-center justify-between border-b border-surface-border bg-surface px-5 py-3">
         <div className="flex items-center gap-3">
           <h1 className="text-sm font-semibold text-text-primary">Backlog</h1>
-          <span className="rounded-full bg-surface-muted px-2 py-0.5 text-xs text-text-muted">
-            {allIssues.length} issues
-          </span>
+          <div className="flex items-center rounded-lg bg-surface-muted p-0.5 text-xs">
+            {(['open', 'closed', 'all'] as const).map((tab) => {
+              const count = tab === 'open'
+                ? allIssues.filter((i) => !i.closed).length
+                : tab === 'closed'
+                  ? allIssues.filter((i) => i.closed).length
+                  : allIssues.length
+              return (
+                <button
+                  key={tab}
+                  onClick={() => setClosedTab(tab)}
+                  className={cn(
+                    'rounded-md px-2.5 py-1 font-medium capitalize transition-colors',
+                    closedTab === tab
+                      ? 'bg-surface text-text-primary shadow-sm'
+                      : 'text-text-muted hover:text-text-primary',
+                  )}
+                >
+                  {tab} <span className="ms-1 text-[10px] opacity-70">{count}</span>
+                </button>
+              )
+            })}
+          </div>
         </div>
         <div className="flex items-center gap-2">
+          {epics.length > 0 && (
+            <EpicFilter
+              epics={epics}
+              selected={selectedEpicIds}
+              onChange={setSelectedEpicIds}
+              onEditEpic={(id) => setEditEpicId(id)}
+            />
+          )}
           <button
             onClick={() => setCreateEpicOpen(true)}
             className="flex items-center gap-1.5 rounded-lg border border-surface-border px-3 py-1.5 text-xs text-text-muted transition-colors hover:border-primary/30 hover:text-primary"
@@ -704,41 +877,6 @@ export default function BacklogPage() {
         </div>
       </div>
 
-      {/* Epic filter bar */}
-      {epics.length > 0 && (
-        <div className="flex shrink-0 items-center gap-2 overflow-x-auto border-b border-surface-border bg-surface px-5 py-2">
-          <span className="shrink-0 text-xs font-medium text-text-muted">Epic:</span>
-          <button
-            onClick={() => setSelectedEpicId(null)}
-            className={cn(
-              'shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors',
-              selectedEpicId === null
-                ? 'bg-primary text-white'
-                : 'bg-surface-muted text-text-muted hover:text-text-primary',
-            )}
-          >
-            All
-          </button>
-          {epics.map((e) => (
-            <button
-              key={e.id}
-              onClick={() => setSelectedEpicId(selectedEpicId === e.id ? null : e.id)}
-              className={cn(
-                'flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors',
-                selectedEpicId === e.id ? 'text-white' : 'bg-surface-muted text-text-muted hover:text-text-primary',
-              )}
-              style={selectedEpicId === e.id ? { backgroundColor: e.color } : undefined}
-            >
-              <span
-                className="h-1.5 w-1.5 rounded-full"
-                style={{ backgroundColor: selectedEpicId === e.id ? 'rgba(255,255,255,0.75)' : e.color }}
-              />
-              {e.title}
-            </button>
-          ))}
-        </div>
-      )}
-
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
         {(issLoading || spLoading) ? (
@@ -753,6 +891,7 @@ export default function BacklogPage() {
                 key={sprint.id}
                 sprint={sprint}
                 issues={issuesBySprint.get(sprint.id) ?? []}
+                allSprintIssues={allIssuesBySprint.get(sprint.id) ?? []}
                 epicsMap={epicsMap}
                 allSprints={sortedSprints}
                 onOpen={setDetailIssueId}
@@ -760,6 +899,7 @@ export default function BacklogPage() {
                 onStart={handleStart}
                 onComplete={(id) => setCompleteId(id)}
                 onAddIssue={(sprintId) => setIssueModal({ open: true, sprintId })}
+                onEdit={(id) => setEditSprintId(id)}
               />
             ))}
 
@@ -780,11 +920,23 @@ export default function BacklogPage() {
 
       {/* Modals */}
       {createSprintOpen && (
-        <CreateSprintModal boardId={boardId!} onClose={() => setCreateSprintOpen(false)} />
+        <CreateSprintModal boardId={boardId!} existingSprints={sprints} onClose={() => setCreateSprintOpen(false)} />
       )}
       {createEpicOpen && (
         <CreateEpicModal boardId={boardId!} onClose={() => setCreateEpicOpen(false)} />
       )}
+      {editSprintId && (() => {
+        const sprint = sortedSprints.find((s) => s.id === editSprintId)
+        return sprint ? (
+          <EditSprintModal sprint={sprint} boardId={boardId!} onClose={() => setEditSprintId(null)} />
+        ) : null
+      })()}
+      {editEpicId && (() => {
+        const epic = epics.find((e) => e.id === editEpicId)
+        return epic ? (
+          <EditEpicModal epic={epic} boardId={boardId!} onClose={() => setEditEpicId(null)} />
+        ) : null
+      })()}
       {completingSprint && (
         <CompleteSprintModal
           sprint={completingSprint}
@@ -802,14 +954,23 @@ export default function BacklogPage() {
         boardName={board?.name}
         sprintId={issueModal.sprintId}
       />
+      </div>
 
       {detailIssueId && (
-        <IssueDetailPanel
-          issueId={detailIssueId}
-          boardId={boardId!}
-          columns={board?.columns ?? []}
-          onClose={() => setDetailIssueId(null)}
-        />
+        <>
+          <div
+            onMouseDown={startResize}
+            className="w-1 shrink-0 cursor-col-resize bg-surface-border transition-colors hover:bg-primary/40"
+          />
+          <div style={{ width: panelWidth }} className="shrink-0 overflow-hidden">
+            <IssueDetailPanel
+              issueId={detailIssueId}
+              boardId={boardId!}
+              columns={board?.columns ?? []}
+              onClose={closeDetail}
+            />
+          </div>
+        </>
       )}
     </div>
   )

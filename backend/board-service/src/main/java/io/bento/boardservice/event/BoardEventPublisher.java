@@ -1,30 +1,48 @@
 package io.bento.boardservice.event;
 
+import io.bento.kafka.event.BoardColumnDeletedEvent;
+import io.bento.kafka.event.BoardDeletedEvent;
+import io.bento.kafka.event.BoardMemberAddedEvent;
+import io.bento.kafka.event.BoardMemberRemovedEvent;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
+import tools.jackson.databind.ObjectMapper;
 
 @Component
 @RequiredArgsConstructor
 public class BoardEventPublisher {
 
+    private static final Logger log = LoggerFactory.getLogger(BoardEventPublisher.class);
     private static final String BOARD_EVENTS_TOPIC = "bento.board.events";
 
-    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final KafkaTemplate<String, String> kafkaTemplate;
+    private final ObjectMapper objectMapper;
 
     public void publishBoardDeleted(BoardDeletedEvent event) {
-        kafkaTemplate.send(BOARD_EVENTS_TOPIC, event.boardId().toString(), event);
+        send(event.boardId().toString(), event);
     }
 
     public void publishBoardColumnDeleted(BoardColumnDeletedEvent event) {
-        kafkaTemplate.send(BOARD_EVENTS_TOPIC, event.boardId().toString(), event);
+        send(event.boardId().toString(), event);
     }
 
     public void publishBoardMemberAdded(BoardMemberAddedEvent event) {
-        kafkaTemplate.send(BOARD_EVENTS_TOPIC, event.boardId().toString(), event);
+        send(event.boardId().toString(), event);
     }
 
     public void publishBoardMemberRemoved(BoardMemberRemovedEvent event) {
-        kafkaTemplate.send(BOARD_EVENTS_TOPIC, event.boardId().toString(), event);
+        send(event.boardId().toString(), event);
+    }
+
+    private void send(String key, Object event) {
+        try {
+            String payload = objectMapper.writeValueAsString(event);
+            kafkaTemplate.send(BOARD_EVENTS_TOPIC, key, payload);
+        } catch (Exception e) {
+            log.error("Failed to publish event {}: {}", event.getClass().getSimpleName(), e.getMessage(), e);
+        }
     }
 }

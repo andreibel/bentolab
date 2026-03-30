@@ -20,7 +20,7 @@ public class InternalOrgController {
 
     @GetMapping("/orgs/user/{userId}")
     public List<Map<String, Object>> getUserOrgs(@PathVariable UUID userId) {
-        return memberRepository.findAllByUserId(userId).stream()
+        return memberRepository.findAllByUserIdWithOrg(userId).stream()
                 .map(m -> Map.<String, Object>of(
                         "orgId", m.getOrganization().getId(),
                         "orgName", m.getOrganization().getName(),

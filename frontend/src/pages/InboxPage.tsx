@@ -1,5 +1,5 @@
-import { Inbox, Bell, AtSign, GitMerge, CheckCircle2 } from 'lucide-react'
-import { FeaturePlaceholder, SkeletonLine } from '@/components/common/FeaturePlaceholder'
+import {AtSign, Bell, CheckCircle2, GitMerge, Inbox} from 'lucide-react'
+import {FeaturePlaceholder} from '@/components/common/FeaturePlaceholder'
 
 const mockNotifications = [
   { icon: AtSign,       color: 'bg-primary-subtle text-primary',   title: 'Sara mentioned you in TF-42',           sub: '"@you can you take a look at this?"',     time: '2m ago',  unread: true  },

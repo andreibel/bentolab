@@ -1,11 +1,15 @@
 package io.bento.taskservice.service;
 
+import io.bento.taskservice.client.BoardServiceClient;
 import io.bento.taskservice.dto.request.CompleteSprintRequest;
 import io.bento.taskservice.dto.request.CreateSprintRequest;
 import io.bento.taskservice.dto.request.UpdateSprintRequest;
 import io.bento.taskservice.entity.Issue;
 import io.bento.taskservice.entity.Sprint;
 import io.bento.taskservice.enums.SprintStatus;
+import io.bento.kafka.event.SprintCompletedEvent;
+import io.bento.taskservice.event.SprintEventPublisher;
+import io.bento.kafka.event.SprintStartedEvent;
 import io.bento.taskservice.exception.ActiveSprintAlreadyExistsException;
 import io.bento.taskservice.exception.SprintNotFoundException;
 import io.bento.taskservice.repository.IssueRepository;
@@ -22,6 +26,8 @@ public class SprintService {
 
     private final SprintRepository sprintRepository;
     private final IssueRepository issueRepository;
+    private final SprintEventPublisher sprintEventPublisher;
+    private final BoardServiceClient boardServiceClient;
 
     public List<Sprint> getSprints(String orgId, String boardId) {
         return sprintRepository.findAllByOrgIdAndBoardId(orgId, boardId);
@@ -68,7 +74,17 @@ public class SprintService {
         }
 
         sprint.setStatus(SprintStatus.ACTIVE);
-        return sprintRepository.save(sprint);
+        sprint = sprintRepository.save(sprint);
+
+        List<String> memberIds = boardServiceClient.getBoardMemberIds(sprint.getBoardId());
+        sprintEventPublisher.publishSprintStarted(new SprintStartedEvent(
+                sprint.getId(), sprint.getBoardId(), orgId, sprint.getName(),
+                sprint.getStartDate() != null ? sprint.getStartDate().toString() : null,
+                sprint.getEndDate() != null ? sprint.getEndDate().toString() : null,
+                memberIds
+        ));
+
+        return sprint;
     }
 
     public Sprint completeSprint(String orgId, String sprintId, CompleteSprintRequest request) {
@@ -76,10 +92,15 @@ public class SprintService {
 
         // Move incomplete issues to backlog or next sprint
         List<Issue> issues = issueRepository.findAllByOrgIdAndSprintId(orgId, sprintId);
+        int completedCount = 0;
+        int remainingCount = 0;
         for (Issue issue : issues) {
             if (issue.getCompletedAt() == null) {
                 issue.setSprintId(request.moveIncompleteToSprintId());
                 issueRepository.save(issue);
+                remainingCount++;
+            } else {
+                completedCount++;
             }
         }
 
@@ -89,6 +110,14 @@ public class SprintService {
             sprint.setRetrospective(request.retrospective());
         }
 
-        return sprintRepository.save(sprint);
+        sprint = sprintRepository.save(sprint);
+
+        List<String> memberIds = boardServiceClient.getBoardMemberIds(sprint.getBoardId());
+        sprintEventPublisher.publishSprintCompleted(new SprintCompletedEvent(
+                sprint.getId(), sprint.getBoardId(), orgId, sprint.getName(),
+                completedCount, remainingCount, memberIds
+        ));
+
+        return sprint;
     }
 }

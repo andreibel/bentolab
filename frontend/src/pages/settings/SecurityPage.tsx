@@ -1,22 +1,22 @@
-import { useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { ShieldCheck, Lock, AlertCircle, ChevronDown, Check } from 'lucide-react'
-import { toast } from 'sonner'
-import { useAuthStore } from '@/stores/authStore'
-import { permissionsApi } from '@/api/permissions'
-import { boardsApi } from '@/api/boards'
-import type { Board } from '@/types/board'
-import { queryKeys } from '@/api/queryKeys'
-import { cn } from '@/utils/cn'
+import {useState} from 'react'
+import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query'
+import {AlertCircle, Check, ChevronDown, Lock, ShieldCheck} from 'lucide-react'
+import {toast} from 'sonner'
+import {useAuthStore} from '@/stores/authStore'
+import {permissionsApi} from '@/api/permissions'
+import {boardsApi} from '@/api/boards'
+import type {Board} from '@/types/board'
+import {queryKeys} from '@/api/queryKeys'
+import {cn} from '@/utils/cn'
 import {
-  ORG_ROLES,
-  ORG_ROLE_LABELS,
-  BOARD_ROLES,
   BOARD_ROLE_LABELS,
-  type OrgPermission,
+  BOARD_ROLES,
   type BoardPermission,
-  type OrgRole,
   type BoardRole,
+  ORG_ROLE_LABELS,
+  ORG_ROLES,
+  type OrgPermission,
+  type OrgRole,
 } from '@/types/permissions'
 
 // ─── Tab type ────────────────────────────────────────────────────────────────

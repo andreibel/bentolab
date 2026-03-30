@@ -5,7 +5,7 @@ export interface User {
   lastName: string
   avatarUrl: string | null
   systemRole: string
-  isEmailVerified: boolean
+  emailVerified: boolean
   currentOrgId: string | null
   timezone: string
   locale: string
@@ -13,10 +13,19 @@ export interface User {
   createdAt: string
 }
 
+export interface UserOrg {
+  orgId: string
+  orgName: string
+  orgSlug: string
+  orgRole: string
+  logoUrl: string | null
+}
+
 export interface AuthResponse {
   accessToken: string
   refreshToken: string
   user: User
+  organizations: UserOrg[]
 }
 
 export interface RefreshResponse {

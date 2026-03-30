@@ -1,11 +1,11 @@
-import { useSortable } from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
-import { MessageSquare, Clock } from 'lucide-react'
-import { cn } from '@/utils/cn'
-import { IssueTypeBadge, PriorityIcon, EpicTag } from '@/components/ui/Badge'
-import { Avatar } from '@/components/ui/Avatar'
-import type { Issue } from '@/types/issue'
-import type { Epic } from '@/types/epic'
+import {useSortable} from '@dnd-kit/sortable'
+import {CSS} from '@dnd-kit/utilities'
+import {Clock, MessageSquare} from 'lucide-react'
+import {cn} from '@/utils/cn'
+import {EpicTag, IssueTypeBadge, PriorityIcon} from '@/components/ui/Badge'
+import {Avatar} from '@/components/ui/Avatar'
+import type {Issue} from '@/types/issue'
+import type {Epic} from '@/types/epic'
 
 interface IssueCardProps {
   issue: Issue

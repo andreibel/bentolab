@@ -1,19 +1,20 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { X, Link2, AlertCircle, Pencil, Loader2 } from 'lucide-react'
-import { toast } from 'sonner'
-import { issuesApi, useIssues } from '@/api/issues'
-import { useEpics } from '@/api/epics'
-import { useSprints } from '@/api/sprints'
-import { queryKeys } from '@/api/queryKeys'
-import { useAuthStore } from '@/stores/authStore'
-import { cn } from '@/utils/cn'
-import { IssueTypeBadge } from '@/components/ui/Badge'
-import { IssueMetaPanel } from './detail/IssueMetaPanel'
-import { DescriptionEditor } from './detail/DescriptionEditor'
-import { IssueActivity } from './detail/IssueActivity'
-import type { Issue } from '@/types/issue'
-import type { BoardColumn } from '@/types/board'
+import {useCallback, useEffect, useRef, useState} from 'react'
+import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query'
+import {AlertCircle, Link2, Loader2, Pencil, RotateCcw, X, XCircle} from 'lucide-react'
+import {toast} from 'sonner'
+import {issuesApi, useIssues} from '@/api/issues'
+import {useEpics} from '@/api/epics'
+import {useSprints} from '@/api/sprints'
+import {queryKeys} from '@/api/queryKeys'
+import {useAuthStore} from '@/stores/authStore'
+import {cn} from '@/utils/cn'
+import {IssueTypeBadge} from '@/components/ui/Badge'
+import {IssueMetaPanel} from './detail/IssueMetaPanel'
+import {DescriptionEditor} from './detail/DescriptionEditor'
+import {IssueTimeTracking} from './detail/IssueTimeTracking'
+import {IssueActivity} from './detail/IssueActivity'
+import type {Issue} from '@/types/issue'
+import type {BoardColumn} from '@/types/board'
 
 // ─── Title editor ─────────────────────────────────────────────────────────────
 
@@ -23,7 +24,8 @@ function TitleEditor({ value, onSave }: { value: string; onSave: (v: string) => 
   const ref = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => { if (editing) { ref.current?.focus(); ref.current?.select() } }, [editing])
-  useEffect(() => { if (!editing) setDraft(value) }, [value, editing])
+
+  const startEditing = () => { setDraft(value); setEditing(true) }
 
   const commit = () => {
     if (draft.trim() && draft.trim() !== value) onSave(draft.trim())
@@ -49,11 +51,11 @@ function TitleEditor({ value, onSave }: { value: string; onSave: (v: string) => 
 
   return (
     <h1
-      onClick={() => setEditing(true)}
+      onClick={startEditing}
       className="group relative cursor-text rounded-md px-1 py-0.5 text-xl font-bold leading-snug text-text-primary hover:bg-surface-muted"
     >
       {value}
-      <Pencil className="absolute end-1 top-1.5 h-3.5 w-3.5 text-text-muted opacity-0 transition-opacity group-hover:opacity-100" />
+      <Pencil className="absolute inset-e-1 top-1.5 h-3.5 w-3.5 text-text-muted opacity-0 transition-opacity group-hover:opacity-100" />
     </h1>
   )
 }
@@ -92,6 +94,19 @@ export function IssueDetailPanel({
   const { data: sprints = [] } = useSprints(effectiveBoardId)
   const { data: boardIssues  } = useIssues(effectiveBoardId)
 
+  const closeMutation = useMutation({
+    mutationFn: (action: 'close' | 'reopen') =>
+      action === 'close' ? issuesApi.close(issueId) : issuesApi.reopen(issueId),
+    onSuccess: (updated) => {
+      queryClient.setQueryData<Issue>(queryKeys.issues.detail(issueId), updated)
+      if (effectiveBoardId) {
+        void queryClient.invalidateQueries({ queryKey: ['issues', effectiveBoardId], exact: false })
+      }
+      toast.success(updated.closed ? 'Issue closed' : 'Issue reopened')
+    },
+    onError: () => toast.error('Failed to update issue status'),
+  })
+
   const mutation = useMutation({
     mutationFn: (data: Partial<Issue>) => issuesApi.update(issueId, data),
     onMutate: async (data) => {
@@ -105,17 +120,38 @@ export function IssueDetailPanel({
       toast.error('Failed to update issue')
     },
     onSettled: (_data, _err, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.issues.detail(issueId) })
-      queryClient.invalidateQueries({ queryKey: queryKeys.issues.activities(issueId) })
+      void queryClient.invalidateQueries({ queryKey: queryKeys.issues.detail(issueId) })
+      void queryClient.invalidateQueries({ queryKey: queryKeys.issues.activities(issueId) })
       if (effectiveBoardId) {
-        queryClient.invalidateQueries({ queryKey: queryKeys.issues.list(effectiveBoardId) })
-        if ('sprintId' in variables) queryClient.invalidateQueries({ queryKey: queryKeys.sprints.all(effectiveBoardId) })
-        if ('epicId'   in variables) queryClient.invalidateQueries({ queryKey: queryKeys.epics.list(effectiveBoardId) })
+        void queryClient.invalidateQueries({ queryKey: ['issues', effectiveBoardId], exact: false })
+        if ('sprintId' in variables) void queryClient.invalidateQueries({ queryKey: queryKeys.sprints.all(effectiveBoardId) })
+        if ('epicId'   in variables) void queryClient.invalidateQueries({ queryKey: queryKeys.epics.list(effectiveBoardId) })
       }
     },
   })
 
-  const handleUpdate = useCallback((data: Partial<Issue>) => mutation.mutate(data), [mutation])
+  const handleUpdate = useCallback((data: Partial<Issue>) => {
+    if ('columnId' in data && data.columnId) {
+      issuesApi.move(issueId, data.columnId, 0).then((updated) => {
+        queryClient.setQueryData<Issue>(queryKeys.issues.detail(issueId), updated)
+        if (effectiveBoardId) {
+          void queryClient.invalidateQueries({ queryKey: ['issues', effectiveBoardId], exact: false })
+        }
+      }).catch(() => toast.error('Failed to move issue'))
+      return
+    }
+    if ('assigneeId' in data) {
+      issuesApi.assign(issueId, data.assigneeId ?? null).then((updated) => {
+        queryClient.setQueryData<Issue>(queryKeys.issues.detail(issueId), updated)
+        void queryClient.invalidateQueries({ queryKey: queryKeys.issues.activities(issueId) })
+        if (effectiveBoardId) {
+          void queryClient.invalidateQueries({ queryKey: ['issues', effectiveBoardId], exact: false })
+        }
+      }).catch(() => toast.error('Failed to update assignee'))
+      return
+    }
+    mutation.mutate(data)
+  }, [mutation, issueId, effectiveBoardId, queryClient])
 
   // Derived data for meta panel
   const parentIssue = issue?.parentIssueId
@@ -126,8 +162,8 @@ export function IssueDetailPanel({
   return (
     <div
       className={cn(
-        'fixed end-0 top-0 z-50 flex h-screen w-[680px] max-w-full flex-col',
-        'border-s border-surface-border bg-surface shadow-2xl',
+        'flex h-full w-full flex-col',
+        'border-s border-surface-border bg-surface',
         'transition-transform duration-300 ease-out',
         visible ? 'translate-x-0' : 'translate-x-full',
       )}
@@ -151,10 +187,15 @@ export function IssueDetailPanel({
           <div className="flex shrink-0 items-center gap-2 border-b border-surface-border px-5 py-2.5">
             <span className="font-mono text-xs font-semibold text-text-muted">{issue.issueKey}</span>
             <IssueTypeBadge type={issue.type} />
+            {issue.closed && (
+              <span className="rounded-full bg-surface-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-text-muted">
+                Closed
+              </span>
+            )}
             <div className="ms-auto flex items-center gap-1">
               <button
                 onClick={() => {
-                  navigator.clipboard.writeText(`${window.location.origin}/issues/${issueId}`)
+                  void navigator.clipboard.writeText(`${window.location.origin}/issues/${issueId}`)
                   toast.success('Link copied')
                 }}
                 title="Copy link"
@@ -162,6 +203,33 @@ export function IssueDetailPanel({
               >
                 <Link2 className="h-4 w-4" />
               </button>
+              {issue.closed ? (
+                <button
+                  onClick={() => closeMutation.mutate('reopen')}
+                  disabled={closeMutation.isPending}
+                  title="Reopen issue"
+                  className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-green-600 transition-colors hover:bg-green-500/10 disabled:opacity-50"
+                >
+                  {closeMutation.isPending
+                    ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    : <RotateCcw className="h-3.5 w-3.5" />
+                  }
+                  Reopen
+                </button>
+              ) : (
+                <button
+                  onClick={() => closeMutation.mutate('close')}
+                  disabled={closeMutation.isPending}
+                  title="Close issue"
+                  className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-text-muted transition-colors hover:bg-surface-muted hover:text-text-primary disabled:opacity-50"
+                >
+                  {closeMutation.isPending
+                    ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    : <XCircle className="h-3.5 w-3.5" />
+                  }
+                  Close issue
+                </button>
+              )}
               <button
                 onClick={onClose}
                 className="rounded-md p-1.5 text-text-muted transition-colors hover:bg-surface-muted hover:text-text-primary"
@@ -181,6 +249,7 @@ export function IssueDetailPanel({
 
               <IssueMetaPanel
                 issue={issue}
+                boardId={effectiveBoardId}
                 columns={columns}
                 epics={epics}
                 sprints={sprints}
@@ -196,6 +265,8 @@ export function IssueDetailPanel({
                   onSave={(description) => handleUpdate({ description })}
                 />
               </section>
+
+              <IssueTimeTracking issue={issue} onUpdate={handleUpdate} />
 
               {childIssues.length > 0 && (
                 <section className="mb-6">
@@ -219,7 +290,7 @@ export function IssueDetailPanel({
                 </section>
               )}
 
-              <IssueActivity issueId={issueId} currentUser={user} />
+              <IssueActivity issueId={issueId} currentUser={user} columns={columns} epics={epics} sprints={sprints} />
 
             </div>
           </div>

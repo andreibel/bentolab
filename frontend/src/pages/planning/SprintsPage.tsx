@@ -1,5 +1,5 @@
-import { Timer } from 'lucide-react'
-import { FeaturePlaceholder } from '@/components/common/FeaturePlaceholder'
+import {Timer} from 'lucide-react'
+import {FeaturePlaceholder} from '@/components/common/FeaturePlaceholder'
 
 const sprints = [
   { name: 'Sprint 3', board: 'Team Frontend', status: 'ACTIVE',    start: 'Mar 1',  end: 'Mar 14', total: 8,  done: 5, points: 30, donePoints: 18 },

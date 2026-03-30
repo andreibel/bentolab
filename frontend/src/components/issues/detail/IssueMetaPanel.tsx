@@ -1,19 +1,19 @@
-import { useState, useEffect, useRef } from 'react'
-import { ChevronDown, Check } from 'lucide-react'
-import { Avatar } from '@/components/ui/Avatar'
-import { IssueTypeBadge, PriorityBadge } from '@/components/ui/Badge'
-import { cn } from '@/utils/cn'
-import type { Issue } from '@/types/issue'
-import type { Epic } from '@/types/epic'
-import type { Sprint } from '@/types/sprint'
-import type { BoardColumn } from '@/types/board'
+import {useEffect, useMemo, useRef, useState} from 'react'
+import {useQuery} from '@tanstack/react-query'
+import {Check, ChevronDown, Search} from 'lucide-react'
+import Fuse from 'fuse.js'
+import {Avatar} from '@/components/ui/Avatar'
+import {IssueTypeBadge, PriorityBadge} from '@/components/ui/Badge'
+import {DatePicker, toDatePart} from '@/components/ui/DatePicker'
+import {cn} from '@/utils/cn'
+import {boardsApi} from '@/api/boards'
+import {usersApi} from '@/api/users'
+import type {Issue} from '@/types/issue'
+import type {Epic} from '@/types/epic'
+import type {Sprint} from '@/types/sprint'
+import type {BoardColumn, UserProfile} from '@/types/board'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function toDateInput(iso: string | null | undefined) {
-  if (!iso) return ''
-  return new Date(iso).toISOString().split('T')[0]
-}
 
 function fmtDate(iso: string | null | undefined) {
   if (!iso) return '—'
@@ -235,6 +235,119 @@ function StoryPointsField({ value, onSave }: { value: number | null | undefined;
   )
 }
 
+function AssigneeSelect({
+  value,
+  boardMembers,
+  profileMap,
+  onSave,
+}: {
+  value: string | null
+  boardMembers: { userId: string }[]
+  profileMap: Map<string, UserProfile>
+  onSave: (id: string | null) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const [search, setSearch] = useState('')
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: MouseEvent) => {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  const currentProfile = value ? profileMap.get(value) ?? null : null
+  const currentName = currentProfile
+    ? [currentProfile.firstName, currentProfile.lastName].filter(Boolean).join(' ') || currentProfile.email
+    : null
+
+  const searchable = useMemo(() =>
+    boardMembers.map((m) => {
+      const p = profileMap.get(m.userId) ?? null
+      return {
+        userId: m.userId,
+        firstName: p?.firstName ?? '',
+        lastName: p?.lastName ?? '',
+        fullName: p ? [p.firstName, p.lastName].filter(Boolean).join(' ') || p.email : '',
+        email: p?.email ?? '',
+        profile: p,
+      }
+    }),
+    [boardMembers, profileMap],
+  )
+
+  const fuse = useMemo(() =>
+    new Fuse(searchable, { keys: ['firstName', 'lastName', 'fullName', 'email'], threshold: 0.4 }),
+    [searchable],
+  )
+
+  const filtered = useMemo(() => {
+    if (!search.trim()) return searchable
+    return fuse.search(search).map((r) => r.item)
+  }, [search, searchable, fuse])
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => { setOpen((v) => !v); setSearch('') }}
+        className="flex items-center gap-1.5 rounded-md px-1.5 py-1 text-sm transition-colors hover:bg-surface-muted"
+      >
+        {currentProfile ? (
+          <>
+            <Avatar userId={currentProfile.id} name={currentName ?? undefined} size="sm" className="shrink-0" />
+            <span className="max-w-[120px] truncate text-text-primary">{currentName || currentProfile.email}</span>
+          </>
+        ) : (
+          <span className="text-text-muted">Unassigned</span>
+        )}
+        <ChevronDown className="h-3 w-3 shrink-0 text-text-muted" />
+      </button>
+      {open && (
+        <div className="absolute start-0 top-full z-50 mt-1 w-52 rounded-lg border border-surface-border bg-surface shadow-xl">
+          <div className="p-1.5">
+            <div className="relative">
+              <Search className="absolute start-2 top-1/2 h-3 w-3 -translate-y-1/2 text-text-muted" />
+              <input
+                autoFocus
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search…"
+                className="w-full rounded border border-surface-border bg-surface-muted py-1 ps-6 pe-2 text-xs text-text-primary outline-none focus:border-primary"
+              />
+            </div>
+          </div>
+          <div className="max-h-48 overflow-y-auto pb-1">
+            <button
+              onClick={() => { onSave(null); setOpen(false) }}
+              className="flex w-full items-center gap-2 px-3 py-1.5 text-sm hover:bg-surface-muted"
+            >
+              {!value ? <Check className="h-3 w-3 shrink-0 text-primary" /> : <span className="h-3 w-3 shrink-0" />}
+              <span className="text-text-muted">Unassigned</span>
+            </button>
+            {filtered.map(({ userId, profile, fullName }) => (
+              <button
+                key={userId}
+                onClick={() => { onSave(userId); setOpen(false) }}
+                className="flex w-full items-center gap-2 px-3 py-1.5 text-sm hover:bg-surface-muted"
+              >
+                {userId === value ? <Check className="h-3 w-3 shrink-0 text-primary" /> : <span className="h-3 w-3 shrink-0" />}
+                <Avatar userId={userId} name={fullName || undefined} size="sm" className="shrink-0" />
+                <span className="truncate text-text-primary">{fullName || profile?.email || userId.slice(0, 8)}</span>
+              </button>
+            ))}
+            {filtered.length === 0 && search && (
+              <p className="px-3 py-2 text-xs text-text-muted">No matches.</p>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Public export ─────────────────────────────────────────────────────────────
 
 const ISSUE_TYPES = ['STORY', 'TASK', 'BUG', 'SUBTASK'] as const
@@ -242,6 +355,7 @@ const PRIORITIES  = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'] as const
 
 interface IssueMetaPanelProps {
   issue: Issue
+  boardId: string
   columns: BoardColumn[]
   epics: Epic[]
   sprints: Sprint[]
@@ -250,7 +364,51 @@ interface IssueMetaPanelProps {
   onUpdate: (data: Partial<Issue>) => void
 }
 
-export function IssueMetaPanel({ issue, columns, epics, sprints, parentIssue, childIssues = [], onUpdate }: IssueMetaPanelProps) {
+export function IssueMetaPanel({ issue, boardId, columns, epics, sprints, parentIssue, onUpdate }: IssueMetaPanelProps) {
+  const { data: boardMembers = [] } = useQuery({
+    queryKey: ['board-members', boardId],
+    queryFn: () => boardsApi.listMembers(boardId),
+    enabled: !!boardId,
+  })
+
+  const profileIds = useMemo(() => {
+    const ids = new Set(boardMembers.map(m => m.userId))
+    ids.add(issue.reporterId)
+    return [...ids]
+  }, [boardMembers, issue.reporterId])
+
+  const { data: profiles = [] } = useQuery({
+    queryKey: ['user-profiles', profileIds],
+    queryFn: () => usersApi.batchGet(profileIds),
+    enabled: profileIds.length > 0,
+  })
+
+  const profileMap = useMemo(() => {
+    const map = new Map<string, UserProfile>()
+    profiles.forEach(p => map.set(p.id, p))
+    return map
+  }, [profiles])
+
+  const reporterProfile = profileMap.get(issue.reporterId)
+  const reporterName = reporterProfile
+    ? [reporterProfile.firstName, reporterProfile.lastName].filter(Boolean).join(' ') || reporterProfile.email
+    : null
+
+  const currentSprint  = sprints.find(s => s.id === issue.sprintId)
+  const eligibleSprint = currentSprint?.status !== 'COMPLETED' ? currentSprint : undefined
+  const sprintMin = eligibleSprint?.startDate ? toDatePart(eligibleSprint.startDate) : undefined
+  const sprintMax = eligibleSprint?.endDate   ? toDatePart(eligibleSprint.endDate)   : undefined
+
+  const issueDuePart   = issue.dueDate   ? toDatePart(issue.dueDate)   : undefined
+  const issueStartPart = issue.startDate ? toDatePart(issue.startDate) : undefined
+
+  // Start date: can't go past sprint end OR due date (whichever is earlier)
+  const startMaxCandidates = [sprintMax, issueDuePart].filter((v): v is string => !!v)
+  const startMax = startMaxCandidates.length ? startMaxCandidates.sort().at(0) : undefined
+  // Due date: must be after sprint start AND start date (whichever is later)
+  const dueMinCandidates = [sprintMin, issueStartPart].filter((v): v is string => !!v)
+  const dueMin = dueMinCandidates.length ? dueMinCandidates.sort().at(-1) : undefined
+
   return (
     <div className="mb-6 grid grid-cols-3 gap-x-4 gap-y-4 rounded-xl border border-surface-border bg-surface-muted/40 p-4">
 
@@ -317,14 +475,12 @@ export function IssueMetaPanel({ issue, columns, epics, sprints, parentIssue, ch
       </MetaCell>
 
       <MetaCell label="Assignee">
-        {issue.assigneeId ? (
-          <div className="flex items-center gap-1.5 px-1.5 py-1">
-            <Avatar userId={issue.assigneeId} size="sm" className="shrink-0" />
-            <span className="truncate font-mono text-xs text-text-secondary">{issue.assigneeId.slice(0, 8)}…</span>
-          </div>
-        ) : (
-          <span className="px-1.5 py-1 text-sm text-text-muted">Unassigned</span>
-        )}
+        <AssigneeSelect
+          value={issue.assigneeId ?? null}
+          boardMembers={boardMembers}
+          profileMap={profileMap}
+          onSave={(assigneeId) => onUpdate({ assigneeId } as Partial<Issue>)}
+        />
       </MetaCell>
 
       <MetaCell label="Story points">
@@ -333,31 +489,29 @@ export function IssueMetaPanel({ issue, columns, epics, sprints, parentIssue, ch
 
       <MetaCell label="Reporter">
         <div className="flex items-center gap-1.5 px-1.5 py-1">
-          <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-surface-border text-[9px] font-bold text-text-secondary">
-            {issue.reporterId.slice(0, 2).toUpperCase()}
-          </div>
-          <span className="truncate font-mono text-xs text-text-secondary">{issue.reporterId.slice(0, 8)}…</span>
+          <Avatar userId={issue.reporterId} name={reporterName ?? undefined} size="sm" className="shrink-0" />
+          <span className="truncate text-sm text-text-primary">{reporterName ?? issue.reporterId.slice(0, 8) + '…'}</span>
         </div>
       </MetaCell>
 
       <MetaCell label="Start date">
-        <input
-          type="date"
-          value={toDateInput(issue.startDate)}
-          onChange={(e) => onUpdate({ startDate: e.target.value ? new Date(e.target.value).toISOString() : null } as Partial<Issue>)}
-          className="w-full rounded-md border border-surface-border bg-surface px-2 py-1 text-xs text-text-primary outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
+        <DatePicker
+          value={issue.startDate ? toDatePart(issue.startDate) : ''}
+          onChange={(v) => onUpdate({ startDate: v ? new Date(v + 'T12:00:00').toISOString() : null } as Partial<Issue>)}
+          placeholder="No start date"
+          minDate={sprintMin}
+          maxDate={startMax}
         />
       </MetaCell>
 
       <MetaCell label="Due date">
-        <input
-          type="date"
-          value={toDateInput(issue.dueDate)}
-          onChange={(e) => onUpdate({ dueDate: e.target.value ? new Date(e.target.value).toISOString() : null } as Partial<Issue>)}
-          className={cn(
-            'w-full rounded-md border border-surface-border bg-surface px-2 py-1 text-xs text-text-primary outline-none focus:border-primary focus:ring-1 focus:ring-primary/20',
-            issue.dueDate && new Date(issue.dueDate) < new Date() && 'border-red-400 text-red-500',
-          )}
+        <DatePicker
+          value={issue.dueDate ? toDatePart(issue.dueDate) : ''}
+          onChange={(v) => onUpdate({ dueDate: v ? new Date(v + 'T12:00:00').toISOString() : null } as Partial<Issue>)}
+          placeholder="No due date"
+          minDate={dueMin}
+          maxDate={sprintMax}
+          className={cn(issue.dueDate && new Date(issue.dueDate) < new Date() && 'border-red-400')}
         />
       </MetaCell>
 

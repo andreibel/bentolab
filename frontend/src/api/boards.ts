@@ -1,7 +1,7 @@
-import { useQuery } from '@tanstack/react-query'
+import {useQuery} from '@tanstack/react-query'
 import client from './client'
-import { queryKeys } from './queryKeys'
-import type { Board, BoardColumn } from '@/types/board'
+import {queryKeys} from './queryKeys'
+import type {Board, BoardColumn, BoardMember, BoardRole} from '@/types/board'
 
 export const boardsApi = {
   list: () =>
@@ -38,8 +38,29 @@ export const boardsApi = {
       .patch<BoardColumn[]>(`/api/boards/${boardId}/columns/reorder`, { columnIds })
       .then((r) => r.data),
 
+  updateColumn: (
+    boardId: string,
+    columnId: string,
+    data: { name?: string; color?: string | null; wipLimit?: number | null },
+  ) =>
+    client.patch<BoardColumn>(`/api/boards/${boardId}/columns/${columnId}`, data).then((r) => r.data),
+
   deleteColumn: (boardId: string, columnId: string) =>
     client.delete(`/api/boards/${boardId}/columns/${columnId}`),
+
+  // ── Members ───────────────────────────────────────────────────────────────
+
+  listMembers: (boardId: string) =>
+    client.get<BoardMember[]>(`/api/boards/${boardId}/members`).then((r) => r.data),
+
+  addMember: (boardId: string, userId: string, boardRole: BoardRole) =>
+    client.post<BoardMember>(`/api/boards/${boardId}/members`, { userId, boardRole }).then((r) => r.data),
+
+  updateMemberRole: (boardId: string, targetUserId: string, boardRole: BoardRole) =>
+    client.patch<BoardMember>(`/api/boards/${boardId}/members/${targetUserId}`, { boardRole }).then((r) => r.data),
+
+  removeMember: (boardId: string, targetUserId: string) =>
+    client.delete(`/api/boards/${boardId}/members/${targetUserId}`),
 }
 
 export function useBoards() {

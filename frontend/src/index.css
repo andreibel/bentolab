@@ -46,8 +46,84 @@
 
 :root {
   font-family: 'Inter', system-ui, sans-serif;
+  color: var(--color-text-primary);
+  background-color: var(--color-surface);
 }
 
 :root[lang="he"] {
   font-family: 'Heebo', system-ui, sans-serif;
+}
+
+/* ── Summary dashboard grid ───────────────────────────────────────────────── */
+
+/* Drag/resize placeholder — dashed rounded rectangle, no fill */
+.react-grid-placeholder {
+  background: transparent !important;
+  border: 2px dashed var(--color-primary) !important;
+  border-radius: 12px !important;
+  opacity: 1 !important;
+}
+
+/* Snap-grid column guides visible only in edit mode (24 cols, 12px gap) */
+.bento-grid-edit {
+  --cell: calc((100% - 23 * 12px) / 24);
+  background-image:
+    repeating-linear-gradient(
+      to right,
+      transparent,
+      transparent var(--cell),
+      color-mix(in srgb, var(--color-primary) 7%, transparent) var(--cell),
+      color-mix(in srgb, var(--color-primary) 7%, transparent) calc(var(--cell) + 12px)
+    );
+}
+
+/* ── Command palette entrance ─────────────────────────────────────────────── */
+
+@keyframes palette-in {
+  from { opacity: 0; transform: scale(0.96) translateY(-10px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0);     }
+}
+.animate-palette-in {
+  animation: palette-in 0.15s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ── Backdrop fade ────────────────────────────────────────────────────────── */
+
+@keyframes backdrop-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.animate-backdrop-in {
+  animation: backdrop-in 0.1s ease-out forwards;
+}
+
+/* Hide the default resize handle image */
+.react-resizable-handle {
+  background-image: none !important;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.react-grid-item:hover .react-resizable-handle,
+.react-grid-item.resizing .react-resizable-handle {
+  opacity: 1;
+}
+
+/* Bottom-right resize grip — two-line corner indicator */
+.react-resizable-handle-se {
+  width: 20px !important;
+  height: 20px !important;
+  bottom: 5px !important;
+  right: 5px !important;
+  cursor: se-resize;
+}
+.react-resizable-handle-se::after {
+  content: '';
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  width: 9px;
+  height: 9px;
+  border-right: 2px solid var(--color-primary);
+  border-bottom: 2px solid var(--color-primary);
+  border-radius: 0 0 4px 0;
 }

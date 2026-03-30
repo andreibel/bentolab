@@ -14,6 +14,9 @@ import java.util.UUID;
 public interface OrganizationMemberRepository extends JpaRepository<OrganizationMember, UUID> {
     List<OrganizationMember> findAllByUserId(UUID userId);
 
+    @Query("SELECT m FROM OrganizationMember m JOIN FETCH m.organization WHERE m.userId = :userId")
+    List<OrganizationMember> findAllByUserIdWithOrg(@Param("userId") UUID userId);
+
     Optional<OrganizationMember> findAllByOrganization_IdAndUserId(UUID organizationId, UUID userId);
 
     boolean existsByOrganization_IdAndUserId(UUID organizationId, UUID userId);

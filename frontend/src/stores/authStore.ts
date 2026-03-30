@@ -1,7 +1,7 @@
-import { create } from 'zustand'
-import { persist, createJSONStorage } from 'zustand/middleware'
+import {create} from 'zustand'
+import {createJSONStorage, persist} from 'zustand/middleware'
 import axios from 'axios'
-import type { User } from '@/types/auth'
+import type {User} from '@/types/auth'
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8080'
 

@@ -1,40 +1,43 @@
-import { useState, useMemo, useRef, useCallback } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import {useCallback, useLayoutEffect, useMemo, useRef, useState} from 'react'
+import {Link, useParams} from 'react-router-dom'
 import {
-  DndContext,
-  DragOverlay,
-  PointerSensor,
-  useSensor,
-  useSensors,
   closestCenter,
   type CollisionDetection,
-  type DragStartEvent,
+  DndContext,
   type DragEndEvent,
   type DragOverEvent,
+  DragOverlay,
+  type DragStartEvent,
+  PointerSensor,
+  pointerWithin,
+  useSensor,
+  useSensors,
 } from '@dnd-kit/core'
-import {
-  SortableContext,
-  horizontalListSortingStrategy,
-  arrayMove,
-  useSortable,
-} from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
-import { ChevronRight, Settings, Users, Plus, AlertCircle, Loader2 } from 'lucide-react'
-import { useQueryClient } from '@tanstack/react-query'
-import { toast } from 'sonner'
-import { useBoard, boardsApi } from '@/api/boards'
-import { useIssues, issuesApi } from '@/api/issues'
-import { useEpics } from '@/api/epics'
-import { queryKeys } from '@/api/queryKeys'
-import { BoardColumn } from '@/components/board/BoardColumn'
-import { IssueCardGhost } from '@/components/board/IssueCard'
-import { AddColumnModal } from '@/components/board/AddColumnModal'
-import { CreateIssueModal } from '@/components/issues/CreateIssueModal'
-import { IssueDetailPanel } from '@/components/issues/IssueDetailPanel'
-import { cn } from '@/utils/cn'
-import type { BoardColumn as BoardColumnType } from '@/types/board'
-import type { Issue } from '@/types/issue'
-import type { Epic } from '@/types/epic'
+import {arrayMove, horizontalListSortingStrategy, SortableContext, useSortable,} from '@dnd-kit/sortable'
+import {CSS} from '@dnd-kit/utilities'
+import {AlertCircle, ChevronRight, Loader2, Plus, Settings, Users} from 'lucide-react'
+import {BoardSettingsPanel} from '@/components/board/BoardSettingsPanel'
+import {useQueryClient} from '@tanstack/react-query'
+import {toast} from 'sonner'
+import {boardsApi, useBoard} from '@/api/boards'
+import {issuesApi, useIssues} from '@/api/issues'
+import {useEpics} from '@/api/epics'
+import {queryKeys} from '@/api/queryKeys'
+import {BoardColumn} from '@/components/board/BoardColumn'
+import {EpicFilter} from '@/components/board/EpicFilter'
+import {IssueCardGhost} from '@/components/board/IssueCard'
+import {AddColumnModal} from '@/components/board/AddColumnModal'
+import {BoardMembersPanel} from '@/components/board/BoardMembersPanel'
+import {BoardPresenceAvatars} from '@/components/board/BoardPresenceAvatars'
+import {CreateIssueModal} from '@/components/issues/CreateIssueModal'
+import {IssueDetailPanel} from '@/components/issues/IssueDetailPanel'
+import {useBoardRealtime} from '@/hooks/useBoardRealtime'
+import {useBoardPresence} from '@/hooks/useBoardPresence'
+import {useAuthStore} from '@/stores/authStore'
+import {cn} from '@/utils/cn'
+import type {BoardColumn as BoardColumnType} from '@/types/board'
+import type {Issue} from '@/types/issue'
+import type {Epic} from '@/types/epic'
 
 // ── Sortable column wrapper ───────────────────────────────────────────────────
 function SortableColumn({
@@ -59,7 +62,7 @@ function SortableColumn({
     <div
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={cn('transition-opacity', isDragging && 'opacity-40')}
+      className={cn('h-full transition-opacity', isDragging && 'opacity-40')}
     >
       <BoardColumn
         column={column}
@@ -86,7 +89,7 @@ export default function BoardPage() {
   const queryClient = useQueryClient()
 
   const { data: board, isLoading: boardLoading, isError: boardError } = useBoard(boardId!)
-  const { data: issuesPage, isLoading: issuesLoading } = useIssues(boardId!)
+  const { data: issuesPage, isLoading: issuesLoading } = useIssues(boardId!, false)
   const { data: epicsData = [] } = useEpics(boardId!)
 
   const serverIssues = issuesPage?.content ?? []
@@ -114,7 +117,7 @@ export default function BoardPage() {
 
   // Keep a live ref to serverIssues so handlers can read it without deps
   const serverIssuesRef = useRef(serverIssues)
-  serverIssuesRef.current = serverIssues
+  useLayoutEffect(() => { serverIssuesRef.current = serverIssues })
 
   // ── Columns ──────────────────────────────────────────────────────────────────
   const serverCols = useMemo(
@@ -122,7 +125,7 @@ export default function BoardPage() {
     [board?.columns],
   )
   const serverColsRef = useRef(serverCols)
-  serverColsRef.current = serverCols
+  useLayoutEffect(() => { serverColsRef.current = serverCols })
 
   const sortedColumns = useMemo(() => {
     if (!localColOrder) return serverCols
@@ -132,11 +135,15 @@ export default function BoardPage() {
   }, [serverCols, localColOrder])
 
   const epicsMap = useMemo(() => new Map(epicsData.map((e) => [e.id, e])), [epicsData])
-  const [selectedEpicId, setSelectedEpicId] = useState<string | null>(null)
+  const [selectedEpicIds, setSelectedEpicIds] = useState<Set<string>>(new Set())
+
+  const currentUserId = useAuthStore(s => s.user?.id)
+  useBoardRealtime(boardId!, sortedColumns)
+  const presenceUsers = useBoardPresence(boardId!)
 
   const issuesByColumn = useMemo(() => {
-    const src = selectedEpicId
-      ? displayIssues.filter((i) => i.epicId === selectedEpicId)
+    const src = selectedEpicIds.size > 0
+      ? displayIssues.filter((i) => i.epicId != null && selectedEpicIds.has(i.epicId))
       : displayIssues
     const map = new Map<string, Issue[]>()
     for (const col of sortedColumns) map.set(col.id, [])
@@ -146,31 +153,76 @@ export default function BoardPage() {
     }
     for (const [, list] of map) list.sort((a, b) => a.position - b.position)
     return map
-  }, [displayIssues, sortedColumns, selectedEpicId])
+  }, [displayIssues, sortedColumns, selectedEpicIds])
 
   const [activeIssue,    setActiveIssue]    = useState<Issue | null>(null)
   const [activeColumn,   setActiveColumn]   = useState<BoardColumnType | null>(null)
   const [addColumnOpen,  setAddColumnOpen]  = useState(false)
   const [issueModal,     setIssueModal]     = useState<{ open: boolean; columnId?: string }>({ open: false })
   const [detailIssueId,  setDetailIssueId]  = useState<string | null>(null)
+  const [membersOpen,    setMembersOpen]    = useState(false)
+  const [settingsOpen,   setSettingsOpen]   = useState(false)
+  const MIN_PANEL = 680
+  const [panelWidth, setPanelWidth] = useState(MIN_PANEL)
+
+  const startResize = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    const startX = e.clientX
+    const startW = panelWidth
+    const onMove = (ev: MouseEvent) => {
+      const maxPanel = Math.max(window.innerWidth / 2, MIN_PANEL)
+      setPanelWidth(Math.min(maxPanel, Math.max(MIN_PANEL, startW + (startX - ev.clientX))))
+    }
+    const onUp = () => {
+      document.removeEventListener('mousemove', onMove)
+      document.removeEventListener('mouseup', onUp)
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+    }
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
+    document.addEventListener('mousemove', onMove)
+    document.addEventListener('mouseup', onUp)
+  }, [panelWidth])
+
+  function closeDetail() {
+    setDetailIssueId(null)
+    setPanelWidth(MIN_PANEL)
+  }
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
   )
 
-  // ── Collision detection: column drags only match col: items,
-  //   issue drags only match non-col: items ─────────────────────────────────
+  // ── Collision detection ───────────────────────────────────────────────────
+  // Column drags: closestCenter among col: droppables only.
+  // Issue drags: closestCenter among issues first (precise reordering);
+  //   fall back to pointerWithin among columns so the drop zone activates
+  //   as soon as the pointer enters the column — not just near its center.
   const collisionDetection = useCallback<CollisionDetection>((args) => {
     const activeId = String(args.active.id)
-    const isColDrag = activeId.startsWith('col:')
-    return closestCenter({
-      ...args,
-      droppableContainers: args.droppableContainers.filter((c) =>
-        isColDrag
-          ? String(c.id).startsWith('col:')
-          : !String(c.id).startsWith('col:'),
-      ),
-    })
+
+    if (activeId.startsWith('col:')) {
+      return closestCenter({
+        ...args,
+        droppableContainers: args.droppableContainers.filter((c) =>
+          String(c.id).startsWith('col:'),
+        ),
+      })
+    }
+
+    // Issue drag — check issues first
+    const issueContainers = args.droppableContainers.filter(
+      (c) => !String(c.id).startsWith('col:'),
+    )
+    const issueHits = closestCenter({ ...args, droppableContainers: issueContainers })
+    if (issueHits.length > 0) return issueHits
+
+    // No issue under pointer — activate whichever column the pointer is inside
+    const colContainers = args.droppableContainers.filter((c) =>
+      String(c.id).startsWith('col:'),
+    )
+    return pointerWithin({ ...args, droppableContainers: colContainers })
   }, [])
 
   // ── Drag start ───────────────────────────────────────────────────────────────
@@ -307,18 +359,23 @@ export default function BoardPage() {
         .sort((a, b) => a.position - b.position)
       const position = colIssues.findIndex((i) => i.id === movedIssue.id)
 
+      // Look up column names for the real-time event
+      const originalIssue = serverIssuesRef.current.find((i) => i.id === movedIssue.id)
+      const fromColumnName = serverColsRef.current.find((c) => c.id === originalIssue?.columnId)?.name
+      const toColumnName = serverColsRef.current.find((c) => c.id === movedIssue.columnId)?.name
+
       // Commit to React Query cache before clearing local state
       queryClient.setQueryData(
-        queryKeys.issues.list(boardId!),
+        queryKeys.issues.list(boardId!, undefined, false),
         (old: { content: Issue[] } | undefined) =>
           old ? { ...old, content: snapshot } : old,
       )
 
       try {
-        await issuesApi.move(movedIssue.id, movedIssue.columnId, position)
+        await issuesApi.move(movedIssue.id, movedIssue.columnId, position, fromColumnName, toColumnName)
       } catch {
         toast.error('Failed to move issue')
-        queryClient.invalidateQueries({ queryKey: queryKeys.issues.list(boardId!) })
+        queryClient.invalidateQueries({ queryKey: queryKeys.issues.list(boardId!, undefined, false) })
       }
     }
   }, [boardId, board, queryClient])
@@ -346,7 +403,8 @@ export default function BoardPage() {
   const colIds = sortedColumns.map((c) => `col:${c.id}`)
 
   return (
-    <div className="flex h-full flex-col overflow-hidden">
+    <div className="flex h-full overflow-hidden">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
       {/* Board header */}
       <div className="flex shrink-0 items-center justify-between border-b border-surface-border bg-surface px-5 py-3">
         <div className="flex items-center gap-2 text-sm">
@@ -360,11 +418,32 @@ export default function BoardPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <button className="flex h-8 items-center gap-1.5 rounded-lg border border-surface-border px-3 text-xs text-text-muted transition-colors hover:border-primary/30 hover:text-text-primary">
+          {epicsData.length > 0 && (
+            <EpicFilter epics={epicsData} selected={selectedEpicIds} onChange={setSelectedEpicIds} />
+          )}
+          <BoardPresenceAvatars users={presenceUsers} currentUserId={currentUserId} />
+          {presenceUsers.filter(u => u.userId !== currentUserId).length > 0 && (
+            <div className="h-4 w-px bg-surface-border" />
+          )}
+          <button
+            onClick={() => setMembersOpen((v) => !v)}
+            className={`flex h-8 items-center gap-1.5 rounded-lg border px-3 text-xs transition-colors ${
+              membersOpen
+                ? 'border-primary/40 bg-primary-subtle text-primary'
+                : 'border-surface-border text-text-muted hover:border-primary/30 hover:text-text-primary'
+            }`}
+          >
             <Users className="h-3.5 w-3.5" />
             Members
           </button>
-          <button className="flex h-8 items-center gap-1.5 rounded-lg border border-surface-border px-3 text-xs text-text-muted transition-colors hover:border-primary/30 hover:text-text-primary">
+          <button
+            onClick={() => setSettingsOpen((v) => !v)}
+            className={`flex h-8 items-center gap-1.5 rounded-lg border px-3 text-xs transition-colors ${
+              settingsOpen
+                ? 'border-primary/40 bg-primary-subtle text-primary'
+                : 'border-surface-border text-text-muted hover:border-primary/30 hover:text-text-primary'
+            }`}
+          >
             <Settings className="h-3.5 w-3.5" />
             Settings
           </button>
@@ -377,43 +456,6 @@ export default function BoardPage() {
           </button>
         </div>
       </div>
-
-      {/* Epic filter bar */}
-      {epicsData.length > 0 && (
-        <div className="flex shrink-0 items-center gap-2 overflow-x-auto border-b border-surface-border bg-surface px-5 py-2">
-          <span className="shrink-0 text-xs font-medium text-text-muted">Epic:</span>
-          <button
-            onClick={() => setSelectedEpicId(null)}
-            className={cn(
-              'shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors',
-              selectedEpicId === null
-                ? 'bg-primary text-white'
-                : 'bg-surface-muted text-text-muted hover:text-text-primary',
-            )}
-          >
-            All
-          </button>
-          {epicsData.map((e) => (
-            <button
-              key={e.id}
-              onClick={() => setSelectedEpicId(selectedEpicId === e.id ? null : e.id)}
-              className={cn(
-                'flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors',
-                selectedEpicId === e.id
-                  ? 'text-white'
-                  : 'bg-surface-muted text-text-muted hover:text-text-primary',
-              )}
-              style={selectedEpicId === e.id ? { backgroundColor: e.color } : undefined}
-            >
-              <span
-                className="h-1.5 w-1.5 rounded-full"
-                style={{ backgroundColor: selectedEpicId === e.id ? 'rgba(255,255,255,0.75)' : e.color }}
-              />
-              {e.title}
-            </button>
-          ))}
-        </div>
-      )}
 
       {/* Kanban board */}
       <div className="flex-1 overflow-x-auto overflow-y-hidden">
@@ -482,12 +524,35 @@ export default function BoardPage() {
         boardName={board?.name}
         columnId={issueModal.columnId}
       />
+      </div>
 
       {detailIssueId && (
-        <IssueDetailPanel
-          issueId={detailIssueId}
-          columns={sortedColumns}
-          onClose={() => setDetailIssueId(null)}
+        <>
+          <div
+            onMouseDown={startResize}
+            className="w-1 shrink-0 cursor-col-resize bg-surface-border transition-colors hover:bg-primary/40"
+          />
+          <div style={{ width: panelWidth }} className="shrink-0 overflow-hidden">
+            <IssueDetailPanel
+              issueId={detailIssueId}
+              columns={sortedColumns}
+              onClose={closeDetail}
+            />
+          </div>
+        </>
+      )}
+
+      {membersOpen && (
+        <BoardMembersPanel
+          boardId={boardId!}
+          onClose={() => setMembersOpen(false)}
+        />
+      )}
+
+      {settingsOpen && (
+        <BoardSettingsPanel
+          board={board}
+          onClose={() => setSettingsOpen(false)}
         />
       )}
     </div>

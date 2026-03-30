@@ -1,5 +1,5 @@
 import client from './client'
-import type { OrgPermission, BoardPermission } from '@/types/permissions'
+import type {BoardPermission, OrgPermission} from '@/types/permissions'
 
 export const permissionsApi = {
   getOrgPermissions: (orgId: string) =>

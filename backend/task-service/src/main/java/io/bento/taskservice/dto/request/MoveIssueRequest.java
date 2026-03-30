@@ -11,5 +11,8 @@ public record MoveIssueRequest(
 
         @NotNull(message = "Position is required")
         @Min(value = 0, message = "Position must be non-negative")
-        Integer position
+        Integer position,
+
+        String fromColumnName,
+        String toColumnName
 ) {}

@@ -1,0 +1,15 @@
+rootProject.name = 'bento-backend'
+
+// Libraries
+include ':libs:common'
+include ':libs:security-common'
+include ':libs:kafka-events'
+
+// Services
+include ':api-gateway'
+include ':auth-service'
+include ':org-service'
+include ':board-service'
+include ':task-service'
+include ':notification-service'
+include ':realtime-service'

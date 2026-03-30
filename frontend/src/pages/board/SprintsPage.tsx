@@ -1,16 +1,15 @@
-import { useState, useEffect } from 'react'
-import { useParams } from 'react-router-dom'
-import {
-  Plus, Play, CheckCircle, Clock, Target,
-  Loader2, X, ChevronDown, ChevronRight,
-} from 'lucide-react'
-import { useQueryClient } from '@tanstack/react-query'
-import { toast } from 'sonner'
-import { useSprints, sprintsApi } from '@/api/sprints'
-import { useIssues } from '@/api/issues'
-import { queryKeys } from '@/api/queryKeys'
-import { cn } from '@/utils/cn'
-import type { Sprint } from '@/types/sprint'
+import {useState} from 'react'
+import {useParams} from 'react-router-dom'
+import {CheckCircle, ChevronDown, ChevronRight, Clock, Loader2, Play, Plus, Target,} from 'lucide-react'
+import {useQueryClient} from '@tanstack/react-query'
+import {toast} from 'sonner'
+import {sprintsApi, useSprints} from '@/api/sprints'
+import {useIssues} from '@/api/issues'
+import {queryKeys} from '@/api/queryKeys'
+import {cn} from '@/utils/cn'
+import {CreateSprintModal} from '@/components/sprint/CreateSprintModal'
+import type {Sprint} from '@/types/sprint'
+import type {Issue} from '@/types/issue'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -24,112 +23,6 @@ function daysLeft(endDate: string | null) {
   const diff = new Date(endDate).getTime() - Date.now()
   const days = Math.ceil(diff / 86_400_000)
   return days
-}
-
-// ── Create Sprint Modal (shared with Backlog) ─────────────────────────────────
-
-function CreateSprintModal({ boardId, onClose }: { boardId: string; onClose: () => void }) {
-  const queryClient = useQueryClient()
-  const [name, setName]           = useState('')
-  const [goal, setGoal]           = useState('')
-  const [startDate, setStartDate] = useState('')
-  const [endDate, setEndDate]     = useState('')
-  const [submitting, setSubmitting] = useState(false)
-
-  useEffect(() => {
-    const today    = new Date().toISOString().split('T')[0]
-    const twoWeeks = new Date(Date.now() + 14 * 86_400_000).toISOString().split('T')[0]
-    setStartDate(today)
-    setEndDate(twoWeeks)
-  }, [])
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!name.trim() || !startDate || !endDate) return
-    setSubmitting(true)
-    try {
-      await sprintsApi.create({
-        boardId,
-        name:      name.trim(),
-        goal:      goal.trim() || undefined,
-        startDate: new Date(startDate).toISOString(),
-        endDate:   new Date(endDate).toISOString(),
-      })
-      queryClient.invalidateQueries({ queryKey: queryKeys.sprints.all(boardId) })
-      toast.success('Sprint created')
-      onClose()
-    } catch {
-      toast.error('Failed to create sprint')
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative z-50 w-[440px] rounded-2xl border border-surface-border bg-surface shadow-2xl">
-        <div className="flex items-center justify-between border-b border-surface-border px-5 py-4">
-          <h2 className="text-base font-semibold text-text-primary">Create Sprint</h2>
-          <button onClick={onClose} className="rounded p-1 text-text-muted hover:bg-surface-muted">
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4 p-5">
-          <div>
-            <label className="mb-1.5 block text-xs font-medium text-text-muted">Name *</label>
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Sprint 1"
-              required autoFocus
-              className="w-full rounded-lg border border-surface-border bg-surface-muted px-3 py-2 text-sm text-text-primary outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary/20"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-text-muted">Start Date *</label>
-              <input
-                type="date" value={startDate}
-                onChange={(e) => setStartDate(e.target.value)} required
-                className="w-full rounded-lg border border-surface-border bg-surface-muted px-3 py-2 text-sm text-text-primary outline-none focus:border-primary"
-              />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-text-muted">End Date *</label>
-              <input
-                type="date" value={endDate}
-                onChange={(e) => setEndDate(e.target.value)} required
-                className="w-full rounded-lg border border-surface-border bg-surface-muted px-3 py-2 text-sm text-text-primary outline-none focus:border-primary"
-              />
-            </div>
-          </div>
-          <div>
-            <label className="mb-1.5 block text-xs font-medium text-text-muted">Sprint Goal</label>
-            <textarea
-              value={goal}
-              onChange={(e) => setGoal(e.target.value)}
-              placeholder="What do you want to achieve in this sprint?"
-              rows={2}
-              className="w-full resize-none rounded-lg border border-surface-border bg-surface-muted px-3 py-2 text-sm text-text-primary placeholder:text-text-muted outline-none focus:border-primary"
-            />
-          </div>
-          <div className="flex justify-end gap-2 pt-1">
-            <button type="button" onClick={onClose} className="rounded-md px-4 py-2 text-sm text-text-muted hover:text-text-primary">
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={submitting || !name.trim()}
-              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-light disabled:opacity-50"
-            >
-              {submitting ? 'Creating…' : 'Create Sprint'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  )
 }
 
 // ── Complete Sprint Modal ──────────────────────────────────────────────────────
@@ -184,25 +77,28 @@ function CompleteSprintModal({
 
 function SprintCard({
   sprint,
-  boardId,
-  allSprints,
-  issueCount,
+  issues,
   onStart,
   onComplete,
 }: {
   sprint: Sprint
-  boardId: string
-  allSprints: Sprint[]
-  issueCount: number
+  issues: Issue[]
   onStart: (id: string) => void
   onComplete: (id: string) => void
 }) {
   const [expanded, setExpanded] = useState(sprint.status === 'ACTIVE')
-  const progress = sprint.totalIssues > 0
-    ? Math.round((sprint.completedIssues / sprint.totalIssues) * 100)
+
+  // Derive live counts from actual issues (so they update immediately on close/reopen)
+  const totalIssues     = issues.length
+  const closedIssues    = issues.filter((i) => i.closed).length
+  const totalPoints     = issues.reduce((s, i) => s + (i.storyPoints ?? 0), 0)
+  const completedPoints = issues.filter((i) => i.closed).reduce((s, i) => s + (i.storyPoints ?? 0), 0)
+
+  const progress = totalIssues > 0
+    ? Math.round((closedIssues / totalIssues) * 100)
     : 0
-  const pointsProgress = sprint.totalPoints > 0
-    ? Math.round((sprint.completedPoints / sprint.totalPoints) * 100)
+  const pointsProgress = totalPoints > 0
+    ? Math.round((completedPoints / totalPoints) * 100)
     : 0
   const days = daysLeft(sprint.endDate)
   const overdue = days !== null && days < 0
@@ -284,7 +180,7 @@ function SprintCard({
           <div className="flex flex-col gap-1">
             <span className="text-[10px] font-semibold uppercase tracking-widest text-text-muted">Issues</span>
             <span className="text-xs text-text-secondary">
-              {sprint.completedIssues}/{sprint.totalIssues || issueCount}
+              {closedIssues}/{totalIssues}
             </span>
           </div>
           <div className="flex flex-col gap-1">
@@ -292,13 +188,13 @@ function SprintCard({
             <div className="flex items-center gap-1.5">
               <Target className="h-3 w-3 shrink-0 text-text-muted" />
               <span className="text-xs text-text-secondary">
-                {sprint.completedPoints}/{sprint.totalPoints}
+                {completedPoints}/{totalPoints}
               </span>
             </div>
           </div>
 
           {/* Progress bars */}
-          {sprint.totalIssues > 0 && (
+          {totalIssues > 0 && (
             <div className="col-span-4 space-y-1.5">
               <div className="flex items-center justify-between text-[11px] text-text-muted">
                 <span>Issue progress</span>
@@ -312,7 +208,7 @@ function SprintCard({
               </div>
             </div>
           )}
-          {sprint.totalPoints > 0 && (
+          {totalPoints > 0 && (
             <div className="col-span-4 space-y-1.5">
               <div className="flex items-center justify-between text-[11px] text-text-muted">
                 <span>Story points</span>
@@ -349,10 +245,11 @@ export default function SprintsPage() {
     return new Date(a.startDate ?? 0).getTime() - new Date(b.startDate ?? 0).getTime()
   })
 
-  const issueCountBySprint = new Map<string, number>()
+  const issuesBySprint = new Map<string, Issue[]>()
   for (const issue of issuesPage?.content ?? []) {
     if (issue.sprintId) {
-      issueCountBySprint.set(issue.sprintId, (issueCountBySprint.get(issue.sprintId) ?? 0) + 1)
+      if (!issuesBySprint.has(issue.sprintId)) issuesBySprint.set(issue.sprintId, [])
+      issuesBySprint.get(issue.sprintId)!.push(issue)
     }
   }
 
@@ -444,9 +341,7 @@ export default function SprintsPage() {
               <SprintCard
                 key={sprint.id}
                 sprint={sprint}
-                boardId={boardId!}
-                allSprints={sortedSprints}
-                issueCount={issueCountBySprint.get(sprint.id) ?? 0}
+                issues={issuesBySprint.get(sprint.id) ?? []}
                 onStart={handleStart}
                 onComplete={(id) => setCompleteId(id)}
               />
@@ -456,7 +351,7 @@ export default function SprintsPage() {
       </div>
 
       {createOpen && (
-        <CreateSprintModal boardId={boardId!} onClose={() => setCreateOpen(false)} />
+        <CreateSprintModal boardId={boardId!} existingSprints={sortedSprints} onClose={() => setCreateOpen(false)} />
       )}
       {completingSprint && (
         <CompleteSprintModal

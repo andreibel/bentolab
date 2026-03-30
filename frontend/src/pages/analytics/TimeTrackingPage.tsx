@@ -1,5 +1,5 @@
-import { Clock } from 'lucide-react'
-import { FeaturePlaceholder } from '@/components/common/FeaturePlaceholder'
+import {Clock} from 'lucide-react'
+import {FeaturePlaceholder} from '@/components/common/FeaturePlaceholder'
 
 const logs = [
   { key: 'TF-42', title: 'Login page UI',          user: 'AK', date: 'Mar 9',  logged: 3.5, est: 8,  type: 'STORY' },

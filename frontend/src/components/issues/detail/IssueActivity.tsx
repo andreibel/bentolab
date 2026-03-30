@@ -1,12 +1,16 @@
-import { useState, useRef } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Bold, Italic, Code, List, GitCommitHorizontal, Pencil, Trash2 } from 'lucide-react'
-import { toast } from 'sonner'
-import { issuesApi } from '@/api/issues'
-import { queryKeys } from '@/api/queryKeys'
-import { Avatar } from '@/components/ui/Avatar'
-import { cn } from '@/utils/cn'
-import type { Comment, Activity } from '@/types/issue'
+import {useCallback, useMemo, useRef, useState} from 'react'
+import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query'
+import {Bold, ChevronDown, Code, GitCommitHorizontal, Italic, List, Pencil, Trash2} from 'lucide-react'
+import {toast} from 'sonner'
+import {issuesApi} from '@/api/issues'
+import {usersApi} from '@/api/users'
+import {queryKeys} from '@/api/queryKeys'
+import {Avatar} from '@/components/ui/Avatar'
+import {cn} from '@/utils/cn'
+import type {Activity, Comment} from '@/types/issue'
+import type {BoardColumn, UserProfile} from '@/types/board'
+import type {Epic} from '@/types/epic'
+import type {Sprint} from '@/types/sprint'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -43,28 +47,19 @@ function insertMdAt(el: HTMLTextAreaElement, setValue: (v: string) => void, pref
 
 // ─── Markdown toolbar ─────────────────────────────────────────────────────────
 
-function MdToolbar({
-  textareaRef,
-  setValue,
-}: {
-  textareaRef: React.RefObject<HTMLTextAreaElement | null>
-  setValue: (v: string) => void
-}) {
-  const wrap = (prefix: string, suffix = prefix) => {
-    if (textareaRef.current) insertMdAt(textareaRef.current, setValue, prefix, suffix)
-  }
+function MdToolbar({ onWrap }: { onWrap: (prefix: string, suffix?: string) => void }) {
   return (
     <div className="flex items-center gap-0.5 px-1.5 py-1">
       {([
-        { icon: Bold,   tip: 'Bold',   fn: () => wrap('**') },
-        { icon: Italic, tip: 'Italic', fn: () => wrap('*') },
-        { icon: Code,   tip: 'Code',   fn: () => wrap('`') },
-        { icon: List,   tip: 'List',   fn: () => wrap('\n- ', '') },
-      ] as const).map(({ icon: Icon, tip, fn }) => (
+        { icon: Bold,   tip: 'Bold',   prefix: '**',   suffix: undefined as string | undefined },
+        { icon: Italic, tip: 'Italic', prefix: '*',    suffix: undefined as string | undefined },
+        { icon: Code,   tip: 'Code',   prefix: '`',    suffix: undefined as string | undefined },
+        { icon: List,   tip: 'List',   prefix: '\n- ', suffix: ''                              },
+      ] as const).map(({ icon: Icon, tip, prefix, suffix }) => (
         <button
           key={tip}
           type="button"
-          onMouseDown={(e) => { e.preventDefault(); fn() }}
+          onMouseDown={(e) => { e.preventDefault(); onWrap(prefix, suffix) }}
           title={tip}
           className="rounded p-1 text-text-muted hover:bg-surface-border hover:text-text-primary"
         >
@@ -75,21 +70,138 @@ function MdToolbar({
   )
 }
 
+// ─── Activity formatter ────────────────────────────────────────────────────────
+
+function resolveValue(
+  val: unknown,
+  profileMap: Map<string, UserProfile>,
+  columns: BoardColumn[],
+  epics: Epic[],
+  sprints: Sprint[],
+): string {
+  if (val == null) return '—'
+  if (typeof val !== 'string') return String(val)
+  const col = columns.find(c => c.id === val)
+  if (col) return col.name
+  const epic = epics.find(e => e.id === val)
+  if (epic) return epic.title
+  const sprint = sprints.find(s => s.id === val)
+  if (sprint) return sprint.name
+  const profile = profileMap.get(val)
+  if (profile) return [profile.firstName, profile.lastName].filter(Boolean).join(' ') || profile.email
+  return val
+}
+
+function formatActivityMessage(
+  activity: Activity,
+  profileMap: Map<string, UserProfile>,
+  columns: BoardColumn[],
+  epics: Epic[],
+  sprints: Sprint[],
+) {
+  const action  = activity.action.toUpperCase()
+  const details = activity.details ?? {}
+  // Backend sends: { field, oldValue, newValue, metadata }
+  const newRaw  = details.newValue != null ? details.newValue : null
+  const oldRaw  = details.oldValue != null ? details.oldValue : null
+  const field   = typeof details.field === 'string' ? details.field.toLowerCase() : ''
+  const newVal  = newRaw != null ? resolveValue(newRaw, profileMap, columns, epics, sprints) : null
+  const oldVal  = oldRaw != null ? resolveValue(oldRaw, profileMap, columns, epics, sprints) : null
+  const B = (t: string) => <span className="font-medium text-text-primary">{t}</span>
+
+  switch (action) {
+    case 'MOVED':
+    case 'COLUMN_CHANGED':
+      if (oldVal && newVal) return <>moved from {B(oldVal)} to {B(newVal)}</>
+      if (newVal)           return <>moved to {B(newVal)}</>
+      return <>moved this issue</>
+
+    case 'ASSIGNED':
+      if (newVal) return <>assigned to {B(newVal)}</>
+      return <>unassigned this issue</>
+
+    case 'SPRINT_CHANGED':
+      if (!newRaw)            return <>moved to backlog</>
+      if (oldVal && newVal)   return <>changed sprint from {B(oldVal)} to {B(newVal)}</>
+      if (newVal)             return <>added to sprint {B(newVal)}</>
+      return <>changed sprint</>
+
+    case 'EPIC_CHANGED':
+      if (!newRaw)            return <>removed epic</>
+      if (oldVal && newVal)   return <>changed epic from {B(oldVal)} to {B(newVal)}</>
+      if (newVal)             return <>added to epic {B(newVal)}</>
+      return <>changed epic</>
+
+    case 'UPDATED': {
+      if (field === 'priority') {
+        if (oldVal && newVal) return <>changed priority from {B(oldVal)} to {B(newVal)}</>
+        if (newVal)           return <>changed priority to {B(newVal)}</>
+      }
+      if (field === 'type') {
+        if (oldVal && newVal) return <>changed type from {B(oldVal)} to {B(newVal)}</>
+        if (newVal)           return <>changed type to {B(newVal)}</>
+      }
+      if (field === 'title')       return <>changed title</>
+      if (field === 'description') return <>updated description</>
+      // cspell:ignore storypoints duedate startdate
+      if (field === 'storypoints' || field === 'story_points') {
+        if (newVal) return <>changed story points to {B(newVal)}</>
+        return <>changed story points</>
+      }
+      if (field === 'duedate' || field === 'due_date') {
+        if (newVal) return <>set due date to {B(newVal)}</>
+        return <>removed due date</>
+      }
+      if (field === 'startdate' || field === 'start_date') {
+        if (newVal) return <>set start date to {B(newVal)}</>
+        return <>removed start date</>
+      }
+      if (field && newVal) return <>changed {B(field)} to {B(newVal)}</>
+      if (field)           return <>changed {B(field)}</>
+      return <>updated</>
+    }
+
+    case 'CLOSED':   return <>closed this issue</>
+    case 'REOPENED': return <>reopened this issue</>
+    case 'CREATED':  return <>created this issue</>
+    case 'COMMENTED': return <>commented</>
+
+    default: {
+      const readable = activity.action.toLowerCase().replace(/_/g, ' ')
+      return newVal ? <>{readable} → {B(newVal)}</> : <>{readable}</>
+    }
+  }
+}
+
 // ─── Activity item ─────────────────────────────────────────────────────────────
 
-function ActivityItem({ activity }: { activity: Activity }) {
+function ActivityItem({
+  activity,
+  profileMap,
+  columns,
+  epics,
+  sprints,
+}: {
+  activity: Activity
+  profileMap: Map<string, UserProfile>
+  columns: BoardColumn[]
+  epics: Epic[]
+  sprints: Sprint[]
+}) {
+  const profile = profileMap.get(activity.userId)
+  const name = profile
+    ? [profile.firstName, profile.lastName].filter(Boolean).join(' ') || profile.email
+    : activity.userId.slice(0, 8) + '…'
+
   return (
     <div className="flex items-start gap-3 py-2.5">
       <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-surface-muted">
         <GitCommitHorizontal className="h-3.5 w-3.5 text-text-muted" />
       </div>
       <p className="flex-1 pt-0.5 text-xs text-text-secondary">
-        <span className="font-medium text-text-primary">{activity.userId.slice(0, 2).toUpperCase()}</span>
+        <span className="font-medium text-text-primary">{name}</span>
         {' '}
-        {activity.action.toLowerCase().replace(/_/g, ' ')}
-        {activity.details?.to && (
-          <span className="font-medium text-text-primary"> → {String(activity.details.to)}</span>
-        )}
+        {formatActivityMessage(activity, profileMap, columns, epics, sprints)}
       </p>
       <span className="shrink-0 pt-0.5 text-[11px] text-text-muted">{timeAgo(activity.createdAt)}</span>
     </div>
@@ -102,10 +214,12 @@ function CommentItem({
   comment,
   issueId,
   currentUserId,
+  profileMap,
 }: {
   comment: Comment
   issueId: string
   currentUserId: string | undefined
+  profileMap: Map<string, UserProfile>
 }) {
   const queryClient = useQueryClient()
   const [editing, setEditing] = useState(false)
@@ -113,18 +227,27 @@ function CommentItem({
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const isOwn = comment.userId === currentUserId
 
+  const wrap = useCallback((prefix: string, suffix = prefix) => {
+    const el = textareaRef.current
+    if (el) insertMdAt(el, setDraft, prefix, suffix)
+  }, [])
+  const commentProfile = profileMap.get(comment.userId)
+  const commentAuthorName = commentProfile
+    ? [commentProfile.firstName, commentProfile.lastName].filter(Boolean).join(' ') || commentProfile.email
+    : comment.userId.slice(0, 8) + '…'
+
   const editMutation = useMutation({
     mutationFn: (text: string) => issuesApi.comments.update(issueId, comment.id, text),
     onSuccess: () => {
       setEditing(false)
-      queryClient.invalidateQueries({ queryKey: queryKeys.issues.comments(issueId) })
+      void queryClient.invalidateQueries({ queryKey: queryKeys.issues.comments(issueId) })
     },
     onError: () => toast.error('Failed to update comment'),
   })
 
   const deleteMutation = useMutation({
     mutationFn: () => issuesApi.comments.delete(issueId, comment.id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.issues.comments(issueId) }),
+    onSuccess: () => { void queryClient.invalidateQueries({ queryKey: queryKeys.issues.comments(issueId) }) },
     onError: () => toast.error('Failed to delete comment'),
   })
 
@@ -133,7 +256,7 @@ function CommentItem({
       <Avatar userId={comment.userId} size="md" className="shrink-0" />
       <div className="min-w-0 flex-1">
         <div className="mb-1.5 flex items-center gap-2">
-          <span className="font-mono text-xs font-semibold text-text-primary">{comment.userId.slice(0, 8)}…</span>
+          <span className="text-xs font-semibold text-text-primary">{commentAuthorName}</span>
           <span className="text-xs text-text-muted">{timeAgo(comment.createdAt)}</span>
           {comment.isEdited && <span className="text-xs text-text-muted">(edited)</span>}
         </div>
@@ -141,7 +264,7 @@ function CommentItem({
         {editing ? (
           <div>
             <div className="rounded-t-md border border-b-0 border-surface-border bg-surface-muted">
-              <MdToolbar textareaRef={textareaRef} setValue={setDraft} />
+              <MdToolbar onWrap={wrap} />
             </div>
             <textarea
               ref={textareaRef}
@@ -215,12 +338,17 @@ function AddCommentForm({
   const [focused, setFocused] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
+  const wrap = useCallback((prefix: string, suffix = prefix) => {
+    const el = textareaRef.current
+    if (el) insertMdAt(el, setDraft, prefix, suffix)
+  }, [])
+
   const addMutation = useMutation({
     mutationFn: (text: string) => issuesApi.comments.create(issueId, text),
     onSuccess: () => {
       setDraft(''); setFocused(false)
-      queryClient.invalidateQueries({ queryKey: queryKeys.issues.comments(issueId) })
-      queryClient.invalidateQueries({ queryKey: queryKeys.issues.activities(issueId) })
+      void queryClient.invalidateQueries({ queryKey: queryKeys.issues.comments(issueId) })
+      void queryClient.invalidateQueries({ queryKey: queryKeys.issues.activities(issueId) })
     },
     onError: () => toast.error('Failed to post comment'),
   })
@@ -238,7 +366,7 @@ function AddCommentForm({
       <div className="flex-1">
         {active && (
           <div className="rounded-t-md border border-b-0 border-surface-border bg-surface-muted">
-            <MdToolbar textareaRef={textareaRef} setValue={setDraft} />
+            <MdToolbar onWrap={wrap} />
           </div>
         )}
         <textarea
@@ -289,9 +417,15 @@ function AddCommentForm({
 interface IssueActivityProps {
   issueId: string
   currentUser: { id: string; firstName: string; lastName: string } | null
+  columns: BoardColumn[]
+  epics: Epic[]
+  sprints: Sprint[]
 }
 
-export function IssueActivity({ issueId, currentUser }: IssueActivityProps) {
+const ACTIVITY_PREVIEW = 5
+
+export function IssueActivity({ issueId, currentUser, columns, epics, sprints }: IssueActivityProps) {
+  const [showAll, setShowAll] = useState(false)
   const { data: commentsData }   = useQuery({
     queryKey: queryKeys.issues.comments(issueId),
     queryFn:  () => issuesApi.comments.list(issueId),
@@ -300,6 +434,25 @@ export function IssueActivity({ issueId, currentUser }: IssueActivityProps) {
     queryKey: queryKeys.issues.activities(issueId),
     queryFn:  () => issuesApi.activities.list(issueId),
   })
+
+  const allUserIds = useMemo(() => {
+    const ids = new Set<string>()
+    activitiesData?.content.forEach(a => ids.add(a.userId))
+    commentsData?.content.forEach(c => ids.add(c.userId))
+    return [...ids]
+  }, [activitiesData, commentsData])
+
+  const { data: profiles = [] } = useQuery({
+    queryKey: ['user-profiles', allUserIds],
+    queryFn:  () => usersApi.batchGet(allUserIds),
+    enabled:  allUserIds.length > 0,
+  })
+
+  const profileMap = useMemo(() => {
+    const map = new Map<string, UserProfile>()
+    profiles.forEach(p => map.set(p.id, p))
+    return map
+  }, [profiles])
 
   type TimelineEntry =
     | { kind: 'comment';  item: Comment;  at: number }
@@ -328,20 +481,47 @@ export function IssueActivity({ issueId, currentUser }: IssueActivityProps) {
         <p className="py-4 text-center text-sm text-text-muted">No activity yet.</p>
       )}
 
-      <div className="divide-y divide-surface-border/50">
-        {timeline.map((entry) =>
-          entry.kind === 'activity' ? (
-            <ActivityItem key={`a-${entry.item.id}`} activity={entry.item} />
-          ) : (
-            <CommentItem
-              key={`c-${entry.item.id}`}
-              comment={entry.item}
-              issueId={issueId}
-              currentUserId={currentUser?.id}
-            />
-          )
-        )}
-      </div>
+      {(() => {
+        const hidden = timeline.length - ACTIVITY_PREVIEW
+        const visible = showAll ? timeline : timeline.slice(-ACTIVITY_PREVIEW)
+        return (
+          <>
+            {!showAll && hidden > 0 && (
+              <button
+                onClick={() => setShowAll(true)}
+                className="mb-1 flex w-full items-center gap-2 rounded-md py-1.5 text-xs text-text-muted transition-colors hover:text-text-primary"
+              >
+                <ChevronDown className="h-3.5 w-3.5" />
+                Show {hidden} earlier {hidden === 1 ? 'entry' : 'entries'}
+              </button>
+            )}
+            <div className="divide-y divide-surface-border/50">
+              {visible.map((entry) =>
+                entry.kind === 'activity' ? (
+                  <ActivityItem key={`a-${entry.item.id}`} activity={entry.item} profileMap={profileMap} columns={columns} epics={epics} sprints={sprints} />
+                ) : (
+                  <CommentItem
+                    key={`c-${entry.item.id}`}
+                    comment={entry.item}
+                    issueId={issueId}
+                    currentUserId={currentUser?.id}
+                    profileMap={profileMap}
+                  />
+                )
+              )}
+            </div>
+            {showAll && hidden > 0 && (
+              <button
+                onClick={() => setShowAll(false)}
+                className="mt-1 flex w-full items-center gap-2 rounded-md py-1.5 text-xs text-text-muted transition-colors hover:text-text-primary"
+              >
+                <ChevronDown className="h-3.5 w-3.5 rotate-180" />
+                Show less
+              </button>
+            )}
+          </>
+        )
+      })()}
 
       <AddCommentForm issueId={issueId} currentUser={currentUser} />
     </section>

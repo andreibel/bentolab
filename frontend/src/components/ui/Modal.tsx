@@ -1,6 +1,6 @@
 import * as Dialog from '@radix-ui/react-dialog'
-import { X } from 'lucide-react'
-import { cn } from '@/utils/cn'
+import {X} from 'lucide-react'
+import {cn} from '@/utils/cn'
 
 interface ModalProps {
   open: boolean

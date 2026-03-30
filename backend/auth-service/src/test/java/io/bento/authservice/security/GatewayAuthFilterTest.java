@@ -1,6 +1,7 @@
 package io.bento.authservice.security;
 
-import io.bento.authservice.config.GatewayAuthProperties;
+import io.bento.security.GatewayAuthFilter;
+import io.bento.security.GatewayAuthProperties;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

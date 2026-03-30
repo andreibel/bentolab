@@ -28,6 +28,8 @@ export interface Issue {
   startDate: string | null
   dueDate: string | null
   completedAt: string | null
+  closed: boolean
+  closedAt: string | null
   estimatedHours: number | null
   totalTimeSpent: number
   remainingHours: number | null
@@ -71,5 +73,15 @@ export interface Activity {
   entityType: string
   action: string
   details: Record<string, unknown>
+  createdAt: string
+}
+
+export interface TimeLog {
+  id: string
+  issueId: string
+  userId: string
+  hoursSpent: number
+  date: string
+  description: string | null
   createdAt: string
 }

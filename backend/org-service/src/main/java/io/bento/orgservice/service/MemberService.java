@@ -4,8 +4,8 @@ import io.bento.orgservice.dto.request.UpdateMemberRoleRequest;
 import io.bento.orgservice.dto.response.MemberResponse;
 import io.bento.orgservice.entity.OrganizationMember;
 import io.bento.orgservice.enums.OrgRoles;
-import io.bento.orgservice.event.MemberRemovedEvent;
-import io.bento.orgservice.event.MemberRoleChangedEvent;
+import io.bento.kafka.event.MemberRemovedEvent;
+import io.bento.kafka.event.MemberRoleChangedEvent;
 import io.bento.orgservice.event.OrgEventPublisher;
 import io.bento.orgservice.exception.OrgAccessDeniedException;
 import io.bento.orgservice.exception.OrganizationMemberNotFoundException;
@@ -51,7 +51,7 @@ public class MemberService {
         OrganizationMember updatedMember = organizationMemberRepository.save(memberToUpdate);
 
         orgEventPublisher.publishMemberRoleChanged(
-                new MemberRoleChangedEvent(orgId, userId, roleRequest.orgRole()));
+                new MemberRoleChangedEvent(orgId, userId, roleRequest.orgRole().name()));
 
         return orgMemberMapper.toMemberResponse(updatedMember);
     }

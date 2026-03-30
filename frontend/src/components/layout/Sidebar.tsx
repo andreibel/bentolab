@@ -1,40 +1,40 @@
-import { useEffect } from 'react'
-import { NavLink, useNavigate, useLocation, useMatch } from 'react-router-dom'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { orgsApi } from '@/api/orgs'
-import { authApi } from '@/api/auth'
-import { boardsApi, useBoards } from '@/api/boards'
-import { queryKeys } from '@/api/queryKeys'
-import type { OrgListItem } from '@/types/org'
-import type { Board } from '@/types/board'
-import { toast } from 'sonner'
+import React, {useEffect} from 'react'
+import {NavLink, useLocation, useMatch, useNavigate} from 'react-router-dom'
+import {useQuery, useQueryClient} from '@tanstack/react-query'
+import {orgsApi} from '@/api/orgs'
+import {authApi} from '@/api/auth'
+import {useBoards} from '@/api/boards'
+import {queryKeys} from '@/api/queryKeys'
+import type {OrgListItem} from '@/types/org'
+import type {Board} from '@/types/board'
+import {toast} from 'sonner'
 import {
-  Settings,
+  ArrowLeft,
+  Building2,
+  CalendarDays,
   ChevronDown,
-  Plus,
+  CircleDot,
+  Inbox,
   LogOut,
   PanelLeftClose,
   PanelLeftOpen,
-  CalendarDays,
-  Inbox,
-  CircleDot,
-  ArrowLeft,
-  User,
-  SlidersHorizontal,
-  Tags,
-  Zap,
-  ShieldCheck,
-  Users,
   Pin,
   PinOff,
-  Building2,
+  Plus,
+  Settings,
+  ShieldCheck,
+  SlidersHorizontal,
+  Tags,
+  User,
+  Users,
+  Zap,
 } from 'lucide-react'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import * as Tooltip from '@radix-ui/react-tooltip'
-import { useAuthStore } from '@/stores/authStore'
-import { useUIStore } from '@/stores/uiStore'
-import { usePinnedLabs, useRecentLabs } from '@/hooks/usePinnedLabs'
-import { cn } from '@/utils/cn'
+import {useAuthStore} from '@/stores/authStore'
+import {useUIStore} from '@/stores/uiStore'
+import {usePinnedLabs, useRecentLabs} from '@/hooks/usePinnedLabs'
+import {cn} from '@/utils/cn'
 
 // ─── Lab color (deterministic from id) ───────────────────────────────────────
 
@@ -146,7 +146,7 @@ function OrgSwitcher({ collapsed }: { collapsed: boolean }) {
     try {
       const { accessToken } = await authApi.switchOrg(org.id)
       setOrgContext(org.id, '', org.slug, accessToken, org.name)
-      queryClient.invalidateQueries()
+      await queryClient.invalidateQueries()
       navigate('/boards')
     } catch {
       toast.error('Failed to switch organization')
@@ -182,7 +182,7 @@ function OrgSwitcher({ collapsed }: { collapsed: boolean }) {
           side="right"
           align="start"
           sideOffset={8}
-          className="z-50 min-w-[220px] rounded-lg border border-surface-border bg-surface p-1 shadow-lg"
+          className="z-50 min-w-55 rounded-lg border border-surface-border bg-surface p-1 shadow-lg"
         >
           <div className="mb-1 px-2 py-1.5">
             <p className="text-[10px] font-semibold uppercase tracking-widest text-text-muted">
@@ -278,10 +278,10 @@ function LabItem({
           <Tooltip.Content
             side="right"
             sideOffset={12}
-            className="rounded-md bg-text-primary px-2 py-1 text-xs text-white shadow-md"
+            className="rounded-md border border-surface-border bg-surface px-2 py-1 text-xs text-text-primary shadow-lg"
           >
             {board.name}
-            <Tooltip.Arrow className="fill-text-primary" />
+            <Tooltip.Arrow className="fill-surface-border" />
           </Tooltip.Content>
         </Tooltip.Portal>
       </Tooltip.Root>
@@ -307,7 +307,7 @@ function LabItem({
       <button
         onClick={(e) => { e.preventDefault(); onPinToggle(board.id) }}
         title={isPinned ? 'Unpin' : 'Pin'}
-        className="absolute end-1.5 top-1/2 -translate-y-1/2 rounded p-1 text-text-muted opacity-0 transition-opacity group-hover:opacity-100 hover:text-text-primary"
+        className="absolute inset-e-1.5 top-1/2 -translate-y-1/2 rounded p-1 text-text-muted opacity-0 transition-opacity group-hover:opacity-100 hover:text-text-primary"
       >
         {isPinned ? <PinOff className="h-3 w-3" /> : <Pin className="h-3 w-3" />}
       </button>
@@ -446,7 +446,7 @@ function UserPanel({ collapsed }: { collapsed: boolean }) {
           side="right"
           align="end"
           sideOffset={8}
-          className="z-50 min-w-[180px] rounded-lg border border-surface-border bg-surface p-1 shadow-lg"
+          className="z-50 min-w-45 rounded-lg border border-surface-border bg-surface p-1 shadow-lg"
         >
           <DropdownMenu.Item
             onSelect={() => navigate('/settings/profile')}
@@ -491,7 +491,7 @@ function GlobalNavItem({
           collapsed && 'justify-center',
           isActive
             ? 'bg-primary-subtle text-primary'
-            : 'text-text-muted hover:bg-surface-border hover:text-text-primary'
+            : 'text-text-secondary hover:bg-surface-border hover:text-text-primary'
         )
       }
     >
@@ -508,10 +508,10 @@ function GlobalNavItem({
           <Tooltip.Content
             side="right"
             sideOffset={12}
-            className="rounded-md bg-text-primary px-2 py-1 text-xs text-white shadow-md"
+            className="rounded-md border border-surface-border bg-surface px-2 py-1 text-xs text-text-primary shadow-lg"
           >
             {label}
-            <Tooltip.Arrow className="fill-text-primary" />
+            <Tooltip.Arrow className="fill-surface-border" />
           </Tooltip.Content>
         </Tooltip.Portal>
       </Tooltip.Root>

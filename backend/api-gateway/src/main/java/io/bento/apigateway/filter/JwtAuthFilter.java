@@ -19,12 +19,16 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import org.springframework.util.AntPathMatcher;
+
 import java.time.Instant;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class JwtAuthFilter implements GlobalFilter, Ordered {
+
+    private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
     private static final byte[] TOKEN_STALE_BODY = "{\"error\":\"TOKEN_STALE\"}".getBytes();
 
@@ -42,6 +46,15 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
         }
 
         String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+
+        // Fallback: browsers cannot set Authorization header on native WebSocket handshakes,
+        // so WebSocket clients pass the JWT as ?token= query param instead.
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            String tokenParam = exchange.getRequest().getQueryParams().getFirst("token");
+            if (tokenParam != null && !tokenParam.isBlank()) {
+                authHeader = "Bearer " + tokenParam;
+            }
+        }
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
@@ -113,7 +126,8 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
     }
 
     private boolean isPublicPath(String path) {
-        return gatewayProperties.publicPaths().stream().anyMatch(path::equals);
+        return gatewayProperties.publicPaths().stream()
+                .anyMatch(pattern -> pathMatcher.match(pattern, path));
     }
 
     private ServerWebExchange withInternalSecret(ServerWebExchange exchange) {

@@ -1,12 +1,12 @@
-import { useForm } from 'react-hook-form'
-import { useQueryClient } from '@tanstack/react-query'
-import { toast } from 'sonner'
-import { boardsApi } from '@/api/boards'
-import { queryKeys } from '@/api/queryKeys'
-import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
-import { Modal } from '@/components/ui/Modal'
-import { ColorPicker } from '@/components/common/ColorPicker'
+import {useForm, useWatch} from 'react-hook-form'
+import {useQueryClient} from '@tanstack/react-query'
+import {toast} from 'sonner'
+import {boardsApi} from '@/api/boards'
+import {queryKeys} from '@/api/queryKeys'
+import {Button} from '@/components/ui/Button'
+import {Input} from '@/components/ui/Input'
+import {Modal} from '@/components/ui/Modal'
+import {ColorPicker} from '@/components/common/ColorPicker'
 
 interface FormValues {
   name: string
@@ -26,7 +26,7 @@ export function AddColumnModal({ open, onClose, boardId }: AddColumnModalProps) 
   const {
     register,
     handleSubmit,
-    watch,
+    control,
     setValue,
     reset,
     formState: { errors, isSubmitting },
@@ -34,7 +34,7 @@ export function AddColumnModal({ open, onClose, boardId }: AddColumnModalProps) 
     defaultValues: { name: '', color: '#6B7280', wipLimit: '' },
   })
 
-  const selectedColor = watch('color')
+  const selectedColor = useWatch({ control, name: 'color', defaultValue: '#6B7280' })
 
   const onSubmit = async (values: FormValues) => {
     try {

@@ -1,0 +1,43 @@
+spring:
+    application:
+        name: realtime-service
+
+server:
+    port: 8086
+
+internal:
+    gateway-secret: ${GATEWAY_INTERNAL_SECRET:dktxrevDkto3aZUvUD6REkn+x2x0foPhAvXBueFO4rs=}
+
+---
+spring:
+    config:
+        activate:
+            on-profile: dev
+    data:
+        redis:
+            host: localhost
+            port: 6380
+    kafka:
+        bootstrap-servers: localhost:9092
+        consumer:
+            group-id: realtime-service
+            auto-offset-reset: earliest
+            key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+            value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+---
+spring:
+    config:
+        activate:
+            on-profile: docker
+    data:
+        redis:
+            host: redis
+            port: 6379
+    kafka:
+        bootstrap-servers: kafka:29092
+        consumer:
+            group-id: realtime-service
+            auto-offset-reset: earliest
+            key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+            value-deserializer: org.apache.kafka.common.serialization.StringDeserializer

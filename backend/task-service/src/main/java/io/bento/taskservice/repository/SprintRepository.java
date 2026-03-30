@@ -16,4 +16,6 @@ public interface SprintRepository extends MongoRepository<Sprint, String> {
     Optional<Sprint> findByOrgIdAndBoardIdAndStatus(String orgId, String boardId, SprintStatus status);
 
     boolean existsByOrgIdAndBoardIdAndStatus(String orgId, String boardId, SprintStatus status);
+
+    List<Sprint> findAllByStatusAndEndDateBetween(SprintStatus status, java.time.Instant from, java.time.Instant to);
 }

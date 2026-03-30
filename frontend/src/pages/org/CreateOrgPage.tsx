@@ -1,14 +1,15 @@
-import { useEffect } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { Link, useNavigate } from 'react-router-dom'
-import { toast } from 'sonner'
-import { orgsApi } from '@/api/orgs'
-import { authApi } from '@/api/auth'
-import { useAuthStore } from '@/stores/authStore'
-import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
+import {useEffect, useState} from 'react'
+import {useForm} from 'react-hook-form'
+import {zodResolver} from '@hookform/resolvers/zod'
+import {z} from 'zod'
+import {Link, useNavigate} from 'react-router-dom'
+import {toast} from 'sonner'
+import {orgsApi} from '@/api/orgs'
+import {authApi} from '@/api/auth'
+import {useAuthStore} from '@/stores/authStore'
+import {Button} from '@/components/ui/Button'
+import {Input} from '@/components/ui/Input'
+import {OrgInviteModal} from '@/components/org/OrgInviteModal'
 
 const schema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(50),
@@ -35,6 +36,7 @@ function toSlug(name: string) {
 export default function CreateOrgPage() {
   const navigate = useNavigate()
   const { setOrgContext, logout } = useAuthStore()
+  const [createdOrg, setCreatedOrg] = useState<{ id: string; name: string } | null>(null)
 
   const {
     register,
@@ -61,12 +63,26 @@ export default function CreateOrgPage() {
       // Switch org context — auth service issues a new JWT with orgId embedded
       const { accessToken } = await authApi.switchOrg(org.id)
       setOrgContext(org.id, 'ORG_OWNER', org.slug, accessToken, org.name)
-      navigate('/boards')
+      setCreatedOrg({ id: org.id, name: org.name })
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : 'Could not create organization'
       toast.error(message)
     }
+  }
+
+  if (createdOrg) {
+    return (
+      <>
+        {/* Keep the page behind the modal so the transition is smooth */}
+        <div className="flex min-h-screen flex-col bg-surface-muted" />
+        <OrgInviteModal
+          orgId={createdOrg.id}
+          orgName={createdOrg.name}
+          onDone={() => navigate('/boards')}
+        />
+      </>
+    )
   }
 
   return (

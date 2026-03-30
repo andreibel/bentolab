@@ -15,10 +15,11 @@ export const queryKeys = {
     labels:  (boardId: string) => ['boards', boardId, 'labels'],
   },
   issues: {
-    list:       (boardId: string, page?: number) => ['issues', boardId, page],
+    mine:       (relation: string, closed?: boolean) => ['issues', 'mine', relation, closed],
+    list:       (boardId: string, page?: number, closed?: boolean) => ['issues', boardId, page, closed],
     detail:     (issueId: string)                => ['issues', 'detail', issueId],
     comments:   (issueId: string)                => ['issues', issueId, 'comments'],
-    timelogs:   (issueId: string)                => ['issues', issueId, 'timelogs'],
+    timelogs:   (issueId: string)                => ['issues', issueId, 'timelogs'] as const,
     relations:  (issueId: string)                => ['issues', issueId, 'relations'],
     activities: (issueId: string)                => ['issues', issueId, 'activities'],
     filters:    (boardId: string)                => ['issues', 'filters', boardId],
@@ -35,5 +36,9 @@ export const queryKeys = {
   epics: {
     list:   (boardId: string) => ['epics', boardId],
     detail: (epicId: string)  => ['epics', 'detail', epicId],
+  },
+  notifications: {
+    list:        (unreadOnly?: boolean) => ['notifications', 'list', unreadOnly] as const,
+    unreadCount: ()                     => ['notifications', 'unread-count'] as const,
   },
 }

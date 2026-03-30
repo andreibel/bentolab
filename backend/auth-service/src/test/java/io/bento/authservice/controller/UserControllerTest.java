@@ -1,6 +1,6 @@
 package io.bento.authservice.controller;
 
-import io.bento.authservice.config.GatewayAuthProperties;
+import io.bento.security.GatewayAuthProperties;
 import io.bento.authservice.config.SecurityConfig;
 import io.bento.authservice.dto.response.UserDto;
 import io.bento.authservice.enums.SystemRole;
