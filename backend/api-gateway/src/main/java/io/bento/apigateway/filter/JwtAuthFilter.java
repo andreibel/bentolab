@@ -47,6 +47,15 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
 
         String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
 
+        // Fallback: browsers cannot set Authorization header on native WebSocket handshakes,
+        // so WebSocket clients pass the JWT as ?token= query param instead.
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            String tokenParam = exchange.getRequest().getQueryParams().getFirst("token");
+            if (tokenParam != null && !tokenParam.isBlank()) {
+                authHeader = "Bearer " + tokenParam;
+            }
+        }
+
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();

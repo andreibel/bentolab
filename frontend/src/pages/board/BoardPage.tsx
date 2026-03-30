@@ -28,8 +28,12 @@ import {EpicFilter} from '@/components/board/EpicFilter'
 import {IssueCardGhost} from '@/components/board/IssueCard'
 import {AddColumnModal} from '@/components/board/AddColumnModal'
 import {BoardMembersPanel} from '@/components/board/BoardMembersPanel'
+import {BoardPresenceAvatars} from '@/components/board/BoardPresenceAvatars'
 import {CreateIssueModal} from '@/components/issues/CreateIssueModal'
 import {IssueDetailPanel} from '@/components/issues/IssueDetailPanel'
+import {useBoardRealtime} from '@/hooks/useBoardRealtime'
+import {useBoardPresence} from '@/hooks/useBoardPresence'
+import {useAuthStore} from '@/stores/authStore'
 import {cn} from '@/utils/cn'
 import type {BoardColumn as BoardColumnType} from '@/types/board'
 import type {Issue} from '@/types/issue'
@@ -132,6 +136,10 @@ export default function BoardPage() {
 
   const epicsMap = useMemo(() => new Map(epicsData.map((e) => [e.id, e])), [epicsData])
   const [selectedEpicIds, setSelectedEpicIds] = useState<Set<string>>(new Set())
+
+  const currentUserId = useAuthStore(s => s.user?.id)
+  useBoardRealtime(boardId!, sortedColumns)
+  const presenceUsers = useBoardPresence(boardId!)
 
   const issuesByColumn = useMemo(() => {
     const src = selectedEpicIds.size > 0
@@ -407,6 +415,10 @@ export default function BoardPage() {
         <div className="flex items-center gap-2">
           {epicsData.length > 0 && (
             <EpicFilter epics={epicsData} selected={selectedEpicIds} onChange={setSelectedEpicIds} />
+          )}
+          <BoardPresenceAvatars users={presenceUsers} currentUserId={currentUserId} />
+          {presenceUsers.filter(u => u.userId !== currentUserId).length > 0 && (
+            <div className="h-4 w-px bg-surface-border" />
           )}
           <button
             onClick={() => setMembersOpen((v) => !v)}

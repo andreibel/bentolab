@@ -1,0 +1,78 @@
+import { useQueryClient } from '@tanstack/react-query'
+import { useAuthStore } from '@/stores/authStore'
+import { queryKeys } from '@/api/queryKeys'
+import { useStompSubscription } from './useStompSubscription'
+import type { Issue } from '@/types/issue'
+import type { BoardColumn } from '@/types/board'
+
+interface IssueEvent {
+  eventType: string
+  issueId: string
+  boardId: string
+  changedByUserId?: string
+  // IssueStatusChangedEvent fields
+  toColumnName?: string
+}
+
+/**
+ * Subscribes to real-time issue events for a board.
+ *
+ * - When another user moves an issue (IssueStatusChangedEvent), the board
+ *   updates immediately by patching the React Query cache and then
+ *   invalidating for a background consistency refetch.
+ * - All other issue events (assigned, commented, priority, closed) trigger
+ *   a query invalidation so the board reflects the latest data.
+ *
+ * Events from the current user are still processed so the cache stays
+ * consistent across tabs/devices.
+ */
+export function useBoardRealtime(boardId: string, columns: BoardColumn[]) {
+  const queryClient = useQueryClient()
+  const currentUserId = useAuthStore(s => s.user?.id)
+
+  useStompSubscription(
+    `/topic/board/${boardId}/issues`,
+    (body) => {
+      const event = body as IssueEvent
+      if (!event?.eventType) return
+
+      if (event.eventType === 'IssueStatusChangedEvent' && event.toColumnName) {
+        const targetCol = columns.find(c => c.name === event.toColumnName)
+
+        if (targetCol) {
+          // Optimistic patch: move the issue to the new column in the cache
+          // (only for events from other users; own events are already applied)
+          if (event.changedByUserId !== currentUserId) {
+            queryClient.setQueryData(
+              queryKeys.issues.list(boardId, undefined, false),
+              (old: { content: Issue[] } | undefined) => {
+                if (!old) return old
+                return {
+                  ...old,
+                  content: old.content.map(issue =>
+                    issue.id === event.issueId
+                      ? { ...issue, columnId: targetCol.id }
+                      : issue,
+                  ),
+                }
+              },
+            )
+          }
+        }
+
+        // Background refetch to confirm server state regardless
+        void queryClient.invalidateQueries({
+          queryKey: queryKeys.issues.list(boardId, undefined, false),
+          refetchType: event.changedByUserId === currentUserId ? 'none' : 'active',
+        })
+        return
+      }
+
+      // All other events: invalidate so data stays fresh
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.issues.list(boardId, undefined, false),
+        refetchType: 'active',
+      })
+    },
+  )
+}
