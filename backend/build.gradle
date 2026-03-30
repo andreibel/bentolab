@@ -14,6 +14,7 @@ allprojects {
 
 subprojects {
     apply plugin: 'java'
+    apply plugin: 'jacoco'
     apply plugin: 'io.spring.dependency-management'
 
     java {
@@ -36,6 +37,27 @@ subprojects {
     tasks.named('test') {
         useJUnitPlatform()
         failOnNoDiscoveredTests = false
+        finalizedBy jacocoTestReport
+    }
+
+    jacocoTestReport {
+        dependsOn test
+        reports {
+            html.required = true
+            xml.required = false
+        }
+        afterEvaluate {
+            classDirectories.setFrom(files(classDirectories.files.collect {
+                fileTree(dir: it, exclude: [
+                    '**/*Application*',
+                    '**/config/**',
+                    '**/entity/**',
+                    '**/dto/**',
+                    '**/event/*Event*',
+                    '**/enums/**',
+                ])
+            }))
+        }
     }
 }
 
