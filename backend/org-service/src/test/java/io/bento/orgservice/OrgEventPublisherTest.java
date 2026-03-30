@@ -1,123 +1,96 @@
 package io.bento.orgservice;
 
-import io.bento.orgservice.enums.OrgRoles;
 import io.bento.kafka.event.InvitationCreatedEvent;
 import io.bento.kafka.event.MemberJoinedEvent;
+import io.bento.kafka.event.MemberRemovedEvent;
+import io.bento.kafka.event.MemberRoleChangedEvent;
+import io.bento.orgservice.enums.OrgRoles;
 import io.bento.orgservice.event.OrgEventPublisher;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.common.serialization.StringDeserializer;
-import org.apache.kafka.common.serialization.StringSerializer;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.kafka.core.DefaultKafkaProducerFactory;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.kafka.support.serializer.JacksonJsonDeserializer;
-import org.springframework.kafka.support.serializer.JacksonJsonSerializer;
 
-import java.time.Duration;
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.verify;
 
+@ExtendWith(MockitoExtension.class)
 class OrgEventPublisherTest {
 
     private static final String TOPIC = "bento.org.events";
-    private static final String BROKERS = "localhost:9092";
+    private static final UUID ORG_ID = UUID.fromString("00000000-0000-0000-0000-000000000001");
+    private static final UUID USER_ID = UUID.fromString("00000000-0000-0000-0000-000000000002");
 
+    @Mock
+    private KafkaTemplate<String, Object> kafkaTemplate;
+
+    @InjectMocks
     private OrgEventPublisher orgEventPublisher;
-    private KafkaConsumer<String, Object> consumer;
-
-    @BeforeEach
-    void setUp() {
-        Map<String, Object> producerProps = new HashMap<>();
-        producerProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, BROKERS);
-        producerProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        producerProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JacksonJsonSerializer.class);
-        KafkaTemplate<String, Object> template = new KafkaTemplate<>(new DefaultKafkaProducerFactory<>(producerProps));
-        orgEventPublisher = new OrgEventPublisher(template);
-
-        Map<String, Object> consumerProps = new HashMap<>();
-        consumerProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, BROKERS);
-        consumerProps.put(ConsumerConfig.GROUP_ID_CONFIG, "test-group-" + UUID.randomUUID());
-        consumerProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
-        consumerProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        consumerProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JacksonJsonDeserializer.class);
-        consumerProps.put(JacksonJsonDeserializer.TRUSTED_PACKAGES, "*");
-        consumer = new KafkaConsumer<>(consumerProps);
-        consumer.subscribe(List.of(TOPIC));
-
-        // Wait until partition is actually assigned before the test publishes,
-        // otherwise the message lands before the consumer gets its offset position.
-        long timeout = System.currentTimeMillis() + 10_000;
-        while (consumer.assignment().isEmpty() && System.currentTimeMillis() < timeout) {
-            consumer.poll(Duration.ofMillis(200));
-        }
-    }
-
-    @AfterEach
-    void tearDown() {
-        consumer.close();
-    }
 
     @Test
-    void shouldPublishInvitationCreatedEvent() {
-        UUID orgId = UUID.randomUUID();
+    void publishInvitationCreated_sendsToOrgEventsTopic() {
         InvitationCreatedEvent event = new InvitationCreatedEvent(
-                orgId,
-                "Acme Corp",
-                UUID.randomUUID(),
-                "newuser@example.com",
-                OrgRoles.ORG_MEMBER.name(),
+                ORG_ID, "Acme Corp", USER_ID,
+                "newuser@example.com", OrgRoles.ORG_MEMBER.name(),
                 UUID.randomUUID().toString(),
-                Instant.now().plusSeconds(7 * 24 * 60 * 60).toString()
-        );
+                Instant.now().plusSeconds(86400).toString());
 
         orgEventPublisher.publishInvitationCreated(event);
 
-        ConsumerRecord<String, Object> received = pollUntilReceived(orgId.toString());
-        assertThat(received).isNotNull();
-        System.out.println("[Kafka] InvitationCreatedEvent on topic=" + received.topic()
-                + " partition=" + received.partition()
-                + " offset=" + received.offset()
-                + "\n  value=" + received.value());
+        ArgumentCaptor<String> topicCaptor = ArgumentCaptor.forClass(String.class);
+        verify(kafkaTemplate).send(topicCaptor.capture(), anyString(), any());
+        assertThat(topicCaptor.getValue()).isEqualTo(TOPIC);
     }
 
     @Test
-    void shouldPublishMemberJoinedEvent() {
-        UUID orgId = UUID.randomUUID();
+    void publishInvitationCreated_usesOrgIdAsKey() {
+        InvitationCreatedEvent event = new InvitationCreatedEvent(
+                ORG_ID, "Acme Corp", USER_ID,
+                "newuser@example.com", OrgRoles.ORG_MEMBER.name(),
+                UUID.randomUUID().toString(),
+                Instant.now().plusSeconds(86400).toString());
+
+        orgEventPublisher.publishInvitationCreated(event);
+
+        ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
+        verify(kafkaTemplate).send(anyString(), keyCaptor.capture(), any());
+        assertThat(keyCaptor.getValue()).isEqualTo(ORG_ID.toString());
+    }
+
+    @Test
+    void publishMemberJoined_sendsToOrgEventsTopic() {
         MemberJoinedEvent event = new MemberJoinedEvent(
-                orgId,
-                "Acme Corp",
-                UUID.randomUUID(),
-                OrgRoles.ORG_MEMBER.name(),
-                Instant.now().toString()
-        );
+                ORG_ID, "Acme Corp", USER_ID,
+                OrgRoles.ORG_MEMBER.name(), Instant.now().toString());
 
         orgEventPublisher.publishMemberJoined(event);
 
-        ConsumerRecord<String, Object> received = pollUntilReceived(orgId.toString());
-        assertThat(received).isNotNull();
-        System.out.println("[Kafka] MemberJoinedEvent on topic=" + received.topic()
-                + " partition=" + received.partition()
-                + " offset=" + received.offset()
-                + "\n  value=" + received.value());
+        verify(kafkaTemplate).send(TOPIC, ORG_ID.toString(), event);
     }
 
-    private ConsumerRecord<String, Object> pollUntilReceived(String expectedKey) {
-        long deadline = System.currentTimeMillis() + 5_000;
-        while (System.currentTimeMillis() < deadline) {
-            for (ConsumerRecord<String, Object> record : consumer.poll(Duration.ofMillis(500))) {
-                if (expectedKey.equals(record.key())) return record;
-            }
-        }
-        return null;
+    @Test
+    void publishMemberRemoved_sendsToOrgEventsTopic() {
+        MemberRemovedEvent event = new MemberRemovedEvent(ORG_ID, USER_ID);
+
+        orgEventPublisher.publishMemberRemoved(event);
+
+        verify(kafkaTemplate).send(TOPIC, ORG_ID.toString(), event);
+    }
+
+    @Test
+    void publishMemberRoleChanged_sendsToOrgEventsTopic() {
+        MemberRoleChangedEvent event = new MemberRoleChangedEvent(ORG_ID, USER_ID, OrgRoles.ORG_ADMIN.name());
+
+        orgEventPublisher.publishMemberRoleChanged(event);
+
+        verify(kafkaTemplate).send(TOPIC, ORG_ID.toString(), event);
     }
 }
