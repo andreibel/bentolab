@@ -12,6 +12,7 @@ import io.bento.taskservice.enums.EntityType;
 import io.bento.taskservice.enums.IssuePriority;
 import io.bento.kafka.event.IssueAssignedEvent;
 import io.bento.kafka.event.IssueClosedEvent;
+import io.bento.kafka.event.IssueCreatedEvent;
 import io.bento.taskservice.event.IssueEventPublisher;
 import io.bento.kafka.event.IssuePriorityChangedEvent;
 import io.bento.kafka.event.IssueStatusChangedEvent;
@@ -116,6 +117,12 @@ public class IssueService {
 
         activityService.log(orgId, issue.getId(), request.boardId(), request.sprintId(),
                 userId, EntityType.ISSUE, ActivityAction.CREATED, null);
+
+        issueEventPublisher.publishIssueCreated(new IssueCreatedEvent(
+                issue.getId(), issue.getBoardId(), orgId, issue.getIssueKey(),
+                issue.getTitle(), issue.getColumnId(), userId, issue.getAssigneeId(),
+                Instant.now().toString()
+        ));
 
         return issue;
     }

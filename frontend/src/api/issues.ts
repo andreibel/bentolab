@@ -18,9 +18,9 @@ export const issuesApi = {
   update: (issueId: string, data: Partial<Issue>) =>
     client.patch<Issue>(`/api/issues/${issueId}`, data).then((r) => r.data),
 
-  move: (issueId: string, columnId: string, position: number) =>
+  move: (issueId: string, columnId: string, position: number, fromColumnName?: string, toColumnName?: string) =>
     client
-      .patch<Issue>(`/api/issues/${issueId}/move`, { columnId, position })
+      .patch<Issue>(`/api/issues/${issueId}/move`, { columnId, position, fromColumnName, toColumnName })
       .then((r) => r.data),
 
   delete: (issueId: string) => client.delete(`/api/issues/${issueId}`),

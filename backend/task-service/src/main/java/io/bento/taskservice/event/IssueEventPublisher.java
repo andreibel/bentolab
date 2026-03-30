@@ -3,6 +3,7 @@ package io.bento.taskservice.event;
 import io.bento.kafka.event.IssueAssignedEvent;
 import io.bento.kafka.event.IssueClosedEvent;
 import io.bento.kafka.event.IssueCommentedEvent;
+import io.bento.kafka.event.IssueCreatedEvent;
 import io.bento.kafka.event.IssuePriorityChangedEvent;
 import io.bento.kafka.event.IssueStatusChangedEvent;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,10 @@ public class IssueEventPublisher {
 
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final ObjectMapper objectMapper;
+
+    public void publishIssueCreated(IssueCreatedEvent event) {
+        send(event.issueId(), event);
+    }
 
     public void publishIssueAssigned(IssueAssignedEvent event) {
         send(event.issueId(), event);
