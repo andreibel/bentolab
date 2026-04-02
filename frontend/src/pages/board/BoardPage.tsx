@@ -431,25 +431,25 @@ export default function BoardPage() {
           )}
           <button
             onClick={() => setMembersOpen((v) => !v)}
-            className={`flex h-8 items-center gap-1.5 rounded-lg border px-3 text-xs transition-colors ${
+            title="Members"
+            className={`flex h-8 w-8 items-center justify-center rounded-lg border transition-colors ${
               membersOpen
                 ? 'border-primary/40 bg-primary-subtle text-primary'
                 : 'border-surface-border text-text-muted hover:border-primary/30 hover:text-text-primary'
             }`}
           >
             <Users className="h-3.5 w-3.5" />
-            Members
           </button>
           <button
             onClick={() => setSettingsOpen((v) => !v)}
-            className={`flex h-8 items-center gap-1.5 rounded-lg border px-3 text-xs transition-colors ${
+            title="Board settings"
+            className={`flex h-8 w-8 items-center justify-center rounded-lg border transition-colors ${
               settingsOpen
                 ? 'border-primary/40 bg-primary-subtle text-primary'
                 : 'border-surface-border text-text-muted hover:border-primary/30 hover:text-text-primary'
             }`}
           >
             <Settings className="h-3.5 w-3.5" />
-            Settings
           </button>
           <button
             onClick={() => setIssueModal({ open: true })}

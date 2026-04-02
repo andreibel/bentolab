@@ -1,13 +1,13 @@
 import {useState} from 'react'
 import {useParams} from 'react-router-dom'
-import {CheckCircle, ChevronDown, ChevronRight, Clock, Loader2, Play, Plus, Target,} from 'lucide-react'
+import {Archive, CheckCircle, ChevronDown, ChevronRight, Clock, Loader2, Play, Plus, RefreshCw, Target,} from 'lucide-react'
 import {useQueryClient} from '@tanstack/react-query'
 import {toast} from 'sonner'
 import {sprintsApi, useSprints} from '@/api/sprints'
 import {useIssues} from '@/api/issues'
 import {queryKeys} from '@/api/queryKeys'
-import {cn} from '@/utils/cn'
 import {CreateSprintModal} from '@/components/sprint/CreateSprintModal'
+import {cn} from '@/utils/cn'
 import type {Sprint} from '@/types/sprint'
 import type {Issue} from '@/types/issue'
 
@@ -30,42 +30,112 @@ function daysLeft(endDate: string | null) {
 function CompleteSprintModal({
   sprint,
   otherSprints,
+  incompleteCount,
   onConfirm,
   onClose,
 }: {
   sprint: Sprint
   otherSprints: Sprint[]
+  incompleteCount: number
   onConfirm: (moveToSprintId: string | null) => void
   onClose: () => void
 }) {
-  const [moveToId, setMoveToId] = useState('')
   const eligible = otherSprints.filter((s) => s.status !== 'COMPLETED')
+  const [dest,     setDest]     = useState<'backlog' | 'sprint'>('backlog')
+  const [moveToId, setMoveToId] = useState(eligible[0]?.id ?? '')
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative z-50 w-[420px] rounded-2xl border border-surface-border bg-surface p-6 shadow-2xl">
-        <h2 className="mb-1 text-base font-semibold text-text-primary">Complete "{sprint.name}"</h2>
-        <p className="mb-4 text-sm text-text-secondary">
-          Where should incomplete issues go after this sprint ends?
-        </p>
-        <select
-          value={moveToId}
-          onChange={(e) => setMoveToId(e.target.value)}
-          className="mb-5 w-full rounded-lg border border-surface-border bg-surface-muted px-3 py-2 text-sm text-text-primary outline-none focus:border-primary"
-        >
-          <option value="">Move to Backlog</option>
-          {eligible.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-        </select>
-        <div className="flex justify-end gap-2">
-          <button onClick={onClose} className="rounded-md px-4 py-2 text-sm text-text-muted hover:text-text-primary">
+      <div className="relative z-50 w-[460px] rounded-2xl border border-surface-border bg-surface shadow-2xl">
+
+        {/* Header */}
+        <div className="border-b border-surface-border px-6 py-4">
+          <h2 className="text-sm font-semibold text-text-primary">Close "{sprint.name}"</h2>
+          <p className="mt-0.5 text-xs text-text-muted">
+            {incompleteCount === 0
+              ? 'All issues are complete — great work!'
+              : `${incompleteCount} incomplete issue${incompleteCount !== 1 ? 's' : ''} need${incompleteCount === 1 ? 's' : ''} to be moved.`}
+          </p>
+        </div>
+
+        {/* Options */}
+        <div className="flex flex-col gap-2.5 p-5">
+          {/* Backlog option */}
+          <button
+            type="button"
+            onClick={() => setDest('backlog')}
+            className={cn(
+              'flex items-start gap-3.5 rounded-xl border p-4 text-start transition-all',
+              dest === 'backlog'
+                ? 'border-primary bg-primary-subtle ring-1 ring-primary/20'
+                : 'border-surface-border hover:border-primary/30 hover:bg-surface-muted/50',
+            )}
+          >
+            <div className={cn('mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg', dest === 'backlog' ? 'bg-primary/15' : 'bg-surface-border')}>
+              <Archive className={cn('h-4 w-4', dest === 'backlog' ? 'text-primary' : 'text-text-muted')} />
+            </div>
+            <div>
+              <p className={cn('text-sm font-medium', dest === 'backlog' ? 'text-primary' : 'text-text-primary')}>
+                Move to Backlog
+              </p>
+              <p className="mt-0.5 text-xs text-text-muted">
+                Incomplete issues return to the backlog and can be planned into future sprints.
+              </p>
+            </div>
+          </button>
+
+          {/* Transfer to sprint option */}
+          <button
+            type="button"
+            disabled={eligible.length === 0}
+            onClick={() => setDest('sprint')}
+            className={cn(
+              'flex items-start gap-3.5 rounded-xl border p-4 text-start transition-all',
+              eligible.length === 0 && 'cursor-not-allowed opacity-40',
+              dest === 'sprint' && eligible.length > 0
+                ? 'border-primary bg-primary-subtle ring-1 ring-primary/20'
+                : 'border-surface-border hover:border-primary/30 hover:bg-surface-muted/50',
+            )}
+          >
+            <div className={cn('mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg', dest === 'sprint' ? 'bg-primary/15' : 'bg-surface-border')}>
+              <RefreshCw className={cn('h-4 w-4', dest === 'sprint' ? 'text-primary' : 'text-text-muted')} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className={cn('text-sm font-medium', dest === 'sprint' ? 'text-primary' : 'text-text-primary')}>
+                Transfer to Sprint
+              </p>
+              <p className="mt-0.5 text-xs text-text-muted">
+                {eligible.length === 0
+                  ? 'No other active or planned sprints available.'
+                  : 'Move incomplete issues directly into another sprint.'}
+              </p>
+              {dest === 'sprint' && eligible.length > 0 && (
+                <select
+                  value={moveToId}
+                  onChange={(e) => { e.stopPropagation(); setMoveToId(e.target.value) }}
+                  onClick={(e) => e.stopPropagation()}
+                  className="mt-2.5 w-full rounded-lg border border-primary/30 bg-surface px-2.5 py-1.5 text-xs text-text-primary outline-none focus:border-primary"
+                >
+                  {eligible.map((s) => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
+                </select>
+              )}
+            </div>
+          </button>
+        </div>
+
+        {/* Footer */}
+        <div className="flex justify-end gap-2 border-t border-surface-border px-5 py-3.5">
+          <button onClick={onClose} className="rounded-lg px-4 py-2 text-sm text-text-muted transition-colors hover:text-text-primary">
             Cancel
           </button>
           <button
-            onClick={() => onConfirm(moveToId || null)}
-            className="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
+            onClick={() => onConfirm(dest === 'sprint' ? (moveToId || null) : null)}
+            className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700"
           >
-            Complete Sprint
+            Close Sprint
           </button>
         </div>
       </div>
@@ -357,6 +427,7 @@ export default function SprintsPage() {
         <CompleteSprintModal
           sprint={completingSprint}
           otherSprints={sortedSprints.filter((s) => s.id !== completeId)}
+          incompleteCount={(issuesBySprint.get(completeId!) ?? []).filter((i) => !i.closed).length}
           onConfirm={(moveToId) => handleComplete(completeId!, moveToId)}
           onClose={() => setCompleteId(null)}
         />
