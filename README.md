@@ -114,6 +114,6 @@ S3_BUCKET=
 ---
 
 <p align="center">
-  <img src="docs/assets/logo_dark.png" alt="BentoLab Logo" width="80" /><br/>
+  <img src="docs/assets/logo_dark.svg" alt="BentoLab Logo" width="80" /><br/>
   <sub>Built by <a href="https://github.com/andreibel">Andrei Beloziorov</a></sub>
 </p>
