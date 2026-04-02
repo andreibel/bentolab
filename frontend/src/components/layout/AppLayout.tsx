@@ -1,11 +1,13 @@
-import {useEffect, useState} from 'react'
-import {Navigate, Outlet, useLocation, useMatch} from 'react-router-dom'
-import {Sidebar} from './Sidebar'
-import {Header} from './Header'
-import {LabTopNav} from './LabTopNav'
-import {CommandPalette} from './CommandPalette'
-import {CreateIssueModal} from '@/components/issues/CreateIssueModal'
-import {useAuthStore} from '@/stores/authStore'
+import { useEffect, useState } from 'react'
+import { Navigate, Outlet, useLocation, useMatch } from 'react-router-dom'
+import { CircleDot, Kanban } from 'lucide-react'
+import { Sidebar } from './Sidebar'
+import { Header } from './Header'
+import { LabTopNav } from './LabTopNav'
+import { CommandPalette } from './CommandPalette'
+import { CreateIssueModal } from '@/components/issues/CreateIssueModal'
+import { CreateBoardWizard } from '@/components/board/CreateBoardWizard'
+import { useAuthStore } from '@/stores/authStore'
 
 const TITLE_MAP: Record<string, string> = {
   '/boards':             'Labs',
@@ -23,12 +25,10 @@ const TITLE_MAP: Record<string, string> = {
 export function AppLayout() {
   const { pathname } = useLocation()
   const { currentOrgId } = useAuthStore()
-  const [createOpen,  setCreateOpen]  = useState(false)
-  const [commandOpen, setCommandOpen] = useState(false)
+  const [createIssueOpen, setCreateIssueOpen] = useState(false)
+  const [createBoardOpen, setCreateBoardOpen] = useState(false)
+  const [commandOpen,     setCommandOpen]     = useState(false)
 
-  // If the user is authenticated but has no org context, send them to org creation.
-  // This happens when a user registers but hasn't created an org yet, or when
-  // the JWT was issued without an orgId (e.g., org-service was temporarily unavailable).
   if (!currentOrgId) {
     return <Navigate to="/org/new" replace />
   }
@@ -47,15 +47,24 @@ export function AppLayout() {
     return () => document.removeEventListener('keydown', handler)
   }, [])
 
-  // Detect any /boards/:boardId route (including sub-routes like /backlog, /cycles…)
   const labMatch = useMatch({ path: '/boards/:boardId', end: false })
-  const isLabRoute = !!labMatch
+  const isLabRoute  = !!labMatch
+  const isBoardList = pathname === '/boards'
 
-  // Full-screen pages that need no padding and no outer scroll (like board routes)
   const FULL_ROUTES = ['/calendar', '/my-issues']
   const isFullRoute = isLabRoute || FULL_ROUTES.includes(pathname)
 
   const pageTitle = isLabRoute ? undefined : TITLE_MAP[pathname]
+
+  // Context action: depends on which page the user is on
+  const contextCreate = isBoardList
+    ? { label: 'New Board', icon: Kanban,    onClick: () => setCreateBoardOpen(true) }
+    : { label: 'New Issue', icon: CircleDot, onClick: () => setCreateIssueOpen(true) }
+
+  const allCreates = [
+    { label: 'New Issue', icon: CircleDot, onClick: () => setCreateIssueOpen(true) },
+    { label: 'New Board', icon: Kanban,    onClick: () => setCreateBoardOpen(true) },
+  ]
 
   return (
     <div className="flex h-screen overflow-hidden bg-surface">
@@ -63,7 +72,8 @@ export function AppLayout() {
       <div className="flex flex-1 flex-col overflow-hidden">
         <Header
           title={pageTitle}
-          onCreateClick={() => setCreateOpen(true)}
+          contextCreate={contextCreate}
+          allCreates={allCreates}
           onSearchClick={() => setCommandOpen(true)}
         />
 
@@ -80,11 +90,12 @@ export function AppLayout() {
         )}
       </div>
 
-      <CreateIssueModal open={createOpen} onClose={() => setCreateOpen(false)} />
+      <CreateIssueModal open={createIssueOpen} onClose={() => setCreateIssueOpen(false)} />
+      <CreateBoardWizard open={createBoardOpen} onClose={() => setCreateBoardOpen(false)} />
       <CommandPalette
         open={commandOpen}
         onClose={() => setCommandOpen(false)}
-        onCreateIssue={() => setCreateOpen(true)}
+        onCreateIssue={() => setCreateIssueOpen(true)}
       />
     </div>
   )

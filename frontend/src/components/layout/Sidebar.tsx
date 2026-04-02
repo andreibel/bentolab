@@ -74,6 +74,8 @@ const settingsGroups = [
 
 function SettingsSidebar() {
   const navigate = useNavigate()
+  const { theme } = useUIStore()
+  const logoSrc = theme === 'dark' ? '/logo-dark.svg' : '/logo.svg'
   return (
     <aside className="flex h-screen w-56 shrink-0 flex-col border-e border-surface-border bg-surface-muted">
       <div className="flex h-14 shrink-0 items-center border-b border-surface-border px-3">
@@ -82,7 +84,7 @@ function SettingsSidebar() {
           className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-text-secondary transition-colors hover:bg-surface-border hover:text-text-primary"
         >
           <ArrowLeft className="h-4 w-4" />
-          <img src="/logo.svg" alt="Bento" className="h-5 w-5 rounded" />
+          <img src={logoSrc} alt="Bento" className="h-5 w-5 rounded" />
           <span className="font-bold tracking-tight text-text-primary">bentolab</span>
         </button>
       </div>
@@ -533,8 +535,9 @@ function GlobalNavItem({
 
 export function Sidebar() {
   const { pathname } = useLocation()
-  const { sidebarCollapsed, toggleSidebar } = useUIStore()
+  const { sidebarCollapsed, toggleSidebar, theme } = useUIStore()
   const collapsed = sidebarCollapsed
+  const logoSrc = theme === 'dark' ? '/logo-dark.svg' : '/logo.svg'
 
   const { pinned, togglePin, isPinned } = usePinnedLabs()
   const { recent, trackVisit } = useRecentLabs()
@@ -569,7 +572,7 @@ export function Sidebar() {
         >
           {!collapsed && (
             <div className="flex items-center gap-2">
-              <img src="/logo.svg" alt="Bento" className="h-6 w-6 rounded" />
+              <img src={logoSrc} alt="Bento" className="h-6 w-6 rounded" />
               <span className="text-sm font-bold tracking-tight text-text-primary">bentolab</span>
             </div>
           )}
