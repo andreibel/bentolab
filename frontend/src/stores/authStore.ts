@@ -30,6 +30,7 @@ interface AuthActions {
   setAuth: (data: { accessToken: string; refreshToken: string; user: User }) => void
   setTokens: (access: string, refresh: string) => void
   setOrgContext: (orgId: string, orgRole: string, orgSlug: string, accessToken: string, orgName?: string) => void
+  updateUser: (partial: Partial<User>) => void
   refresh: () => Promise<void>
   logout: () => void
 }
@@ -84,6 +85,9 @@ export const useAuthStore = create<AuthState & AuthActions>()(
           orgName:      orgName ?? null,
         })
       },
+
+      updateUser: (partial) =>
+        set((s) => ({ user: s.user ? { ...s.user, ...partial } : s.user })),
 
       refresh: async () => {
         const { refreshToken, currentOrgId } = get()

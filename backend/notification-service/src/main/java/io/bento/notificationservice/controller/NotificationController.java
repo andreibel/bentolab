@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/notifications")
@@ -28,12 +29,12 @@ public class NotificationController {
     @GetMapping
     public ResponseEntity<Page<NotificationResponse>> getNotifications(
             @RequestHeader("X-Org-Id") String orgId,
-            @AuthenticationPrincipal String userId,
+            @AuthenticationPrincipal UUID userId,
             @RequestParam(defaultValue = "false") boolean unreadOnly,
             @PageableDefault(size = 20) Pageable pageable) {
 
         return ResponseEntity.ok(
-                notificationService.getNotifications(orgId, userId, unreadOnly, pageable)
+                notificationService.getNotifications(orgId, userId.toString(), unreadOnly, pageable)
                         .map(notificationMapper::toResponse)
         );
     }
@@ -41,31 +42,31 @@ public class NotificationController {
     @GetMapping("/unread-count")
     public ResponseEntity<Map<String, Long>> getUnreadCount(
             @RequestHeader("X-Org-Id") String orgId,
-            @AuthenticationPrincipal String userId) {
+            @AuthenticationPrincipal UUID userId) {
 
-        return ResponseEntity.ok(Map.of("count", notificationService.countUnread(orgId, userId)));
+        return ResponseEntity.ok(Map.of("count", notificationService.countUnread(orgId, userId.toString())));
     }
 
     @PatchMapping("/{id}/read")
     public ResponseEntity<Void> markAsRead(
             @PathVariable String id,
-            @AuthenticationPrincipal String userId) {
+            @AuthenticationPrincipal UUID userId) {
 
-        notificationService.markAsRead(id, userId);
+        notificationService.markAsRead(id, userId.toString());
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/read-all")
     public ResponseEntity<Void> markAllAsRead(
             @RequestHeader("X-Org-Id") String orgId,
-            @AuthenticationPrincipal String userId) {
+            @AuthenticationPrincipal UUID userId) {
 
-        notificationService.markAllAsRead(orgId, userId);
+        notificationService.markAllAsRead(orgId, userId.toString());
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter stream(@AuthenticationPrincipal String userId) {
-        return sseEmitterRegistry.subscribe(userId);
+    public SseEmitter stream(@AuthenticationPrincipal UUID userId) {
+        return sseEmitterRegistry.subscribe(userId.toString());
     }
 }

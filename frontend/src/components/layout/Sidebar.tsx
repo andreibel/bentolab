@@ -74,6 +74,8 @@ const settingsGroups = [
 
 function SettingsSidebar() {
   const navigate = useNavigate()
+  const { theme } = useUIStore()
+  const logoSrc = theme === 'dark' ? '/logo-dark.svg' : '/logo.svg'
   return (
     <aside className="flex h-screen w-56 shrink-0 flex-col border-e border-surface-border bg-surface-muted">
       <div className="flex h-14 shrink-0 items-center border-b border-surface-border px-3">
@@ -82,7 +84,7 @@ function SettingsSidebar() {
           className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-text-secondary transition-colors hover:bg-surface-border hover:text-text-primary"
         >
           <ArrowLeft className="h-4 w-4" />
-          <img src="/logo.svg" alt="Bento" className="h-5 w-5 rounded" />
+          <img src={logoSrc} alt="Bento" className="h-5 w-5 rounded" />
           <span className="font-bold tracking-tight text-text-primary">bentolab</span>
         </button>
       </div>
@@ -162,8 +164,11 @@ function OrgSwitcher({ collapsed }: { collapsed: boolean }) {
             collapsed && 'justify-center'
           )}
         >
-          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-primary text-[10px] font-bold text-white">
-            {initials}
+          <div className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-md bg-primary text-[10px] font-bold text-white">
+            {orgs?.find((o) => o.id === currentOrgId)?.logoUrl
+              ? <img src={orgs.find((o) => o.id === currentOrgId)!.logoUrl!} alt={displayName} className="h-full w-full object-cover" />
+              : initials
+            }
           </div>
           {!collapsed && (
             <>
@@ -206,10 +211,13 @@ function OrgSwitcher({ collapsed }: { collapsed: boolean }) {
                 )}
               >
                 <div className={cn(
-                  'flex h-5 w-5 shrink-0 items-center justify-center rounded text-[9px] font-bold text-white',
-                  isCurrent ? 'bg-primary' : 'bg-text-muted'
+                  'flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded text-[9px] font-bold text-white',
+                  !org.logoUrl && (isCurrent ? 'bg-primary' : 'bg-text-muted')
                 )}>
-                  {org.name.slice(0, 2).toUpperCase()}
+                  {org.logoUrl
+                    ? <img src={org.logoUrl} alt={org.name} className="h-full w-full object-cover" />
+                    : org.name.slice(0, 2).toUpperCase()
+                  }
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{org.name}</p>
@@ -427,9 +435,17 @@ function UserPanel({ collapsed }: { collapsed: boolean }) {
             collapsed && 'justify-center'
           )}
         >
-          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary-subtle text-[10px] font-semibold text-primary">
-            {initials}
-          </div>
+          {user?.avatarUrl ? (
+            <img
+              src={user.avatarUrl}
+              alt={initials}
+              className="h-6 w-6 shrink-0 rounded-full object-cover ring-1 ring-surface-border"
+            />
+          ) : (
+            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary-subtle text-[10px] font-semibold text-primary">
+              {initials}
+            </div>
+          )}
           {!collapsed && (
             <div className="min-w-0 flex-1 text-start">
               <p className="truncate text-xs font-medium text-text-primary">
@@ -525,8 +541,9 @@ function GlobalNavItem({
 
 export function Sidebar() {
   const { pathname } = useLocation()
-  const { sidebarCollapsed, toggleSidebar } = useUIStore()
+  const { sidebarCollapsed, toggleSidebar, theme } = useUIStore()
   const collapsed = sidebarCollapsed
+  const logoSrc = theme === 'dark' ? '/logo-dark.svg' : '/logo.svg'
 
   const { pinned, togglePin, isPinned } = usePinnedLabs()
   const { recent, trackVisit } = useRecentLabs()
@@ -561,7 +578,7 @@ export function Sidebar() {
         >
           {!collapsed && (
             <div className="flex items-center gap-2">
-              <img src="/logo.svg" alt="Bento" className="h-6 w-6 rounded" />
+              <img src={logoSrc} alt="Bento" className="h-6 w-6 rounded" />
               <span className="text-sm font-bold tracking-tight text-text-primary">bentolab</span>
             </div>
           )}

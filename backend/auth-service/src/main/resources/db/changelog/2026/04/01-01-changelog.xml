@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+
+    <!-- Widen avatar_url column from VARCHAR(500) to TEXT to support base64 data URLs -->
+    <changeSet id="2026-04-01-01" author="bento">
+        <modifyDataType tableName="users" columnName="avatar_url" newDataType="TEXT"/>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,11 +1,13 @@
 import {useCallback, useMemo, useRef, useState} from 'react'
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query'
 import {Bold, ChevronDown, Code, GitCommitHorizontal, Italic, List, Pencil, Trash2} from 'lucide-react'
+import {marked} from 'marked'
 import {toast} from 'sonner'
 import {issuesApi} from '@/api/issues'
 import {usersApi} from '@/api/users'
 import {queryKeys} from '@/api/queryKeys'
 import {Avatar} from '@/components/ui/Avatar'
+import {sanitizeHtml} from '@/utils/sanitize'
 import {cn} from '@/utils/cn'
 import type {Activity, Comment} from '@/types/issue'
 import type {BoardColumn, UserProfile} from '@/types/board'
@@ -25,12 +27,7 @@ function timeAgo(iso: string) {
 }
 
 function renderMd(text: string): string {
-  const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-  return escaped
-    .replace(/\*\*(.+?)\*\*/gs, '<strong>$1</strong>')
-    .replace(/\*(.+?)\*/gs, '<em>$1</em>')
-    .replace(/`(.+?)`/g, '<code style="background:rgba(0,0,0,0.06);padding:1px 5px;border-radius:3px;font-size:0.85em;font-family:monospace">$1</code>')
-    .replace(/\n/g, '<br>')
+  return sanitizeHtml(marked.parse(text, { async: false }) as string)
 }
 
 function insertMdAt(el: HTMLTextAreaElement, setValue: (v: string) => void, prefix: string, suffix = prefix) {

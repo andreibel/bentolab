@@ -3,7 +3,7 @@ import * as Dialog from '@radix-ui/react-dialog'
 import {Controller, useForm, useWatch} from 'react-hook-form'
 import {zodResolver} from '@hookform/resolvers/zod'
 import {z} from 'zod'
-import {ArrowLeft, Check, X} from 'lucide-react'
+import {ArrowLeft, Bug, Check, Kanban, RefreshCw, SlidersHorizontal, X} from 'lucide-react'
 import {useQueryClient} from '@tanstack/react-query'
 import {useNavigate} from 'react-router-dom'
 import {toast} from 'sonner'
@@ -23,31 +23,36 @@ const TEMPLATES: {
   type: BoardType
   label: string
   description: string
-  illustration: string
+  icon: React.ElementType
+  color: string
 }[] = [
   {
     type: 'SCRUM',
     label: 'Scrum',
-    description: 'Sprint-based delivery with backlog, velocity tracking, and burndown charts.',
-    illustration: '/illustrations/scrum.svg',
+    description: 'Sprint-based delivery with backlog and velocity tracking.',
+    icon: RefreshCw,
+    color: '#6366f1',
   },
   {
     type: 'KANBAN',
     label: 'Kanban',
-    description: 'Continuous flow with WIP limits to keep your team focused and unblocked.',
-    illustration: '/illustrations/kanban.svg',
+    description: 'Continuous flow with WIP limits to keep your team focused.',
+    icon: Kanban,
+    color: '#10b981',
   },
   {
     type: 'BUG_TRACKING',
     label: 'Bug Tracking',
-    description: 'Triage, prioritize, and resolve issues with severity and status tracking.',
-    illustration: '/illustrations/bug-tracking.svg',
+    description: 'Triage and resolve issues with severity and status tracking.',
+    icon: Bug,
+    color: '#ef4444',
   },
   {
     type: 'CUSTOM',
     label: 'Custom',
-    description: 'Start from scratch and build your workflow exactly how you need it.',
-    illustration: '/illustrations/custom.svg',
+    description: 'Start from scratch and build your own workflow.',
+    icon: SlidersHorizontal,
+    color: '#f59e0b',
   },
 ]
 
@@ -85,9 +90,8 @@ export function CreateBoardWizard({ open, onClose }: CreateBoardWizardProps) {
   const queryClient = useQueryClient()
   const navigate    = useNavigate()
 
-  const [step, setStep]     = useState<'template' | 'details'>('template')
+  const [step, setStep]         = useState<'template' | 'details'>('template')
   const [selected, setSelected] = useState<BoardType>('SCRUM')
-
 
   const {
     register,
@@ -133,37 +137,34 @@ export function CreateBoardWizard({ open, onClose }: CreateBoardWizardProps) {
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" />
         <Dialog.Content className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="w-full max-w-3xl rounded-2xl border border-surface-border bg-surface shadow-2xl">
+          <div className="w-full max-w-xl rounded-xl border border-surface-border bg-surface shadow-2xl">
 
             {/* ── Header ── */}
-            <div className="flex items-center justify-between border-b border-surface-border px-6 py-4">
-              <div className="flex items-center gap-3">
+            <div className="flex items-center justify-between border-b border-surface-border px-5 py-3.5">
+              <div className="flex items-center gap-2.5">
                 {step === 'details' && (
                   <button
                     onClick={() => setStep('template')}
-                    className="rounded-md p-1 text-text-muted transition-colors hover:bg-surface-muted hover:text-text-primary"
+                    className="rounded p-1 text-text-muted transition-colors hover:bg-surface-muted hover:text-text-primary"
                   >
                     <ArrowLeft className="h-4 w-4" />
                   </button>
                 )}
                 <div>
                   <Dialog.Title className="text-sm font-semibold text-text-primary">
-                    {step === 'template' ? 'Create a new lab' : `Configure — ${selectedTemplate.label}`}
+                    {step === 'template' ? 'Create a new board' : `Configure — ${selectedTemplate.label}`}
                   </Dialog.Title>
-                  <p className="text-xs text-text-muted">
-                    Step {step === 'template' ? '1' : '2'} of 2
-                  </p>
+                  <p className="text-xs text-text-muted">Step {step === 'template' ? '1' : '2'} of 2</p>
                 </div>
               </div>
 
-              {/* step dots */}
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-full bg-primary" />
-                  <span className={cn('h-2 w-2 rounded-full transition-colors', step === 'details' ? 'bg-primary' : 'bg-surface-border')} />
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1">
+                  <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                  <span className={cn('h-1.5 w-1.5 rounded-full transition-colors', step === 'details' ? 'bg-primary' : 'bg-surface-border')} />
                 </div>
                 <Dialog.Close asChild>
-                  <button className="rounded-md p-1 text-text-muted transition-colors hover:bg-surface-muted hover:text-text-primary">
+                  <button className="rounded p-1 text-text-muted transition-colors hover:bg-surface-muted hover:text-text-primary">
                     <X className="h-4 w-4" />
                   </button>
                 </Dialog.Close>
@@ -173,42 +174,34 @@ export function CreateBoardWizard({ open, onClose }: CreateBoardWizardProps) {
             {/* ── Step 1: Template selection ── */}
             {step === 'template' && (
               <>
-                <div className="px-6 pt-5 pb-2">
-                  <p className="text-base font-semibold text-text-primary">Choose a template</p>
-                  <p className="mt-0.5 text-sm text-text-muted">Pick the workflow that best fits your team. You can customise everything after.</p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4 px-6 py-4">
-                  {TEMPLATES.map(({ type, label, description, illustration }) => (
+                <div className="grid grid-cols-2 gap-3 p-4">
+                  {TEMPLATES.map(({ type, label, description, icon: Icon, color }) => (
                     <button
                       key={type}
                       type="button"
                       onClick={() => setSelected(type)}
                       className={cn(
-                        'group relative overflow-hidden rounded-xl border text-start transition-all',
+                        'group relative flex flex-col gap-2.5 rounded-lg border p-3.5 text-start transition-all',
                         selected === type
-                          ? 'border-primary shadow-md shadow-primary/10 ring-2 ring-primary/20'
-                          : 'border-surface-border hover:border-primary/40 hover:shadow-sm',
+                          ? 'border-primary shadow-sm shadow-primary/10 ring-1 ring-primary/20'
+                          : 'border-surface-border hover:border-primary/40',
                       )}
                     >
-                      {/* Selected checkmark */}
                       {selected === type && (
-                        <div className="absolute inset-e-2.5 top-2.5 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-primary shadow-md">
-                          <Check className="h-3.5 w-3.5 text-white" />
-                        </div>
+                        <span className="absolute inset-e-2.5 top-2.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary">
+                          <Check className="h-2.5 w-2.5 text-white" />
+                        </span>
                       )}
 
-                      {/* Illustration */}
-                      <div className="overflow-hidden rounded-t-xl bg-surface-muted">
-                        <img src={illustration} alt={label} className="w-full" />
-                      </div>
+                      <span
+                        className="flex h-8 w-8 items-center justify-center rounded-lg"
+                        style={{ backgroundColor: color + '1a', color }}
+                      >
+                        <Icon className="h-4 w-4" />
+                      </span>
 
-                      {/* Label + description */}
-                      <div className="px-4 py-3">
-                        <p className={cn(
-                          'text-sm font-semibold transition-colors',
-                          selected === type ? 'text-primary' : 'text-text-primary',
-                        )}>
+                      <div>
+                        <p className={cn('text-sm font-semibold', selected === type ? 'text-primary' : 'text-text-primary')}>
                           {label}
                         </p>
                         <p className="mt-0.5 text-xs leading-relaxed text-text-muted">{description}</p>
@@ -217,7 +210,7 @@ export function CreateBoardWizard({ open, onClose }: CreateBoardWizardProps) {
                   ))}
                 </div>
 
-                <div className="flex justify-end gap-2 border-t border-surface-border px-6 py-4">
+                <div className="flex justify-end gap-2 border-t border-surface-border px-4 py-3">
                   <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
                   <Button type="button" onClick={() => setStep('details')}>
                     Continue with {selectedTemplate.label}
@@ -229,9 +222,7 @@ export function CreateBoardWizard({ open, onClose }: CreateBoardWizardProps) {
             {/* ── Step 2: Details form ── */}
             {step === 'details' && (
               <form onSubmit={handleSubmit(onSubmit)}>
-                <div className="flex flex-col gap-5 px-6 py-5">
-
-                  {/* Name + Key */}
+                <div className="flex flex-col gap-4 px-5 py-4">
                   <div className="flex gap-3">
                     <div className="flex-1">
                       <Input
@@ -242,7 +233,7 @@ export function CreateBoardWizard({ open, onClose }: CreateBoardWizardProps) {
                         {...register('name')}
                       />
                     </div>
-                    <div className="w-28">
+                    <div className="w-24">
                       <Input
                         label="Key"
                         placeholder="TF"
@@ -278,13 +269,9 @@ export function CreateBoardWizard({ open, onClose }: CreateBoardWizardProps) {
                   />
                 </div>
 
-                <div className="flex justify-end gap-2 border-t border-surface-border px-6 py-4">
-                  <Button type="button" variant="secondary" onClick={() => setStep('template')}>
-                    Back
-                  </Button>
-                  <Button type="submit" loading={isSubmitting}>
-                    Create board
-                  </Button>
+                <div className="flex justify-end gap-2 border-t border-surface-border px-4 py-3">
+                  <Button type="button" variant="secondary" onClick={() => setStep('template')}>Back</Button>
+                  <Button type="submit" loading={isSubmitting}>Create board</Button>
                 </div>
               </form>
             )}

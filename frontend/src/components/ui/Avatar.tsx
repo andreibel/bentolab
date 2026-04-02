@@ -14,11 +14,23 @@ interface AvatarProps {
   userId?: string | null
   /** Full name — used to derive initials if provided */
   name?: string | null
+  /** Image URL — shown instead of initials when present */
+  src?: string | null
   size?: AvatarSize
   className?: string
 }
 
-export function Avatar({ userId, name, size = 'sm', className }: AvatarProps) {
+export function Avatar({ userId, name, src, size = 'sm', className }: AvatarProps) {
+  if (src) {
+    return (
+      <img
+        src={src}
+        alt={name ?? 'avatar'}
+        className={cn('rounded-full object-cover ring-1 ring-surface-border', SIZE[size], className)}
+      />
+    )
+  }
+
   if (!userId && !name) {
     return (
       <div

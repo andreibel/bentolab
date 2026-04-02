@@ -1,5 +1,5 @@
 import {useCallback, useLayoutEffect, useMemo, useRef, useState} from 'react'
-import {Link, useParams} from 'react-router-dom'
+import {Link, useParams, useSearchParams} from 'react-router-dom'
 import {
   closestCenter,
   type CollisionDetection,
@@ -86,6 +86,7 @@ function toColumnId(id: string) {
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function BoardPage() {
   const { boardId } = useParams<{ boardId: string }>()
+  const [searchParams] = useSearchParams()
   const queryClient = useQueryClient()
 
   const { data: board, isLoading: boardLoading, isError: boardError } = useBoard(boardId!)
@@ -159,7 +160,9 @@ export default function BoardPage() {
   const [activeColumn,   setActiveColumn]   = useState<BoardColumnType | null>(null)
   const [addColumnOpen,  setAddColumnOpen]  = useState(false)
   const [issueModal,     setIssueModal]     = useState<{ open: boolean; columnId?: string }>({ open: false })
-  const [detailIssueId,  setDetailIssueId]  = useState<string | null>(null)
+  const urlIssueId = searchParams.get('issue')
+  const [detailIssueId,  setDetailIssueId]  = useState<string | null>(urlIssueId)
+  const openedFromUrl = useRef(!!urlIssueId)
   const [membersOpen,    setMembersOpen]    = useState(false)
   const [settingsOpen,   setSettingsOpen]   = useState(false)
   const MIN_PANEL = 680
@@ -188,6 +191,7 @@ export default function BoardPage() {
   function closeDetail() {
     setDetailIssueId(null)
     setPanelWidth(MIN_PANEL)
+    openedFromUrl.current = false
   }
 
   const sensors = useSensors(
@@ -427,25 +431,25 @@ export default function BoardPage() {
           )}
           <button
             onClick={() => setMembersOpen((v) => !v)}
-            className={`flex h-8 items-center gap-1.5 rounded-lg border px-3 text-xs transition-colors ${
+            title="Members"
+            className={`flex h-8 w-8 items-center justify-center rounded-lg border transition-colors ${
               membersOpen
                 ? 'border-primary/40 bg-primary-subtle text-primary'
                 : 'border-surface-border text-text-muted hover:border-primary/30 hover:text-text-primary'
             }`}
           >
             <Users className="h-3.5 w-3.5" />
-            Members
           </button>
           <button
             onClick={() => setSettingsOpen((v) => !v)}
-            className={`flex h-8 items-center gap-1.5 rounded-lg border px-3 text-xs transition-colors ${
+            title="Board settings"
+            className={`flex h-8 w-8 items-center justify-center rounded-lg border transition-colors ${
               settingsOpen
                 ? 'border-primary/40 bg-primary-subtle text-primary'
                 : 'border-surface-border text-text-muted hover:border-primary/30 hover:text-text-primary'
             }`}
           >
             <Settings className="h-3.5 w-3.5" />
-            Settings
           </button>
           <button
             onClick={() => setIssueModal({ open: true })}
@@ -474,7 +478,7 @@ export default function BoardPage() {
                   column={col}
                   issues={issuesByColumn.get(col.id) ?? []}
                   epicsMap={epicsMap}
-                  onIssueClick={(issue) => setDetailIssueId(issue.id)}
+                  onIssueClick={(issue) => { openedFromUrl.current = false; setDetailIssueId(issue.id) }}
                   onAddIssue={(columnId) => setIssueModal({ open: true, columnId })}
                 />
               ))}
@@ -537,6 +541,7 @@ export default function BoardPage() {
               issueId={detailIssueId}
               columns={sortedColumns}
               onClose={closeDetail}
+              defaultFullScreen={openedFromUrl.current}
             />
           </div>
         </>

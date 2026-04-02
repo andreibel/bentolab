@@ -4,6 +4,7 @@ import io.bento.kafka.event.BoardMemberAddedEvent;
 import io.bento.kafka.event.BoardMemberRemovedEvent;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
+import io.bento.notificationservice.service.EmailService;
 import io.bento.notificationservice.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Component;
 public class BoardEventConsumer {
 
     private final ObjectMapper kafkaObjectMapper;
+    private final EmailService emailService;
     private final NotificationService notificationService;
 
     @KafkaListener(topics = "bento.board.events", groupId = "notification-service")
@@ -33,6 +35,7 @@ public class BoardEventConsumer {
                 case "BoardMemberAddedEvent" -> {
                     BoardMemberAddedEvent e = kafkaObjectMapper.treeToValue(node, BoardMemberAddedEvent.class);
                     notificationService.createBoardMemberAddedNotification(e);
+                    emailService.sendBoardMemberAdded(e);
                 }
                 case "BoardMemberRemovedEvent" -> {
                     BoardMemberRemovedEvent e = kafkaObjectMapper.treeToValue(node, BoardMemberRemovedEvent.class);

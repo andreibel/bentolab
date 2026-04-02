@@ -41,4 +41,7 @@ export const queryKeys = {
     list:        (unreadOnly?: boolean) => ['notifications', 'list', unreadOnly] as const,
     unreadCount: ()                     => ['notifications', 'unread-count'] as const,
   },
+  attachments: {
+    list: (entityType: string, entityId: string) => ['attachments', entityType, entityId] as const,
+  },
 }

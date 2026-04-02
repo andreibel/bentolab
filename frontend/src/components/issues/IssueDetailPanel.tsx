@@ -1,6 +1,6 @@
 import {useCallback, useEffect, useRef, useState} from 'react'
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query'
-import {AlertCircle, Link2, Loader2, Pencil, RotateCcw, X, XCircle} from 'lucide-react'
+import {AlertCircle, Link2, Loader2, Maximize2, Minimize2, Pencil, RotateCcw, X, XCircle} from 'lucide-react'
 import {toast} from 'sonner'
 import {issuesApi, useIssues} from '@/api/issues'
 import {useEpics} from '@/api/epics'
@@ -13,6 +13,7 @@ import {IssueMetaPanel} from './detail/IssueMetaPanel'
 import {DescriptionEditor} from './detail/DescriptionEditor'
 import {IssueTimeTracking} from './detail/IssueTimeTracking'
 import {IssueActivity} from './detail/IssueActivity'
+import {IssueAttachments} from './detail/IssueAttachments'
 import type {Issue} from '@/types/issue'
 import type {BoardColumn} from '@/types/board'
 
@@ -67,15 +68,18 @@ export function IssueDetailPanel({
   boardId: propBoardId,
   columns,
   onClose,
+  defaultFullScreen = false,
 }: {
   issueId: string
   boardId?: string
   columns: BoardColumn[]
   onClose: () => void
+  defaultFullScreen?: boolean
 }) {
   const queryClient    = useQueryClient()
   const { user }       = useAuthStore()
   const [visible, setVisible] = useState(false)
+  const [isFullScreen, setIsFullScreen] = useState(defaultFullScreen)
 
   useEffect(() => {
     requestAnimationFrame(() => setVisible(true))
@@ -160,10 +164,20 @@ export function IssueDetailPanel({
   const childIssues = boardIssues?.content.filter((i) => i.parentIssueId === issue?.id) ?? []
 
   return (
+    <>
+      {isFullScreen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/20 backdrop-blur-[2px]"
+          onClick={onClose}
+          aria-hidden="true"
+        />
+      )}
     <div
       className={cn(
-        'flex h-full w-full flex-col',
-        'border-s border-surface-border bg-surface',
+        'flex flex-col bg-surface border-s border-surface-border',
+        isFullScreen
+          ? 'fixed inset-y-0 end-0 z-50 w-full max-w-3xl shadow-2xl'
+          : 'h-full w-full',
         'transition-transform duration-300 ease-out',
         visible ? 'translate-x-0' : 'translate-x-full',
       )}
@@ -195,13 +209,21 @@ export function IssueDetailPanel({
             <div className="ms-auto flex items-center gap-1">
               <button
                 onClick={() => {
-                  void navigator.clipboard.writeText(`${window.location.origin}/issues/${issueId}`)
+                  const boardPath = effectiveBoardId ? `/boards/${effectiveBoardId}` : window.location.pathname
+                  void navigator.clipboard.writeText(`${window.location.origin}${boardPath}?issue=${issueId}`)
                   toast.success('Link copied')
                 }}
                 title="Copy link"
                 className="rounded-md p-1.5 text-text-muted transition-colors hover:bg-surface-muted hover:text-text-primary"
               >
                 <Link2 className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => setIsFullScreen(v => !v)}
+                title={isFullScreen ? 'Exit full screen' : 'Full screen'}
+                className="rounded-md p-1.5 text-text-muted transition-colors hover:bg-surface-muted hover:text-text-primary"
+              >
+                {isFullScreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
               </button>
               {issue.closed ? (
                 <button
@@ -268,6 +290,8 @@ export function IssueDetailPanel({
 
               <IssueTimeTracking issue={issue} onUpdate={handleUpdate} />
 
+              <IssueAttachments issueId={issue.id} orgId={issue.orgId} />
+
               {childIssues.length > 0 && (
                 <section className="mb-6">
                   <h2 className="mb-2 text-xs font-semibold uppercase tracking-widest text-text-muted">
@@ -297,5 +321,6 @@ export function IssueDetailPanel({
         </>
       )}
     </div>
+    </>
   )
 }

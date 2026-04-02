@@ -7,6 +7,7 @@ import io.bento.kafka.event.IssuePriorityChangedEvent;
 import io.bento.kafka.event.IssueStatusChangedEvent;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
+import io.bento.notificationservice.service.EmailService;
 import io.bento.notificationservice.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +25,7 @@ import java.util.Set;
 public class IssueEventConsumer {
 
     private final ObjectMapper kafkaObjectMapper;
+    private final EmailService emailService;
     private final NotificationService notificationService;
 
     @KafkaListener(topics = "bento.issue.events", groupId = "notification-service")
@@ -41,6 +43,7 @@ public class IssueEventConsumer {
                 case "IssueAssignedEvent" -> {
                     IssueAssignedEvent e = kafkaObjectMapper.treeToValue(node, IssueAssignedEvent.class);
                     notificationService.createIssueAssignedNotification(e);
+                    emailService.sendIssueAssigned(e);
                 }
                 case "IssueCommentedEvent" -> {
                     IssueCommentedEvent e = kafkaObjectMapper.treeToValue(node, IssueCommentedEvent.class);
@@ -61,6 +64,7 @@ public class IssueEventConsumer {
                     for (String mentionedId : mentionedUserIds) {
                         if (!mentionedId.equals(e.authorUserId())) {
                             notificationService.createIssueMentionedNotification(e, mentionedId);
+                            emailService.sendIssueMentioned(e, mentionedId);
                         }
                     }
                 }
@@ -91,6 +95,7 @@ public class IssueEventConsumer {
                     boolean escalated = "CRITICAL".equals(e.newPriority()) || "HIGH".equals(e.newPriority());
                     if (escalated && e.assigneeId() != null && !e.assigneeId().equals(e.changedByUserId())) {
                         notificationService.createIssuePriorityChangedNotification(e);
+                        emailService.sendIssuePriorityEscalated(e);
                     }
                 }
                 default -> log.debug("Unhandled issue event type: {}", eventType);
