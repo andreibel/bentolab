@@ -3,12 +3,18 @@ import {EditorContent, useEditor} from '@tiptap/react'
 import {StarterKit} from '@tiptap/starter-kit'
 import {Bold, Code, Italic, List, ListOrdered} from 'lucide-react'
 import {marked} from 'marked'
+import {sanitizeHtml} from '@/utils/sanitize'
 import {cn} from '@/utils/cn'
 
 function toHtml(value: string): string {
   if (!value) return ''
-  if (value.trimStart().startsWith('<')) return value
-  return marked.parse(value, { async: false }) as string
+  // Always sanitize — whether the stored value is raw HTML or Markdown.
+  // The `startsWith('<')` shortcut was skipping sanitization for stored HTML,
+  // which is an XSS vector if the content was crafted via the API.
+  const raw = value.trimStart().startsWith('<')
+    ? value
+    : (marked.parse(value, { async: false }) as string)
+  return sanitizeHtml(raw)
 }
 
 export function DescriptionEditor({ value, onSave }: { value: string; onSave: (html: string) => void }) {
