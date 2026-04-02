@@ -164,8 +164,11 @@ function OrgSwitcher({ collapsed }: { collapsed: boolean }) {
             collapsed && 'justify-center'
           )}
         >
-          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-primary text-[10px] font-bold text-white">
-            {initials}
+          <div className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-md bg-primary text-[10px] font-bold text-white">
+            {orgs?.find((o) => o.id === currentOrgId)?.logoUrl
+              ? <img src={orgs.find((o) => o.id === currentOrgId)!.logoUrl!} alt={displayName} className="h-full w-full object-cover" />
+              : initials
+            }
           </div>
           {!collapsed && (
             <>
@@ -208,10 +211,13 @@ function OrgSwitcher({ collapsed }: { collapsed: boolean }) {
                 )}
               >
                 <div className={cn(
-                  'flex h-5 w-5 shrink-0 items-center justify-center rounded text-[9px] font-bold text-white',
-                  isCurrent ? 'bg-primary' : 'bg-text-muted'
+                  'flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded text-[9px] font-bold text-white',
+                  !org.logoUrl && (isCurrent ? 'bg-primary' : 'bg-text-muted')
                 )}>
-                  {org.name.slice(0, 2).toUpperCase()}
+                  {org.logoUrl
+                    ? <img src={org.logoUrl} alt={org.name} className="h-full w-full object-cover" />
+                    : org.name.slice(0, 2).toUpperCase()
+                  }
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{org.name}</p>
