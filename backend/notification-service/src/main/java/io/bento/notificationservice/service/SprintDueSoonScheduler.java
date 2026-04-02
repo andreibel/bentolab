@@ -19,6 +19,7 @@ import java.util.List;
 public class SprintDueSoonScheduler {
 
     private final TaskServiceClient taskServiceClient;
+    private final EmailService emailService;
     private final NotificationService notificationService;
     private final NotificationRepository notificationRepository;
 
@@ -37,6 +38,7 @@ public class SprintDueSoonScheduler {
                                 sprint.sprintId(), memberId, NotificationType.SPRINT_DUE_SOON, since);
                 if (!alreadySent) {
                     notificationService.createSprintDueSoonNotification(sprint, memberId);
+                    emailService.sendSprintDueSoon(sprint, memberId);
                 }
             }
         }

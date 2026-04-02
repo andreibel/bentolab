@@ -427,9 +427,17 @@ function UserPanel({ collapsed }: { collapsed: boolean }) {
             collapsed && 'justify-center'
           )}
         >
-          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary-subtle text-[10px] font-semibold text-primary">
-            {initials}
-          </div>
+          {user?.avatarUrl ? (
+            <img
+              src={user.avatarUrl}
+              alt={initials}
+              className="h-6 w-6 shrink-0 rounded-full object-cover ring-1 ring-surface-border"
+            />
+          ) : (
+            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary-subtle text-[10px] font-semibold text-primary">
+              {initials}
+            </div>
+          )}
           {!collapsed && (
             <div className="min-w-0 flex-1 text-start">
               <p className="truncate text-xs font-medium text-text-primary">

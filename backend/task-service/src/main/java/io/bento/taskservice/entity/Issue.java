@@ -77,6 +77,9 @@ public class Issue {
     private List<String> labelIds;
     private List<String> components;
 
+    // Attachments (IDs referencing attacment-service)
+    private List<String> attachmentIds;
+
     // Embedded
     private List<ChecklistItem> checklist;
     private List<ColumnHistoryEntry> columnHistory;

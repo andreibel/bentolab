@@ -39,6 +39,7 @@ export interface Issue {
   parentIssueId: string | null
   labelIds: string[]
   components: string[]
+  attachmentIds: string[]
   checklist: ChecklistItem[]
   commentCount: number
   reassignmentCount: number

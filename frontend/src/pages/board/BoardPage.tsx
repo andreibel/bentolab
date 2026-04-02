@@ -1,5 +1,5 @@
 import {useCallback, useLayoutEffect, useMemo, useRef, useState} from 'react'
-import {Link, useParams} from 'react-router-dom'
+import {Link, useParams, useSearchParams} from 'react-router-dom'
 import {
   closestCenter,
   type CollisionDetection,
@@ -86,6 +86,7 @@ function toColumnId(id: string) {
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function BoardPage() {
   const { boardId } = useParams<{ boardId: string }>()
+  const [searchParams] = useSearchParams()
   const queryClient = useQueryClient()
 
   const { data: board, isLoading: boardLoading, isError: boardError } = useBoard(boardId!)
@@ -159,7 +160,9 @@ export default function BoardPage() {
   const [activeColumn,   setActiveColumn]   = useState<BoardColumnType | null>(null)
   const [addColumnOpen,  setAddColumnOpen]  = useState(false)
   const [issueModal,     setIssueModal]     = useState<{ open: boolean; columnId?: string }>({ open: false })
-  const [detailIssueId,  setDetailIssueId]  = useState<string | null>(null)
+  const urlIssueId = searchParams.get('issue')
+  const [detailIssueId,  setDetailIssueId]  = useState<string | null>(urlIssueId)
+  const openedFromUrl = useRef(!!urlIssueId)
   const [membersOpen,    setMembersOpen]    = useState(false)
   const [settingsOpen,   setSettingsOpen]   = useState(false)
   const MIN_PANEL = 680
@@ -188,6 +191,7 @@ export default function BoardPage() {
   function closeDetail() {
     setDetailIssueId(null)
     setPanelWidth(MIN_PANEL)
+    openedFromUrl.current = false
   }
 
   const sensors = useSensors(
@@ -474,7 +478,7 @@ export default function BoardPage() {
                   column={col}
                   issues={issuesByColumn.get(col.id) ?? []}
                   epicsMap={epicsMap}
-                  onIssueClick={(issue) => setDetailIssueId(issue.id)}
+                  onIssueClick={(issue) => { openedFromUrl.current = false; setDetailIssueId(issue.id) }}
                   onAddIssue={(columnId) => setIssueModal({ open: true, columnId })}
                 />
               ))}
@@ -537,6 +541,7 @@ export default function BoardPage() {
               issueId={detailIssueId}
               columns={sortedColumns}
               onClose={closeDetail}
+              defaultFullScreen={openedFromUrl.current}
             />
           </div>
         </>

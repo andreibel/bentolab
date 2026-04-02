@@ -76,9 +76,17 @@ export function Header({ title, onCreateClick, onSearchClick }: HeaderProps) {
         <NotificationBell />
 
         {/* User avatar */}
-        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary-subtle text-xs font-semibold text-primary">
-          {initials}
-        </div>
+        {user?.avatarUrl ? (
+          <img
+            src={user.avatarUrl}
+            alt={`${user.firstName} ${user.lastName}`}
+            className="h-7 w-7 rounded-full object-cover ring-1 ring-surface-border"
+          />
+        ) : (
+          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary-subtle text-xs font-semibold text-primary">
+            {initials}
+          </div>
+        )}
       </div>
     </header>
   )

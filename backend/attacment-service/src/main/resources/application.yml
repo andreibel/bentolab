@@ -1,0 +1,76 @@
+spring:
+    application:
+        name: attacment-service
+
+server:
+    port: 8087
+
+internal:
+    gateway-secret: ${GATEWAY_INTERNAL_SECRET:dktxrevDkto3aZUvUD6REkn+x2x0foPhAvXBueFO4rs=}
+
+storage:
+    upload-url-expiry-minutes: 10
+    download-url-expiry-minutes: 60
+
+---
+spring:
+    config:
+        activate:
+            on-profile: dev
+    mongodb:
+        host: localhost
+        port: 27017
+        database: attachment_db
+        username: root
+        password: root
+        authentication-database: admin
+
+storage:
+    endpoint: http://localhost:9000
+    bucket-name: bento
+    region: us-east-1
+    access-key: minioadmin
+    secret-key: minioadmin
+    path-style-access: true
+
+---
+spring:
+    config:
+        activate:
+            on-profile: docker
+    mongodb:
+        host: mongo
+        port: 27017
+        database: attachment_db
+        username: root
+        password: root
+        authentication-database: admin
+
+storage:
+    endpoint: http://minio:9000
+    bucket-name: bento
+    region: us-east-1
+    access-key: minioadmin
+    secret-key: minioadmin
+    path-style-access: true
+
+---
+spring:
+    config:
+        activate:
+            on-profile: selfhost
+    mongodb:
+        host: ${MONGO_HOST:localhost}
+        port: ${MONGO_PORT:27017}
+        database: ${MONGO_DB:attachment_db}
+        username: ${MONGO_USERNAME}
+        password: ${MONGO_PASSWORD}
+        authentication-database: admin
+
+storage:
+    endpoint: ${STORAGE_ENDPOINT:}
+    bucket-name: ${STORAGE_BUCKET:bento}
+    region: ${STORAGE_REGION:us-east-1}
+    access-key: ${STORAGE_ACCESS_KEY}
+    secret-key: ${STORAGE_SECRET_KEY}
+    path-style-access: ${STORAGE_PATH_STYLE:false}

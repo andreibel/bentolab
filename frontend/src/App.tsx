@@ -24,6 +24,7 @@ import InboxPage from '@/pages/InboxPage'
 import AutomationsPage from '@/pages/settings/AutomationsPage'
 import SecurityPage from '@/pages/settings/SecurityPage'
 import MembersPage from '@/pages/settings/MembersPage'
+import ProfilePage from '@/pages/settings/ProfilePage'
 import {FeaturePlaceholder} from '@/components/common/FeaturePlaceholder'
 import {BarChart2, GanttChart} from 'lucide-react'
 
@@ -99,7 +100,7 @@ export default function App() {
           <Route path="/settings/automations"  element={<AutomationsPage />} />
           <Route path="/settings/org"          element={<div className="p-6 text-sm text-text-muted">Org Settings — coming soon</div>} />
           <Route path="/settings/security"     element={<SecurityPage />} />
-          <Route path="/settings/profile"      element={<div className="p-6 text-sm text-text-muted">Profile — coming soon</div>} />
+          <Route path="/settings/profile"      element={<ProfilePage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

@@ -131,6 +131,27 @@ services:
       start_period: 60s
       retries: 5
 
+  # ── MinIO (S3-compatible object storage for dev) ─────────────────────────
+  minio:
+    image: minio/minio:latest
+    restart: "no"
+    ports:
+      - "9000:9000"   # S3 API
+      - "9001:9001"   # Web console — http://localhost:9001
+    volumes:
+      - minio_data:/data
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+      MINIO_API_CORS_ALLOW_ORIGIN: "http://localhost:5173,http://localhost:3000"
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: mc ready local
+      interval: 10s
+      timeout: 5s
+      start_period: 15s
+      retries: 5
+
   # ── Mail (dev only) ───────────────────────────────────────────────────────
   mailhog:
     image: mailhog/mailhog:latest
@@ -146,3 +167,4 @@ volumes:
   redis_data:
   kafka_data:
   mongo_data:
+  minio_data:
