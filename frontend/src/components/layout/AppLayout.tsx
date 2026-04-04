@@ -11,6 +11,9 @@ import { useAuthStore } from '@/stores/authStore'
 
 const TITLE_MAP: Record<string, string> = {
   '/boards':             'Labs',
+  '/summary':            'Summary',
+  '/timeline':           'Timeline',
+  '/reports':            'Reports',
   '/calendar':           'Calendar',
   '/my-issues':          'My Issues',
   '/inbox':              'Inbox',

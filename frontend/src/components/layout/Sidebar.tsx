@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react'
+import React, {useEffect, useState} from 'react'
 import {buildOrgUrl} from '@/utils/subdomain'
 import {NavLink, useLocation, useMatch, useNavigate} from 'react-router-dom'
 import {useQuery, useQueryClient} from '@tanstack/react-query'
@@ -11,16 +11,18 @@ import type {Board} from '@/types/board'
 import {toast} from 'sonner'
 import {
   ArrowLeft,
+  BarChart2,
   Building2,
   CalendarDays,
   ChevronDown,
   CircleDot,
+  GanttChart,
   Inbox,
+  Kanban,
+  LayoutDashboard,
   LogOut,
   PanelLeftClose,
   PanelLeftOpen,
-  Pin,
-  PinOff,
   Plus,
   Settings,
   ShieldCheck,
@@ -34,7 +36,7 @@ import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import * as Tooltip from '@radix-ui/react-tooltip'
 import {useAuthStore} from '@/stores/authStore'
 import {useUIStore} from '@/stores/uiStore'
-import {usePinnedLabs, useRecentLabs} from '@/hooks/usePinnedLabs'
+import {useRecentLabs} from '@/hooks/usePinnedLabs'
 import {cn} from '@/utils/cn'
 
 // ─── Lab color (deterministic from id) ───────────────────────────────────────
@@ -244,19 +246,9 @@ function OrgSwitcher({ collapsed }: { collapsed: boolean }) {
   )
 }
 
-// ─── Lab item ─────────────────────────────────────────────────────────────────
+// ─── Recent board item (compact) ─────────────────────────────────────────────
 
-function LabItem({
-  board,
-  collapsed,
-  isPinned,
-  onPinToggle,
-}: {
-  board: Board
-  collapsed: boolean
-  isPinned: boolean
-  onPinToggle: (id: string) => void
-}) {
+function RecentBoardItem({ board, collapsed }: { board: Board; collapsed: boolean }) {
   const color = labColor(board.id)
 
   const dot = (
@@ -299,111 +291,151 @@ function LabItem({
   }
 
   return (
-    <div className="group relative">
-      <NavLink
-        to={`/boards/${board.id}`}
-        className={({ isActive }) =>
-          cn(
-            'flex items-center gap-2 rounded-lg px-2 py-1.5 pe-8 text-sm font-medium transition-colors',
+    <NavLink
+      to={`/boards/${board.id}`}
+      className={({ isActive }) =>
+        cn(
+          'flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium transition-colors',
+          isActive
+            ? 'bg-primary-subtle text-primary'
+            : 'text-text-secondary hover:bg-surface-border hover:text-text-primary'
+        )
+      }
+    >
+      {dot}
+      <span className="truncate">{board.name}</span>
+    </NavLink>
+  )
+}
+
+// ─── Boards nav item with dropdown ───────────────────────────────────────────
+
+function BoardsNavItem({ boards, collapsed }: { boards: Board[]; collapsed: boolean }) {
+  const navigate = useNavigate()
+  const { pathname } = useLocation()
+  const [open, setOpen] = useState(false)
+  const isActive = pathname === '/boards'
+
+  const icon = <Kanban className="h-4 w-4 shrink-0" />
+
+  if (collapsed) {
+    return (
+      <Tooltip.Root>
+        <Tooltip.Trigger asChild>
+          <NavLink
+            to="/boards"
+            className={cn(
+              'flex items-center justify-center rounded-lg px-2 py-1.5 text-sm font-medium transition-colors',
+              isActive
+                ? 'bg-primary-subtle text-primary'
+                : 'text-text-secondary hover:bg-surface-border hover:text-text-primary'
+            )}
+          >
+            {icon}
+          </NavLink>
+        </Tooltip.Trigger>
+        <Tooltip.Portal>
+          <Tooltip.Content
+            side="right"
+            sideOffset={12}
+            className="rounded-md border border-surface-border bg-surface px-2 py-1 text-xs text-text-primary shadow-lg"
+          >
+            Boards
+            <Tooltip.Arrow className="fill-surface-border" />
+          </Tooltip.Content>
+        </Tooltip.Portal>
+      </Tooltip.Root>
+    )
+  }
+
+  return (
+    <div>
+      <div className="flex items-center">
+        <NavLink
+          to="/boards"
+          className={cn(
+            'flex flex-1 items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium transition-colors',
             isActive
               ? 'bg-primary-subtle text-primary'
               : 'text-text-secondary hover:bg-surface-border hover:text-text-primary'
-          )
-        }
-      >
-        {dot}
-        <span className="truncate">{board.name}</span>
-      </NavLink>
-      <button
-        onClick={(e) => { e.preventDefault(); onPinToggle(board.id) }}
-        title={isPinned ? 'Unpin' : 'Pin'}
-        className="absolute inset-e-1.5 top-1/2 -translate-y-1/2 rounded p-1 text-text-muted opacity-0 transition-opacity group-hover:opacity-100 hover:text-text-primary"
-      >
-        {isPinned ? <PinOff className="h-3 w-3" /> : <Pin className="h-3 w-3" />}
-      </button>
+          )}
+        >
+          {icon}
+          <span>Boards</span>
+        </NavLink>
+        <button
+          onClick={() => setOpen((v) => !v)}
+          className="rounded p-1 text-text-muted transition-colors hover:bg-surface-border hover:text-text-primary"
+        >
+          <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', open && 'rotate-180')} />
+        </button>
+      </div>
+
+      {open && (
+        <div className="ms-4 mt-0.5 flex flex-col gap-0.5 border-s border-surface-border ps-2">
+          {boards.slice(0, 8).map((board) => {
+            const color = labColor(board.id)
+            return (
+              <NavLink
+                key={board.id}
+                to={`/boards/${board.id}`}
+                className={({ isActive: active }) =>
+                  cn(
+                    'flex items-center gap-2 rounded-md px-2 py-1 text-xs font-medium transition-colors',
+                    active
+                      ? 'bg-primary-subtle text-primary'
+                      : 'text-text-secondary hover:bg-surface-border hover:text-text-primary'
+                  )
+                }
+              >
+                <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: color }} />
+                <span className="truncate">{board.name}</span>
+              </NavLink>
+            )
+          })}
+          {boards.length > 8 && (
+            <button
+              onClick={() => { navigate('/boards'); setOpen(false) }}
+              className="px-2 py-1 text-start text-xs text-text-muted hover:text-text-primary"
+            >
+              View all ({boards.length})
+            </button>
+          )}
+          <button
+            onClick={() => { navigate('/boards'); setOpen(false) }}
+            className="flex items-center gap-2 rounded-md px-2 py-1 text-xs font-medium text-text-muted transition-colors hover:bg-surface-border hover:text-text-primary"
+          >
+            <Plus className="h-3 w-3" />
+            New board
+          </button>
+        </div>
+      )}
     </div>
   )
 }
 
-// ─── Labs section ─────────────────────────────────────────────────────────────
+// ─── Recent section ──────────────────────────────────────────────────────────
 
-function LabsSection({
-  boards,
-  collapsed,
-  pinned,
-  recent,
-  isPinned,
-  onPinToggle,
-}: {
-  boards: Board[]
-  collapsed: boolean
-  pinned: string[]
-  recent: string[]
-  isPinned: (id: string) => boolean
-  onPinToggle: (id: string) => void
-}) {
-  const navigate = useNavigate()
-
-  const pinnedBoards = pinned.map((id) => boards.find((b) => b.id === id)).filter(Boolean) as Board[]
+function RecentSection({ boards, recent, collapsed }: { boards: Board[]; recent: string[]; collapsed: boolean }) {
   const recentBoards = recent
-    .filter((id) => !pinned.includes(id))
     .map((id) => boards.find((b) => b.id === id))
     .filter(Boolean)
     .slice(0, 3) as Board[]
-  const otherBoards = boards.filter((b) => !pinned.includes(b.id) && !recent.includes(b.id))
 
-  const group = (label: string, items: Board[]) => (
-    <div key={label} className="mb-3">
+  if (recentBoards.length === 0) return null
+
+  return (
+    <div className="px-2 py-2">
       {!collapsed && (
-        <p className="mb-0.5 px-2 text-[9px] font-semibold uppercase tracking-widest text-text-muted">
-          {label}
+        <p className="mb-1 px-2 text-[9px] font-semibold uppercase tracking-widest text-text-muted">
+          Recent
         </p>
       )}
       <div className="flex flex-col gap-0.5">
-        {items.map((b) => (
-          <LabItem
-            key={b.id}
-            board={b}
-            collapsed={collapsed}
-            isPinned={isPinned(b.id)}
-            onPinToggle={onPinToggle}
-          />
+        {recentBoards.map((b) => (
+          <RecentBoardItem key={b.id} board={b} collapsed={collapsed} />
         ))}
       </div>
-    </div>
-  )
-
-  return (
-    <div className="flex-1 overflow-y-auto px-2 py-2">
-      {!collapsed && (
-        <div className="mb-2 flex items-center justify-between px-2">
-          <span className="text-[10px] font-semibold uppercase tracking-widest text-text-muted">Labs</span>
-          <button
-            onClick={() => navigate('/boards')}
-            title="All labs"
-            className="rounded p-0.5 text-text-muted hover:text-text-primary"
-          >
-            <Plus className="h-3.5 w-3.5" />
-          </button>
-        </div>
-      )}
-
-      {pinnedBoards.length > 0 && group('Pinned', pinnedBoards)}
-      {recentBoards.length > 0 && group('Recent', recentBoards)}
-      {otherBoards.length > 0 && group(
-        pinnedBoards.length > 0 || recentBoards.length > 0 ? 'All' : '',
-        otherBoards,
-      )}
-
-      {boards.length === 0 && !collapsed && (
-        <button
-          onClick={() => navigate('/boards')}
-          className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-text-muted hover:bg-surface-border hover:text-text-primary"
-        >
-          <Plus className="h-4 w-4" />
-          Create your first lab
-        </button>
-      )}
     </div>
   )
 }
@@ -547,10 +579,10 @@ export function Sidebar() {
   const collapsed = sidebarCollapsed
   const logoSrc = theme === 'dark' ? '/logo-dark.svg' : '/logo.svg'
 
-  const { pinned, togglePin, isPinned } = usePinnedLabs()
   const { recent, trackVisit } = useRecentLabs()
 
   const { data: boards = [] } = useBoards()
+  const activeBoards = boards.filter((b) => !b.isArchived)
 
   // Track board visits
   const boardMatch = useMatch({ path: '/boards/:boardId', end: false })
@@ -598,18 +630,31 @@ export function Sidebar() {
           <OrgSwitcher collapsed={collapsed} />
         </div>
 
-        {/* Labs list */}
-        <LabsSection
-          boards={boards}
-          collapsed={collapsed}
-          pinned={pinned}
-          recent={recent}
-          isPinned={isPinned}
-          onPinToggle={togglePin}
-        />
+        {/* Recent boards */}
+        <RecentSection boards={activeBoards} recent={recent} collapsed={collapsed} />
 
-        {/* Global personal items */}
+        {/* Workspace */}
+        <div className="flex-1 overflow-y-auto px-2 py-2">
+          {!collapsed && (
+            <p className="mb-1 px-2 text-[9px] font-semibold uppercase tracking-widest text-text-muted">
+              Workspace
+            </p>
+          )}
+          <div className="flex flex-col gap-0.5">
+            <BoardsNavItem boards={activeBoards} collapsed={collapsed} />
+            <GlobalNavItem to="/summary"  icon={LayoutDashboard} label="Summary"  collapsed={collapsed} />
+            <GlobalNavItem to="/timeline" icon={GanttChart}      label="Timeline" collapsed={collapsed} />
+            <GlobalNavItem to="/reports"  icon={BarChart2}       label="Reports"  collapsed={collapsed} />
+          </div>
+        </div>
+
+        {/* Personal */}
         <div className={cn('border-t border-surface-border px-2 py-2', collapsed && 'flex flex-col items-center gap-0.5')}>
+          {!collapsed && (
+            <p className="mb-1 px-2 text-[9px] font-semibold uppercase tracking-widest text-text-muted">
+              Personal
+            </p>
+          )}
           <GlobalNavItem to="/my-issues"   icon={CircleDot}    label="My Issues" collapsed={collapsed} />
           <GlobalNavItem to="/inbox"       icon={Inbox}        label="Inbox"     collapsed={collapsed} />
           <GlobalNavItem to="/calendar"    icon={CalendarDays} label="Calendar"  collapsed={collapsed} />

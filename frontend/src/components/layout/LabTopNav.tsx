@@ -2,21 +2,44 @@ import {NavLink, useParams} from 'react-router-dom'
 import {useBoard} from '@/api/boards'
 import {cn} from '@/utils/cn'
 import {Loader2} from 'lucide-react'
+import type {BoardType} from '@/types/board'
 
-const LAB_TABS = [
+interface LabTab {
+  label: string
+  path: string
+}
+
+const ALL_TABS: LabTab[] = [
   { label: 'Board',    path: ''          },
   { label: 'Summary',  path: '/summary'  },
   { label: 'Backlog',  path: '/backlog'  },
   { label: 'Sprints',  path: '/sprints'  },
+  { label: 'Triage',   path: '/triage'   },
   { label: 'Timeline', path: '/timeline' },
   { label: 'Reports',  path: '/reports'  },
 ]
+
+function getTabsForBoardType(boardType: BoardType | undefined): LabTab[] {
+  switch (boardType) {
+    case 'KANBAN':
+      return ALL_TABS.filter((t) => !['Backlog', 'Sprints', 'Triage'].includes(t.label))
+    case 'BUG_TRACKING':
+      return ALL_TABS.filter((t) => !['Backlog', 'Sprints'].includes(t.label))
+    case 'SCRUM':
+      return ALL_TABS.filter((t) => t.label !== 'Triage')
+    case 'CUSTOM':
+    default:
+      return ALL_TABS.filter((t) => t.label !== 'Triage')
+  }
+}
 
 export function LabTopNav() {
   const { boardId } = useParams<{ boardId: string }>()
   const { data: board, isLoading } = useBoard(boardId!)
 
   if (!boardId) return null
+
+  const tabs = getTabsForBoardType(board?.boardType)
 
   return (
     <div className="flex h-10 shrink-0 items-center border-b border-surface-border bg-surface px-4">
@@ -39,7 +62,7 @@ export function LabTopNav() {
 
       {/* Tabs */}
       <nav className="flex items-center">
-        {LAB_TABS.map(({ label, path }) => {
+        {tabs.map(({ label, path }) => {
           const to = `/boards/${boardId}${path}`
           return (
             <NavLink

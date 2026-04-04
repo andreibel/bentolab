@@ -27,7 +27,7 @@ import MembersPage from '@/pages/settings/MembersPage'
 import ProfilePage from '@/pages/settings/ProfilePage'
 import OrgGeneralPage from '@/pages/settings/OrgGeneralPage'
 import {FeaturePlaceholder} from '@/components/common/FeaturePlaceholder'
-import {BarChart2, GanttChart} from 'lucide-react'
+import {BarChart2, GanttChart, LayoutDashboard} from 'lucide-react'
 
 const RTL_LANGS = ['he', 'ar', 'fa']
 
@@ -42,6 +42,11 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 const SummaryPage  = SummaryPageComponent
 const TimelinePage = () => <FeaturePlaceholder icon={GanttChart} title="Timeline" description="Visualize your lab's work on a timeline and roadmap view."  badge="Coming Soon" />
 const LabReports   = () => <FeaturePlaceholder icon={BarChart2}  title="Reports"  description="Velocity, burndown, and cycle time analytics for this lab."  badge="Coming Soon" />
+
+// Global workspace placeholders
+const GlobalSummary  = () => <FeaturePlaceholder icon={LayoutDashboard} title="Summary"  description="Overview of all your boards — issues, activity, and progress across your workspace." badge="Coming Soon" />
+const GlobalTimeline = () => <FeaturePlaceholder icon={GanttChart}      title="Timeline" description="Cross-board timeline and roadmap view for your entire workspace."                  badge="Coming Soon" />
+const GlobalReports  = () => <FeaturePlaceholder icon={BarChart2}       title="Reports"  description="Analytics and insights across all boards — velocity, cycle time, and trends."       badge="Coming Soon" />
 
 export default function App() {
   const { i18n } = useTranslation()
@@ -89,6 +94,11 @@ export default function App() {
           <Route path="/boards/:boardId/sprints"  element={<SprintsPage />} />
           <Route path="/boards/:boardId/timeline" element={<TimelinePage />} />
           <Route path="/boards/:boardId/reports"  element={<LabReports />} />
+
+          {/* Workspace global views */}
+          <Route path="/summary"   element={<GlobalSummary />} />
+          <Route path="/timeline"  element={<GlobalTimeline />} />
+          <Route path="/reports"   element={<GlobalReports />} />
 
           {/* Personal */}
           <Route path="/my-issues" element={<MyIssuesPage />} />
