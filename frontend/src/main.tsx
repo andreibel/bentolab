@@ -24,7 +24,7 @@ if (import.meta.env.DEV) {
     { id: '8', orgId: 'org1', userId: 'u1', type: 'SPRINT_COMPLETED',      title: 'Sprint completed: Sprint 23',         message: '18 issues completed, 4 carried over',                                             sprintId: 's0', boardId: 'b1', isRead: true,  createdAt: new Date(Date.now() - 7 * 86400_000).toISOString() },
   ]
 
-  ;(window as Record<string, unknown>).seedNotifications = () => {
+  ;(window as unknown as Record<string, unknown>).seedNotifications = () => {
     queryClient.setQueryData(['notifications', 'list', undefined], {
       content: MOCK_NOTIFICATIONS,
       totalElements: MOCK_NOTIFICATIONS.length,

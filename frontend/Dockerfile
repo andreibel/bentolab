@@ -1,6 +1,11 @@
 # Stage 1: Build
 FROM node:24-alpine AS builder
 
+ARG VITE_API_URL=http://localhost:8080
+ARG VITE_APP_DOMAIN=localhost
+ENV VITE_API_URL=${VITE_API_URL}
+ENV VITE_APP_DOMAIN=${VITE_APP_DOMAIN}
+
 WORKDIR /app
 
 COPY package*.json ./

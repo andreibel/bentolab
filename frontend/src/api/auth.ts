@@ -2,8 +2,8 @@ import client from './client'
 import type {AuthResponse, User} from '@/types/auth'
 
 export const authApi = {
-  login: (email: string, password: string) =>
-    client.post<AuthResponse>('/api/auth/login', { email, password }).then((r) => r.data),
+  login: (email: string, password: string, orgSlug?: string) =>
+    client.post<AuthResponse>('/api/auth/login', { email, password, orgSlug }).then((r) => r.data),
 
   register: (data: {
     email: string

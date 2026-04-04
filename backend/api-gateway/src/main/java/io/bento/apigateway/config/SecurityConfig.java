@@ -19,9 +19,11 @@ public class SecurityConfig {
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource(
-            @Value("${cors.allowed-origin:http://localhost:5173}") String allowedOrigin) {
+            @Value("${cors.allowed-origin-patterns:http://localhost:5173,http://*.localhost:5173,http://localhost:3000,http://*.localhost:3000}") String patterns) {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of(allowedOrigin));
+        // setAllowedOriginPatterns supports wildcards (e.g. http://*.localhost:5173)
+        // which is required for subdomain-per-org routing in dev and production
+        config.setAllowedOriginPatterns(List.of(patterns.split(",")));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);

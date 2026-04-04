@@ -2,6 +2,7 @@ import {create} from 'zustand'
 import {createJSONStorage, persist} from 'zustand/middleware'
 import axios from 'axios'
 import type {User} from '@/types/auth'
+import {getOrgSlug} from '@/utils/subdomain'
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8080'
 
@@ -54,6 +55,26 @@ export const useAuthStore = create<AuthState & AuthActions>()(
             await get().refresh()
           } catch {
             get().logout()
+          }
+        }
+        // If on an org subdomain but the stored org slug differs, re-scope the token
+        const subdomainSlug = getOrgSlug()
+        if (subdomainSlug && get().orgSlug !== subdomainSlug) {
+          try {
+            const res = await axios.post(`${BASE_URL}/api/auth/switch-org-by-slug`, {
+              orgSlug: subdomainSlug,
+              refreshToken: get().refreshToken,
+            })
+            const payload = parseJwt(res.data.accessToken)
+            set({
+              accessToken:  res.data.accessToken,
+              currentOrgId: (payload.orgId   as string) ?? get().currentOrgId,
+              orgRole:      (payload.orgRole  as string) ?? get().orgRole,
+              orgSlug:      (payload.orgSlug  as string) ?? subdomainSlug,
+            })
+          } catch {
+            // Slug mismatch but we can't switch — user may not be a member
+            // Leave them logged in; the backend will reject scoped calls
           }
         }
         set({ isInitialized: true })

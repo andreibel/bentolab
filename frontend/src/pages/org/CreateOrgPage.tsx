@@ -1,8 +1,9 @@
 import {useEffect, useState} from 'react'
+import {buildOrgUrl} from '@/utils/subdomain'
 import {useForm} from 'react-hook-form'
 import {zodResolver} from '@hookform/resolvers/zod'
 import {z} from 'zod'
-import {Link, useNavigate} from 'react-router-dom'
+import {Link} from 'react-router-dom'
 import {toast} from 'sonner'
 import {orgsApi} from '@/api/orgs'
 import {authApi} from '@/api/auth'
@@ -34,9 +35,8 @@ function toSlug(name: string) {
 }
 
 export default function CreateOrgPage() {
-  const navigate = useNavigate()
   const { setOrgContext, logout } = useAuthStore()
-  const [createdOrg, setCreatedOrg] = useState<{ id: string; name: string } | null>(null)
+  const [createdOrg, setCreatedOrg] = useState<{ id: string; name: string; slug: string } | null>(null)
 
   const {
     register,
@@ -63,7 +63,7 @@ export default function CreateOrgPage() {
       // Switch org context — auth service issues a new JWT with orgId embedded
       const { accessToken } = await authApi.switchOrg(org.id)
       setOrgContext(org.id, 'ORG_OWNER', org.slug, accessToken, org.name)
-      setCreatedOrg({ id: org.id, name: org.name })
+      setCreatedOrg({ id: org.id, name: org.name, slug: org.slug })
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : 'Could not create organization'
@@ -79,7 +79,7 @@ export default function CreateOrgPage() {
         <OrgInviteModal
           orgId={createdOrg.id}
           orgName={createdOrg.name}
-          onDone={() => navigate('/boards')}
+          onDone={() => { window.location.href = buildOrgUrl(createdOrg.slug, '/boards') }}
         />
       </>
     )

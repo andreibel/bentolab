@@ -52,6 +52,16 @@ public class AuthController {
         return ResponseEntity.ok(authService.switchOrg(userId, request.orgId()));
     }
 
+    /**
+     * Switches org context using a refresh token instead of an access token.
+     * Called when the user lands on a subdomain whose org slug differs from their stored context.
+     * No JWT required — validated via refresh token.
+     */
+    @PostMapping("/switch-org-by-slug")
+    public ResponseEntity<TokenResponse> switchOrgBySlug(@Valid @RequestBody SwitchOrgBySlugRequest request) {
+        return ResponseEntity.ok(authService.switchOrgBySlug(request.refreshToken(), request.orgSlug()));
+    }
+
     @GetMapping("/verify-email")
     public ResponseEntity<Void> verifyEmail(@RequestParam String token) {
         emailVerificationService.verify(token);

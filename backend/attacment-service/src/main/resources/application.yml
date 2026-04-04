@@ -32,6 +32,9 @@ storage:
     access-key: minioadmin
     secret-key: minioadmin
     path-style-access: true
+    cors-origins:
+        - "http://localhost:5173"
+        - "http://*.localhost:5173"
 
 ---
 spring:
@@ -53,6 +56,9 @@ storage:
     access-key: minioadmin
     secret-key: minioadmin
     path-style-access: true
+    cors-origins:
+        - "http://localhost:5173"
+        - "http://*.localhost:5173"
 
 ---
 spring:
@@ -74,3 +80,6 @@ storage:
     access-key: ${STORAGE_ACCESS_KEY}
     secret-key: ${STORAGE_SECRET_KEY}
     path-style-access: ${STORAGE_PATH_STYLE:false}
+    cors-origins:
+        - "https://bentolab.app"
+        - "https://*.bentolab.app"

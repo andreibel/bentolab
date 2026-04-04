@@ -1,4 +1,5 @@
 import React, {useEffect} from 'react'
+import {buildOrgUrl} from '@/utils/subdomain'
 import {NavLink, useLocation, useMatch, useNavigate} from 'react-router-dom'
 import {useQuery, useQueryClient} from '@tanstack/react-query'
 import {orgsApi} from '@/api/orgs'
@@ -149,7 +150,8 @@ function OrgSwitcher({ collapsed }: { collapsed: boolean }) {
       const { accessToken } = await authApi.switchOrg(org.id)
       setOrgContext(org.id, '', org.slug, accessToken, org.name)
       await queryClient.invalidateQueries()
-      navigate('/boards')
+      // Redirect to the org's subdomain
+      window.location.href = buildOrgUrl(org.slug, '/boards')
     } catch {
       toast.error('Failed to switch organization')
     }

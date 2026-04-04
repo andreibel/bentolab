@@ -24,6 +24,9 @@ export const boardsApi = {
   delete: (boardId: string) =>
     client.delete(`/api/boards/${boardId}`),
 
+  archive: (boardId: string) =>
+    client.patch<Board>(`/api/boards/${boardId}/archive`).then((r) => r.data),
+
   columns: (boardId: string) =>
     client.get<BoardColumn[]>(`/api/boards/${boardId}/columns`).then((r) => r.data),
 

@@ -98,7 +98,7 @@ public class AuthService {
         userEventPublisher.publishUserLoggedIn(new UserLoggedInEvent(user.getId(), null, Instant.now().toString()));
 
         List<UserOrgDto> organizations = fetchUserOrganizations(user.getId());
-        UserOrgDto primaryOrg = organizations.isEmpty() ? null : organizations.getFirst();
+        UserOrgDto primaryOrg = resolveOrg(organizations, request.orgSlug());
 
         String accessToken = jwtService.generateAccessToken(user, primaryOrg);
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(user, null, null);
@@ -162,7 +162,48 @@ public class AuthService {
         return new TokenResponse(accessToken, refreshToken.getToken());
     }
 
+    /**
+     * Switches org context using only a refresh token (no access token required).
+     * Used by the frontend when the user lands on a subdomain whose slug differs
+     * from their currently stored org context.
+     */
+    @Transactional
+    public TokenResponse switchOrgBySlug(String refreshTokenValue, String orgSlug) {
+        RefreshToken refreshToken = refreshTokenService.validateRefreshToken(refreshTokenValue);
+        User user = refreshToken.getUser();
+
+        List<UserOrgDto> organizations = fetchUserOrganizations(user.getId());
+        UserOrgDto targetOrg = organizations.stream()
+                .filter(o -> orgSlug.equals(o.orgSlug()))
+                .findFirst()
+                .orElse(null);
+
+        if (targetOrg == null) {
+            throw new BadCredentialsException("You are not a member of this workspace");
+        }
+
+        user.setCurrentOrgId(targetOrg.orgId());
+        userRepository.save(user);
+
+        String accessToken = jwtService.generateAccessToken(user, targetOrg);
+        return new TokenResponse(accessToken, refreshToken.getToken());
+    }
+
     private List<UserOrgDto> fetchUserOrganizations(UUID userId) {
         return orgServiceClient.getUserOrgs(userId);
+    }
+
+    /**
+     * Picks the org matching {@code orgSlug} from the list.
+     * Falls back to the first org if slug is null or not found (preserves existing behaviour).
+     */
+    private UserOrgDto resolveOrg(List<UserOrgDto> organizations, String orgSlug) {
+        if (orgSlug != null && !orgSlug.isBlank()) {
+            return organizations.stream()
+                    .filter(o -> orgSlug.equals(o.orgSlug()))
+                    .findFirst()
+                    .orElseGet(() -> organizations.isEmpty() ? null : organizations.getFirst());
+        }
+        return organizations.isEmpty() ? null : organizations.getFirst();
     }
 }

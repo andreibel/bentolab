@@ -7,27 +7,37 @@ import io.bento.kafka.event.MemberRoleChangedEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
+import tools.jackson.databind.ObjectMapper;
 
 @RequiredArgsConstructor
 @Component
 public class OrgEventPublisher {
     private static final String ORG_EVENTS_TOPIC = "bento.org.events";
 
-    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final KafkaTemplate<String, String> kafkaTemplate;
+    private final ObjectMapper objectMapper;
 
     public void publishInvitationCreated(InvitationCreatedEvent event) {
-        kafkaTemplate.send(ORG_EVENTS_TOPIC,event.orgId().toString(),event);
+        kafkaTemplate.send(ORG_EVENTS_TOPIC, event.orgId().toString(), toJson(event));
     }
 
     public void publishMemberJoined(MemberJoinedEvent event) {
-        kafkaTemplate.send(ORG_EVENTS_TOPIC, event.orgId().toString(), event);
+        kafkaTemplate.send(ORG_EVENTS_TOPIC, event.orgId().toString(), toJson(event));
     }
 
     public void publishMemberRemoved(MemberRemovedEvent event) {
-        kafkaTemplate.send(ORG_EVENTS_TOPIC, event.orgId().toString(), event);
+        kafkaTemplate.send(ORG_EVENTS_TOPIC, event.orgId().toString(), toJson(event));
     }
 
     public void publishMemberRoleChanged(MemberRoleChangedEvent event) {
-        kafkaTemplate.send(ORG_EVENTS_TOPIC, event.orgId().toString(), event);
+        kafkaTemplate.send(ORG_EVENTS_TOPIC, event.orgId().toString(), toJson(event));
+    }
+
+    private String toJson(Object event) {
+        try {
+            return objectMapper.writeValueAsString(event);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to serialize Kafka event", e);
+        }
     }
 }

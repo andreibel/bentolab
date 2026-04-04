@@ -8,4 +8,9 @@ export default defineConfig({
   resolve: {
     alias: { '@': path.resolve(__dirname, './src') },
   },
+  server: {
+    host: true,   // bind to 0.0.0.0 so *.localhost subdomains are reachable
+    port: 5173,
+    allowedHosts: ['.localhost', 'localhost'], // allow acme.localhost, foo.localhost, etc.
+  },
 })

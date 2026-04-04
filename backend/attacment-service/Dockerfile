@@ -2,7 +2,7 @@
 FROM bellsoft/liberica-openjdk-alpine:25-cds AS builder
 WORKDIR /application
 COPY . .
-RUN --mount=type=cache,target=/root/.gradle chmod +x gradlew && ./gradlew clean :bento-backend.attacment-service:build -x test
+RUN --mount=type=cache,target=/root/.gradle chmod +x gradlew && ./gradlew clean :attacment-service:build -x test
 
 # Stage: extract Spring Boot application layers
 FROM bellsoft/liberica-openjre-alpine:25-cds AS layers

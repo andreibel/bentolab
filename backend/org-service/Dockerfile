@@ -2,12 +2,12 @@
 FROM bellsoft/liberica-openjdk-alpine:25-cds AS builder
 WORKDIR /application
 COPY . .
-RUN --mount=type=cache,target=/root/.gradle chmod +x gradlew && ./gradlew clean build -x test
+RUN --mount=type=cache,target=/root/.gradle chmod +x gradlew && ./gradlew clean :org-service:build -x test
 
 # Stage: extract Spring Boot application layers
 FROM bellsoft/liberica-openjre-alpine:25-cds AS layers
 WORKDIR /application
-COPY --from=builder /application/build/libs/*.jar app.jar
+COPY --from=builder /application/org-service/build/libs/*.jar app.jar
 RUN java -Djarmode=tools -jar app.jar extract --layers --destination extracted
 
 # Stage: final runtime image
