@@ -50,14 +50,19 @@ public class S3Config {
         var credentials = StaticCredentialsProvider.create(
                 AwsBasicCredentials.create(props.accessKey(), props.secretKey())
         );
+        // Use public-endpoint for presigned URLs (browser-facing) if set,
+        // otherwise fall back to the internal endpoint.
+        String presignEndpoint = props.publicEndpoint() != null && !props.publicEndpoint().isBlank()
+                ? props.publicEndpoint()
+                : props.endpoint();
         var builder = S3Presigner.builder()
                 .region(Region.of(props.region()))
                 .credentialsProvider(credentials)
                 .serviceConfiguration(S3Configuration.builder()
                         .pathStyleAccessEnabled(props.pathStyleAccess())
                         .build());
-        if (props.endpoint() != null && !props.endpoint().isBlank()) {
-            builder.endpointOverride(URI.create(props.endpoint()));
+        if (presignEndpoint != null && !presignEndpoint.isBlank()) {
+            builder.endpointOverride(URI.create(presignEndpoint));
         }
         return builder.build();
     }

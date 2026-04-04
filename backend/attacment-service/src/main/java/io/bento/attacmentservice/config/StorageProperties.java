@@ -7,6 +7,7 @@ import java.util.List;
 @ConfigurationProperties(prefix = "storage")
 public record StorageProperties(
         String endpoint,
+        String publicEndpoint,
         String bucketName,
         String region,
         String accessKey,
