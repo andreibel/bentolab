@@ -26,25 +26,26 @@ export function sanitizeHtml(dirty: string): string {
   return DOMPurify.sanitize(dirty, {
     // Explicit allowlist — anything not listed is stripped
     ALLOWED_TAGS: [
-      'p', 'br',
+      'p', 'br', 'div', 'span',
       'strong', 'b', 'em', 'i', 's', 'del', 'u',
       'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
       'ul', 'ol', 'li',
       'blockquote', 'pre', 'code',
-      'a',
+      'a', 'img',
       'table', 'thead', 'tbody', 'tr', 'th', 'td',
       'hr',
+      'input',
     ],
     // Only inert presentation attributes — no event handlers, no style
-    ALLOWED_ATTR: ['href', 'title', 'class'],
-    // Block data-* attributes (potential DOM-based XSS vectors)
-    ALLOW_DATA_ATTR: false,
+    ALLOWED_ATTR: ['href', 'title', 'class', 'src', 'alt', 'width', 'height', 'type', 'checked', 'disabled'],
+    // Allow specific data-* attributes needed by Tiptap (taskList, taskItem)
+    ALLOW_DATA_ATTR: true,
     // Only allow safe URL schemes in href
     ALLOWED_URI_REGEXP: /^(?:https?|mailto):/i,
     // Prevent DOM clobbering (e.g. <form id="nodeName">)
     SANITIZE_DOM: true,
-    // Don't keep <template> element content
-    KEEP_CONTENT: false,
+    // Keep text content when stripping disallowed tags
+    KEEP_CONTENT: true,
     // Strip unknown tags instead of keeping their text content
     // (prevents <iframe>payload</iframe> leaving "payload" behind)
     WHOLE_DOCUMENT: false,
