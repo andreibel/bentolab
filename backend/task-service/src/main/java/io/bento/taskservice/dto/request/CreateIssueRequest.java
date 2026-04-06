@@ -40,6 +40,7 @@ public record CreateIssueRequest(
         String sprintId,
         String epicId,
         String parentIssueId,
+        String milestoneId,
 
         Integer storyPoints,
         Double estimatedHours,

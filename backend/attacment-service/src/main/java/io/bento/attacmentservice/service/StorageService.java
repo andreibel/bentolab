@@ -50,6 +50,20 @@ public class StorageService {
         return s3Presigner.presignGetObject(presignRequest).url().toString();
     }
 
+    /**
+     * Returns a permanent, publicly-readable URL for objects that are not access-controlled
+     * (avatars, org logos). Does not expire — requires the bucket policy to allow public reads
+     * on those prefixes.
+     */
+    public String generatePublicUrl(String s3Key) {
+        String base = storageProperties.publicEndpoint() != null && !storageProperties.publicEndpoint().isBlank()
+                ? storageProperties.publicEndpoint()
+                : storageProperties.endpoint();
+        // Strip trailing slash to avoid double-slash
+        if (base.endsWith("/")) base = base.substring(0, base.length() - 1);
+        return base + "/" + storageProperties.bucketName() + "/" + s3Key;
+    }
+
     public void delete(String s3Key) {
         s3Client.deleteObject(DeleteObjectRequest.builder()
                 .bucket(storageProperties.bucketName())

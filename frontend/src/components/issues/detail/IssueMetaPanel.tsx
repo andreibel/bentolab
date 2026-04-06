@@ -1,6 +1,6 @@
 import {useEffect, useMemo, useRef, useState} from 'react'
 import {useQuery} from '@tanstack/react-query'
-import {Check, ChevronDown, Search} from 'lucide-react'
+import {AlertTriangle, Check, ChevronDown, Search} from 'lucide-react'
 import Fuse from 'fuse.js'
 import {Avatar} from '@/components/ui/Avatar'
 import {IssueTypeBadge, PriorityBadge} from '@/components/ui/Badge'
@@ -12,6 +12,7 @@ import type {Issue} from '@/types/issue'
 import type {Epic} from '@/types/epic'
 import type {Sprint} from '@/types/sprint'
 import type {BoardColumn, UserProfile} from '@/types/board'
+import type {Milestone} from '@/types/milestone'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -201,6 +202,65 @@ function SprintSelect({ value, sprints, onSave }: { value: string | null; sprint
   )
 }
 
+function MilestoneSelect({ value, milestones, onSave }: { value: string | null; milestones: Milestone[]; onSave: (id: string | null) => void }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  const current = milestones.find((m) => m.id === value)
+
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: MouseEvent) => {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-1 rounded-md px-1.5 py-1 text-sm transition-colors hover:bg-surface-muted"
+      >
+        {current ? (
+          <span className="flex items-center gap-1.5">
+            <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: current.color }} />
+            <span className="max-w-[120px] truncate text-text-primary">{current.title}</span>
+          </span>
+        ) : (
+          <span className="text-text-muted">None</span>
+        )}
+        <ChevronDown className="h-3 w-3 shrink-0 text-text-muted" />
+      </button>
+      {open && (
+        <div className="absolute start-0 top-full z-50 mt-1 min-w-[180px] rounded-lg border border-surface-border bg-surface shadow-xl">
+          <button
+            onClick={() => { onSave(null); setOpen(false) }}
+            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-text-muted hover:bg-surface-muted"
+          >
+            {!value ? <Check className="h-3 w-3 shrink-0 text-primary" /> : <span className="h-3 w-3 shrink-0" />}
+            None
+          </button>
+          {milestones.map((m) => (
+            <button
+              key={m.id}
+              onClick={() => { onSave(m.id); setOpen(false) }}
+              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-text-primary hover:bg-surface-muted"
+            >
+              {m.id === value ? <Check className="h-3 w-3 shrink-0 text-primary" /> : <span className="h-3 w-3 shrink-0" />}
+              <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: m.color }} />
+              <span className="truncate">{m.title}</span>
+            </button>
+          ))}
+          {milestones.length === 0 && (
+            <div className="px-3 py-2 text-xs text-text-muted">No milestones</div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function StoryPointsField({ value, onSave }: { value: number | null | undefined; onSave: (n: number | null) => void }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(value?.toString() ?? '')
@@ -359,12 +419,13 @@ interface IssueMetaPanelProps {
   columns: BoardColumn[]
   epics: Epic[]
   sprints: Sprint[]
-  parentIssue?: { issueKey: string; title: string } | null
+  milestones?: Milestone[]
+  parentIssue?: { issueKey: string; title: string; dueDate?: string | null } | null
   childIssues?: Issue[]
   onUpdate: (data: Partial<Issue>) => void
 }
 
-export function IssueMetaPanel({ issue, boardId, columns, epics, sprints, parentIssue, onUpdate }: IssueMetaPanelProps) {
+export function IssueMetaPanel({ issue, boardId, columns, epics, sprints, milestones = [], parentIssue, onUpdate }: IssueMetaPanelProps) {
   const { data: boardMembers = [] } = useQuery({
     queryKey: ['board-members', boardId],
     queryFn: () => boardsApi.listMembers(boardId),
@@ -402,15 +463,29 @@ export function IssueMetaPanel({ issue, boardId, columns, epics, sprints, parent
   const issueDuePart   = issue.dueDate   ? toDatePart(issue.dueDate)   : undefined
   const issueStartPart = issue.startDate ? toDatePart(issue.startDate) : undefined
 
-  // Start date: can't go past sprint end OR due date (whichever is earlier)
+  // Parent blocking: start date must be >= parent's due date
+  const parentDuePart = parentIssue?.dueDate ? toDatePart(parentIssue.dueDate) : undefined
+  const isBlockedByParent = !!(parentDuePart && issue.startDate && toDatePart(issue.startDate) < parentDuePart)
+
+  // Start date: can't go past sprint end OR due date; must be >= parent due date
   const startMaxCandidates = [sprintMax, issueDuePart].filter((v): v is string => !!v)
   const startMax = startMaxCandidates.length ? startMaxCandidates.sort().at(0) : undefined
+  const startMin = [sprintMin, parentDuePart].filter((v): v is string => !!v).sort().at(-1)
   // Due date: must be after sprint start AND start date (whichever is later)
   const dueMinCandidates = [sprintMin, issueStartPart].filter((v): v is string => !!v)
   const dueMin = dueMinCandidates.length ? dueMinCandidates.sort().at(-1) : undefined
 
   return (
-    <div className="mb-6 grid grid-cols-3 gap-x-4 gap-y-4 rounded-xl border border-surface-border bg-surface-muted/40 p-4">
+    <div className="mb-6 flex flex-col gap-3">
+    {isBlockedByParent && (
+      <div className="flex items-center gap-2 rounded-lg border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-400">
+        <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+        <span>
+          Start date is before parent issue due date ({fmtDate(parentIssue!.dueDate!)}). This issue is blocked until the parent finishes.
+        </span>
+      </div>
+    )}
+    <div className="grid grid-cols-3 gap-x-4 gap-y-4 rounded-xl border border-surface-border bg-surface-muted/40 p-4">
 
       <MetaCell label="Status">
         <InlineSelect
@@ -462,7 +537,10 @@ export function IssueMetaPanel({ issue, boardId, columns, epics, sprints, parent
         <EpicSelect
           value={issue.epicId ?? null}
           epics={epics}
-          onSave={(epicId) => onUpdate({ epicId } as Partial<Issue>)}
+          onSave={(epicId) => epicId === null
+            ? onUpdate({ clearEpicId: true } as unknown as Partial<Issue>)
+            : onUpdate({ epicId } as Partial<Issue>)
+          }
         />
       </MetaCell>
 
@@ -499,8 +577,9 @@ export function IssueMetaPanel({ issue, boardId, columns, epics, sprints, parent
           value={issue.startDate ? toDatePart(issue.startDate) : ''}
           onChange={(v) => onUpdate({ startDate: v ? new Date(v + 'T12:00:00').toISOString() : null } as Partial<Issue>)}
           placeholder="No start date"
-          minDate={sprintMin}
+          minDate={startMin}
           maxDate={startMax}
+          className={cn(isBlockedByParent && 'border-amber-400')}
         />
       </MetaCell>
 
@@ -519,6 +598,17 @@ export function IssueMetaPanel({ issue, boardId, columns, epics, sprints, parent
         <span className="px-1.5 py-1 text-xs text-text-muted">{fmtDate(issue.createdAt)}</span>
       </MetaCell>
 
+      <MetaCell label="Milestone">
+        <MilestoneSelect
+          value={issue.milestoneId ?? null}
+          milestones={milestones}
+          onSave={(milestoneId) => milestoneId === null
+            ? onUpdate({ clearMilestoneId: true } as unknown as Partial<Issue>)
+            : onUpdate({ milestoneId } as Partial<Issue>)
+          }
+        />
+      </MetaCell>
+
       {issue.parentIssueId && parentIssue && (
         <MetaCell label="Parent">
           <span className="flex items-center gap-1.5 px-1.5 py-1 text-xs text-text-secondary">
@@ -528,6 +618,7 @@ export function IssueMetaPanel({ issue, boardId, columns, epics, sprints, parent
         </MetaCell>
       )}
 
+    </div>
     </div>
   )
 }

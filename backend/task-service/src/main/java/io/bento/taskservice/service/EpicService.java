@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -102,6 +103,38 @@ public class EpicService {
                 io.bento.taskservice.entity.Issue.class);
 
         epicRepository.deleteById(epicId);
+    }
+
+    // ── Date refresh ─────────────────────────────────────────────────────────
+
+    /**
+     * Recomputes startDate = min(issue.startDate) and endDate = max(issue.dueDate)
+     * for the given epic from its current issues. Call this whenever issues are
+     * created, updated, or deleted.
+     */
+    public void refreshEpicDates(String orgId, String epicId) {
+        Epic epic = epicRepository.findByIdAndOrgId(epicId, orgId).orElse(null);
+        if (epic == null) return;
+
+        List<io.bento.taskservice.entity.Issue> issues =
+                issueRepository.findAllByOrgIdAndEpicId(orgId, epicId);
+
+        Instant minStart = issues.stream()
+                .map(io.bento.taskservice.entity.Issue::getStartDate)
+                .filter(Objects::nonNull)
+                .min(Instant::compareTo)
+                .orElse(null);
+
+        Instant maxDue = issues.stream()
+                .map(io.bento.taskservice.entity.Issue::getDueDate)
+                .filter(Objects::nonNull)
+                .max(Instant::compareTo)
+                .orElse(null);
+
+        epic.setStartDate(minStart);
+        epic.setEndDate(maxDue);
+        epic.setUpdatedAt(Instant.now());
+        epicRepository.save(epic);
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────

@@ -20,7 +20,10 @@ public record UpdateIssueRequest(
         String description,
         String sprintId,
         String epicId,
+        Boolean clearEpicId,
         String parentIssueId,
+        String milestoneId,
+        Boolean clearMilestoneId,
 
         Integer storyPoints,
         Double estimatedHours,

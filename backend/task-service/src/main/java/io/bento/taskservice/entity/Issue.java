@@ -72,6 +72,7 @@ public class Issue {
     private String sprintId;
     private String epicId;
     private String parentIssueId;
+    private String milestoneId;
 
     // Organization
     private List<String> labelIds;

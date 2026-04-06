@@ -92,13 +92,24 @@ public class AttachmentService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Attachment not available");
         }
 
-        return storageService.generateDownloadUrl(attachment.getS3Key());
+        return resolveUrl(attachment);
+    }
+
+    private boolean isPublicType(EntityType type) {
+        return type == EntityType.USER_AVATAR || type == EntityType.ORG_LOGO;
+    }
+
+    /** Public types get a permanent URL; everything else gets a time-limited presigned URL. */
+    private String resolveUrl(Attachment a) {
+        return isPublicType(a.getEntityType())
+                ? storageService.generatePublicUrl(a.getS3Key())
+                : storageService.generateDownloadUrl(a.getS3Key());
     }
 
     private AttachmentResponse toResponse(Attachment a) {
         String downloadUrl = null;
         if (a.getStatus() == AttachmentStatus.CONFIRMED) {
-            downloadUrl = storageService.generateDownloadUrl(a.getS3Key());
+            downloadUrl = resolveUrl(a);
         }
         return new AttachmentResponse(
                 a.getId(),

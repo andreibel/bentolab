@@ -1,6 +1,6 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Paperclip, Trash2, Upload } from 'lucide-react'
+import { Download, Paperclip, Trash2, Upload, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { attachmentsApi } from '@/api/attachments'
 import { queryKeys } from '@/api/queryKeys'
@@ -27,6 +27,32 @@ function fileIcon(contentType: string) {
   return '📎'
 }
 
+// ─── Image preview modal ──────────────────────────────────────────────────────
+
+function ImagePreview({ src, name, onClose }: { src: string; name: string; onClose: () => void }) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+      onClick={onClose}
+    >
+      <div className="relative max-h-full max-w-4xl" onClick={(e) => e.stopPropagation()}>
+        <button
+          onClick={onClose}
+          className="absolute -right-3 -top-3 z-10 rounded-full bg-surface p-1 shadow-lg hover:bg-surface-muted"
+        >
+          <X className="h-4 w-4 text-text-primary" />
+        </button>
+        <img
+          src={src}
+          alt={name}
+          className="max-h-[80vh] max-w-full rounded-lg object-contain shadow-2xl"
+        />
+        <p className="mt-2 text-center text-xs text-white/70">{name}</p>
+      </div>
+    </div>
+  )
+}
+
 // ─── Attachment row ───────────────────────────────────────────────────────────
 
 function AttachmentRow({
@@ -38,41 +64,93 @@ function AttachmentRow({
   canDelete: boolean
   onDelete: () => void
 }) {
+  const [downloading, setDownloading] = useState(false)
+  const [previewSrc, setPreviewSrc] = useState<string | null>(null)
+  const isImage = attachment.contentType.startsWith('image/')
+
+  const fetchUrl = async () => {
+    const url = await attachmentsApi.getDownloadUrl(attachment.id)
+    return url
+  }
+
   const handleDownload = async () => {
+    if (downloading) return
+    setDownloading(true)
     try {
-      const url = await attachmentsApi.getDownloadUrl(attachment.id)
-      window.open(url, '_blank', 'noopener,noreferrer')
+      const url = await fetchUrl()
+      const a = document.createElement('a')
+      a.href = url
+      a.download = attachment.fileName
+      a.rel = 'noopener noreferrer'
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
     } catch {
       toast.error('Failed to get download link')
+    } finally {
+      setDownloading(false)
+    }
+  }
+
+  const handlePreview = async () => {
+    try {
+      const url = await fetchUrl()
+      setPreviewSrc(url)
+    } catch {
+      toast.error('Failed to load preview')
     }
   }
 
   return (
-    <div className="group flex items-center gap-3 rounded-lg border border-surface-border bg-surface-muted/30 px-3 py-2.5 transition-colors hover:bg-surface-muted/60">
-      <span className="text-lg leading-none">{fileIcon(attachment.contentType)}</span>
+    <>
+      <div className="group flex items-center gap-3 rounded-lg border border-surface-border bg-surface-muted/30 px-3 py-2.5 transition-colors hover:bg-surface-muted/60">
+        {/* Icon / thumbnail trigger */}
+        <button
+          onClick={isImage ? handlePreview : undefined}
+          className={isImage ? 'shrink-0 cursor-pointer' : 'shrink-0 cursor-default'}
+          tabIndex={isImage ? 0 : -1}
+          title={isImage ? 'Preview' : undefined}
+        >
+          <span className="text-lg leading-none">{fileIcon(attachment.contentType)}</span>
+        </button>
 
-      <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1">
+          <button
+            onClick={isImage ? handlePreview : handleDownload}
+            className="block truncate text-sm font-medium text-text-primary hover:text-primary hover:underline"
+          >
+            {attachment.fileName}
+          </button>
+          <p className="text-xs text-text-muted">
+            {fmtSize(attachment.size)} · {fmtDate(attachment.createdAt)}
+          </p>
+        </div>
+
+        {/* Download button — always visible */}
         <button
           onClick={handleDownload}
-          className="block truncate text-sm font-medium text-text-primary hover:text-primary hover:underline"
+          disabled={downloading}
+          className="rounded p-1.5 text-text-muted transition-colors hover:bg-surface-muted hover:text-text-primary disabled:opacity-50"
+          title="Download"
         >
-          {attachment.fileName}
+          <Download className="h-3.5 w-3.5" />
         </button>
-        <p className="text-xs text-text-muted">
-          {fmtSize(attachment.size)} · {fmtDate(attachment.createdAt)}
-        </p>
+
+        {canDelete && (
+          <button
+            onClick={onDelete}
+            className="rounded p-1.5 text-text-muted transition-colors hover:bg-red-500/10 hover:text-red-500"
+            title="Delete attachment"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        )}
       </div>
 
-      {canDelete && (
-        <button
-          onClick={onDelete}
-          className="rounded p-1 text-text-muted opacity-0 transition-all hover:bg-red-500/10 hover:text-red-500 group-hover:opacity-100"
-          title="Delete attachment"
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-        </button>
+      {previewSrc && (
+        <ImagePreview src={previewSrc} name={attachment.fileName} onClose={() => setPreviewSrc(null)} />
       )}
-    </div>
+    </>
   )
 }
 

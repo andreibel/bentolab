@@ -44,4 +44,8 @@ export const queryKeys = {
   attachments: {
     list: (entityType: string, entityId: string) => ['attachments', entityType, entityId] as const,
   },
+  milestones: {
+    list:   (boardId: string)     => ['milestones', boardId],
+    detail: (milestoneId: string) => ['milestones', 'detail', milestoneId],
+  },
 }

@@ -42,6 +42,7 @@ public class IssueService {
     private final ActivityService activityService;
     private final MongoTemplate mongoTemplate;
     private final IssueEventPublisher issueEventPublisher;
+    private final EpicService epicService;
 
     public Page<Issue> getMyIssues(String orgId, String userId, String relation, Boolean closed, Pageable pageable) {
         return switch (relation) {
@@ -98,6 +99,7 @@ public class IssueService {
                 .sprintId(request.sprintId())
                 .epicId(request.epicId())
                 .parentIssueId(request.parentIssueId())
+                .milestoneId(request.milestoneId())
                 .storyPoints(request.storyPoints())
                 .estimatedHours(request.estimatedHours())
                 .startDate(request.startDate())
@@ -115,6 +117,10 @@ public class IssueService {
 
         issue = issueRepository.save(issue);
 
+        if (issue.getEpicId() != null) {
+            epicService.refreshEpicDates(orgId, issue.getEpicId());
+        }
+
         activityService.log(orgId, issue.getId(), request.boardId(), request.sprintId(),
                 userId, EntityType.ISSUE, ActivityAction.CREATED, null);
 
@@ -131,6 +137,7 @@ public class IssueService {
         Issue issue = getIssue(orgId, issueId);
 
         IssuePriority oldPriority = issue.getPriority();
+        String oldEpicId = issue.getEpicId();
 
         if (request.type() != null) issue.setType(request.type());
         if (request.priority() != null) issue.setPriority(request.priority());
@@ -138,8 +145,11 @@ public class IssueService {
         if (request.title() != null) issue.setTitle(request.title());
         if (request.description() != null) issue.setDescription(request.description());
         if (request.sprintId() != null) issue.setSprintId(request.sprintId());
-        if (request.epicId() != null) issue.setEpicId(request.epicId());
+        if (Boolean.TRUE.equals(request.clearEpicId())) issue.setEpicId(null);
+        else if (request.epicId() != null) issue.setEpicId(request.epicId());
         if (request.parentIssueId() != null) issue.setParentIssueId(request.parentIssueId());
+        if (Boolean.TRUE.equals(request.clearMilestoneId())) issue.setMilestoneId(null);
+        else if (request.milestoneId() != null) issue.setMilestoneId(request.milestoneId());
         if (request.storyPoints() != null) issue.setStoryPoints(request.storyPoints());
         if (request.estimatedHours() != null) issue.setEstimatedHours(request.estimatedHours());
         if (request.remainingHours() != null) issue.setRemainingHours(request.remainingHours());
@@ -150,6 +160,17 @@ public class IssueService {
 
         issue.setUpdatedAt(Instant.now());
         issue = issueRepository.save(issue);
+
+        // Refresh epic dates for any affected epic
+        boolean epicCleared = Boolean.TRUE.equals(request.clearEpicId());
+        boolean epicChanged = epicCleared || (request.epicId() != null && !request.epicId().equals(oldEpicId));
+        boolean datesChanged = request.startDate() != null || request.dueDate() != null;
+        if (epicChanged && oldEpicId != null) {
+            epicService.refreshEpicDates(orgId, oldEpicId);
+        }
+        if (!epicCleared && (epicChanged || datesChanged) && issue.getEpicId() != null) {
+            epicService.refreshEpicDates(orgId, issue.getEpicId());
+        }
 
         activityService.log(orgId, issueId, issue.getBoardId(), issue.getSprintId(),
                 userId, EntityType.ISSUE, ActivityAction.UPDATED, null);
@@ -174,11 +195,16 @@ public class IssueService {
 
     public void deleteIssue(String orgId, String userId, String issueId) {
         Issue issue = getIssue(orgId, issueId);
+        String epicId = issue.getEpicId();
 
         activityService.log(orgId, issueId, issue.getBoardId(), issue.getSprintId(),
                 userId, EntityType.ISSUE, ActivityAction.DELETED, null);
 
         issueRepository.delete(issue);
+
+        if (epicId != null) {
+            epicService.refreshEpicDates(orgId, epicId);
+        }
     }
 
     public Issue moveIssue(String orgId, String userId, String issueId, MoveIssueRequest request) {

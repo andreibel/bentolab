@@ -37,6 +37,7 @@ export interface Issue {
   sprintId: string | null
   epicId: string | null
   parentIssueId: string | null
+  milestoneId: string | null
   labelIds: string[]
   components: string[]
   attachmentIds: string[]

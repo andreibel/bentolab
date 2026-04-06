@@ -17,6 +17,7 @@ import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
 import software.amazon.awssdk.services.s3.model.HeadBucketRequest;
 import software.amazon.awssdk.services.s3.model.NoSuchBucketException;
 import software.amazon.awssdk.services.s3.model.PutBucketCorsRequest;
+import software.amazon.awssdk.services.s3.model.PutBucketPolicyRequest;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 
@@ -77,7 +78,39 @@ public class S3Config {
                 s3Client.createBucket(CreateBucketRequest.builder().bucket(bucket).build());
             }
             applyBucketCors(s3Client, bucket, props);
+            applyPublicReadPolicy(s3Client, bucket);
         };
+    }
+
+    /**
+     * Grants public (anonymous) GET access to avatar and org-logo prefixes so those
+     * objects can be served via a permanent URL without a time-limited signature.
+     */
+    private void applyPublicReadPolicy(S3Client s3Client, String bucket) {
+        String policy = """
+                {
+                  "Version": "2012-10-17",
+                  "Statement": [
+                    {
+                      "Effect": "Allow",
+                      "Principal": {"AWS": ["*"]},
+                      "Action": ["s3:GetObject"],
+                      "Resource": [
+                        "arn:aws:s3:::%s/avatars/*",
+                        "arn:aws:s3:::%s/orgs/*/logo/*"
+                      ]
+                    }
+                  ]
+                }""".formatted(bucket, bucket);
+        try {
+            s3Client.putBucketPolicy(PutBucketPolicyRequest.builder()
+                    .bucket(bucket)
+                    .policy(policy)
+                    .build());
+            log.info("Public-read bucket policy applied for avatars/* and orgs/*/logo/*");
+        } catch (S3Exception e) {
+            log.warn("Could not apply public-read bucket policy: {}", e.getMessage());
+        }
     }
 
     private void applyBucketCors(S3Client s3Client, String bucket, StorageProperties props) {

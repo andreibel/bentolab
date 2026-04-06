@@ -5,6 +5,7 @@ import {toast} from 'sonner'
 import {issuesApi, useIssues} from '@/api/issues'
 import {useEpics} from '@/api/epics'
 import {useSprints} from '@/api/sprints'
+import {useMilestones} from '@/api/milestones'
 import {queryKeys} from '@/api/queryKeys'
 import {useAuthStore} from '@/stores/authStore'
 import {cn} from '@/utils/cn'
@@ -94,9 +95,10 @@ export function IssueDetailPanel({
   })
 
   const effectiveBoardId = propBoardId ?? issue?.boardId ?? ''
-  const { data: epics   = [] } = useEpics(effectiveBoardId)
-  const { data: sprints = [] } = useSprints(effectiveBoardId)
-  const { data: boardIssues  } = useIssues(effectiveBoardId)
+  const { data: epics      = [] } = useEpics(effectiveBoardId)
+  const { data: sprints    = [] } = useSprints(effectiveBoardId)
+  const { data: milestones = [] } = useMilestones(effectiveBoardId)
+  const { data: boardIssues     } = useIssues(effectiveBoardId)
 
   const closeMutation = useMutation({
     mutationFn: (action: 'close' | 'reopen') =>
@@ -275,6 +277,7 @@ export function IssueDetailPanel({
                 columns={columns}
                 epics={epics}
                 sprints={sprints}
+                milestones={milestones}
                 parentIssue={parentIssue}
                 childIssues={childIssues}
                 onUpdate={handleUpdate}
