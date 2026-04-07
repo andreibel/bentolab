@@ -1,10 +1,11 @@
-import {useState} from 'react'
+import {useRef, useState} from 'react'
 import {useForm} from 'react-hook-form'
 import {zodResolver} from '@hookform/resolvers/zod'
 import {z} from 'zod'
 import {Link, useNavigate} from 'react-router-dom'
 import {toast} from 'sonner'
 import {MailCheck} from 'lucide-react'
+import {motion, useReducedMotion} from 'framer-motion'
 import {authApi} from '@/api/auth'
 import {useAuthStore} from '@/stores/authStore'
 import {Button} from '@/components/ui/Button'
@@ -23,6 +24,20 @@ export default function RegisterPage() {
   const navigate = useNavigate()
   const setAuth = useAuthStore((s) => s.setAuth)
   const [verifyEmail, setVerifyEmail] = useState<string | null>(null)
+  const reduceMotion = useReducedMotion()
+
+  const cardRef = useRef<HTMLDivElement>(null)
+  const [glow, setGlow] = useState({ x: 50, y: 50, visible: false })
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = cardRef.current?.getBoundingClientRect()
+    if (!rect) return
+    setGlow({
+      x: ((e.clientX - rect.left) / rect.width) * 100,
+      y: ((e.clientY - rect.top) / rect.height) * 100,
+      visible: true,
+    })
+  }
 
   const {
     register,
@@ -44,26 +59,71 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-surface-muted">
-      {/* Top bar */}
-      <header className="flex h-14 items-center justify-between border-b border-surface-border bg-surface px-6">
-        <Link to="/" className="flex items-center gap-2.5">
-          <img src="/logo.svg" alt="Bento" className="h-7 w-7" />
-          <span className="text-[1.05rem] font-bold tracking-[-0.5px] text-text-primary">bento</span>
-        </Link>
-        <span className="text-sm text-text-secondary">
-          Already have an account?{' '}
-          <Link to="/login" className="font-medium text-primary hover:text-primary-light">
-            Sign in
-          </Link>
-        </span>
-      </header>
+    <div
+      className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-4 py-12"
+      style={{
+        background: 'radial-gradient(ellipse 80% 60% at 50% -10%, color-mix(in srgb, var(--color-primary) 10%, transparent), transparent 70%), var(--color-surface-muted)',
+      }}
+    >
+      {/* Background orbs */}
+      <motion.div
+        aria-hidden
+        className="pointer-events-none absolute -left-40 -top-40 h-[500px] w-[500px] rounded-full bg-primary"
+        style={{ opacity: 0.06, filter: 'blur(90px)' }}
+        animate={reduceMotion ? {} : {
+          x: [0, 28, -18, 0],
+          y: [0, -22, 26, 0],
+        }}
+        transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
+      />
+      <motion.div
+        aria-hidden
+        className="pointer-events-none absolute -bottom-48 -right-40 h-[420px] w-[420px] rounded-full bg-primary"
+        style={{ opacity: 0.045, filter: 'blur(70px)' }}
+        animate={reduceMotion ? {} : {
+          x: [0, -22, 16, 0],
+          y: [0, 18, -28, 0],
+        }}
+        transition={{ duration: 22, repeat: Infinity, ease: 'easeInOut', delay: 3 }}
+      />
 
-      {/* Form */}
-      <main className="flex flex-1 items-center justify-center px-4 py-12">
-        <div className="w-full max-w-sm">
+      {/* Logo */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+        className="mb-8 flex justify-center"
+      >
+        <Link to="/" className="flex items-center gap-2.5">
+          <img src="/logo.svg" alt="Bento" className="h-8 w-8" />
+          <span className="text-lg font-bold tracking-[-0.5px] text-text-primary">bento</span>
+        </Link>
+      </motion.div>
+
+      <div className="w-full max-w-sm">
+        {/* Form card */}
+        <motion.div
+          ref={cardRef}
+          initial={{ opacity: 0, y: 16, scale: 0.97 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.45, delay: 0.06, ease: [0.16, 1, 0.3, 1] }}
+          className="relative overflow-hidden rounded-2xl border border-surface-border bg-surface p-8 shadow-sm"
+          onMouseMove={reduceMotion ? undefined : handleMouseMove}
+          onMouseLeave={reduceMotion ? undefined : () => setGlow(g => ({ ...g, visible: false }))}
+        >
+          {/* Spotlight overlay */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 rounded-2xl"
+            style={{
+              opacity: glow.visible ? 1 : 0,
+              transition: 'opacity 400ms ease',
+              background: `radial-gradient(circle 220px at ${glow.x}% ${glow.y}%, color-mix(in srgb, var(--color-primary) 9%, transparent), transparent 75%)`,
+            }}
+          />
+
           {verifyEmail && (
-            <div className="mb-6 flex items-start gap-3 rounded-lg border border-primary/20 bg-primary-subtle px-4 py-3">
+            <div className="mb-5 flex items-start gap-3 rounded-lg border border-primary/20 bg-primary-subtle px-4 py-3">
               <MailCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
               <p className="text-sm text-text-secondary">
                 We sent a verification email to{' '}
@@ -73,19 +133,16 @@ export default function RegisterPage() {
             </div>
           )}
 
-          <div className="mb-8">
-            <h1 className="text-2xl font-bold tracking-tight text-text-primary">
-              Create your account
-            </h1>
-            <p className="mt-1 text-sm text-text-secondary">
-              Get started with Bento for free
-            </p>
+          <div className="mb-6 text-center">
+            <h1 className="text-[1.75rem] font-bold tracking-tight text-text-primary">Create your account</h1>
+            <p className="mt-1.5 text-sm text-text-secondary">Get started with Bento for free</p>
           </div>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+          <form noValidate onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
             <div className="grid grid-cols-2 gap-3">
               <Input
                 label="First name"
+                autoFocus
                 autoComplete="given-name"
                 placeholder="John"
                 error={errors.firstName?.message}
@@ -116,7 +173,7 @@ export default function RegisterPage() {
               {...register('password')}
             />
 
-            <Button type="submit" size="lg" loading={isSubmitting} className="mt-2 w-full">
+            <Button type="submit" size="lg" loading={isSubmitting} className="mt-1 w-full">
               Create account
             </Button>
           </form>
@@ -127,8 +184,21 @@ export default function RegisterPage() {
             {' '}and{' '}
             <a href="#" className="underline hover:text-text-secondary">Privacy Policy</a>.
           </p>
-        </div>
-      </main>
+        </motion.div>
+
+        {/* Bottom link */}
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.4, delay: 0.2 }}
+          className="mt-5 text-center text-xs text-text-muted"
+        >
+          Already have an account?{' '}
+          <Link to="/login" className="font-medium text-text-secondary transition-colors hover:text-text-primary">
+            Sign in
+          </Link>
+        </motion.p>
+      </div>
     </div>
   )
 }

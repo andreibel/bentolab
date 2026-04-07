@@ -1,14 +1,9 @@
 import React, {useEffect, useState} from 'react'
-import {buildOrgUrl} from '@/utils/subdomain'
 import {NavLink, useLocation, useMatch, useNavigate} from 'react-router-dom'
-import {useQuery, useQueryClient} from '@tanstack/react-query'
-import {orgsApi} from '@/api/orgs'
+import {motion} from 'framer-motion'
 import {authApi} from '@/api/auth'
 import {useBoards} from '@/api/boards'
-import {queryKeys} from '@/api/queryKeys'
-import type {OrgListItem} from '@/types/org'
 import type {Board} from '@/types/board'
-import {toast} from 'sonner'
 import {
   ArrowLeft,
   BarChart2,
@@ -38,6 +33,26 @@ import {useAuthStore} from '@/stores/authStore'
 import {useUIStore} from '@/stores/uiStore'
 import {useRecentLabs} from '@/hooks/usePinnedLabs'
 import {cn} from '@/utils/cn'
+
+// ─── Torch highlight shared style ────────────────────────────────────────────
+
+// Visual style only — no transform/position here (would conflict with Framer Motion layout)
+const TORCH_STYLE: React.CSSProperties = {
+  background: 'radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--color-primary) 70%, transparent) 0%, transparent 68%)',
+  filter: 'blur(22px)',
+}
+
+// Positioning via margin (not transform) so Framer Motion layoutId animation works correctly
+const TORCH_POS: React.CSSProperties = {
+  left: 0,
+  top: '50%',
+  width: '12rem',
+  height: '12rem',
+  marginLeft: '-6rem',
+  marginTop: '-6rem',
+}
+
+const TORCH_TRANSITION = { type: 'spring' as const, stiffness: 320, damping: 32 }
 
 // ─── Lab color (deterministic from id) ───────────────────────────────────────
 
@@ -112,15 +127,27 @@ function SettingsSidebar() {
                   to={item.to}
                   className={({ isActive }) =>
                     cn(
-                      'flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm font-medium transition-colors',
+                      'relative flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm font-medium transition-colors',
                       isActive
-                        ? 'bg-primary-subtle text-primary'
+                        ? 'text-primary'
                         : 'text-text-secondary hover:bg-surface-border hover:text-text-primary'
                     )
                   }
                 >
-                  <item.icon className="h-4 w-4 shrink-0" />
-                  <span>{item.label}</span>
+                  {({ isActive }: { isActive: boolean }) => (
+                    <>
+                      {isActive && (
+                        <motion.div
+                          layoutId="settings-torch"
+                          className="pointer-events-none absolute rounded-full"
+                          style={{ ...TORCH_POS, ...TORCH_STYLE }}
+                          transition={TORCH_TRANSITION}
+                        />
+                      )}
+                      <item.icon className="relative z-10 h-4 w-4 shrink-0" />
+                      <span className="relative z-10">{item.label}</span>
+                    </>
+                  )}
                 </NavLink>
               ))}
             </div>
@@ -133,115 +160,64 @@ function SettingsSidebar() {
 
 // ─── Org switcher ─────────────────────────────────────────────────────────────
 
-function OrgSwitcher({ collapsed }: { collapsed: boolean }) {
-  const { orgName, orgSlug, orgRole, currentOrgId, setOrgContext } = useAuthStore()
+function OrgDisplay({ collapsed }: { collapsed: boolean }) {
+  const { orgName, orgSlug, orgRole } = useAuthStore()
   const navigate = useNavigate()
-  const queryClient = useQueryClient()
-
-  const { data: orgs, isLoading } = useQuery({
-    queryKey: queryKeys.orgs.all(),
-    queryFn: () => orgsApi.list(),
-  })
 
   const displayName = orgName ?? orgSlug ?? 'No organization'
   const initials = displayName.slice(0, 2).toUpperCase()
 
-  const handleSwitch = async (org: OrgListItem) => {
-    if (org.id === currentOrgId) return
-    try {
-      const { accessToken } = await authApi.switchOrg(org.id)
-      setOrgContext(org.id, '', org.slug, accessToken, org.name)
-      await queryClient.invalidateQueries()
-      // Redirect to the org's subdomain
-      window.location.href = buildOrgUrl(org.slug, '/boards')
-    } catch {
-      toast.error('Failed to switch organization')
-    }
-  }
+  const trigger = (
+    <DropdownMenu.Trigger asChild>
+      <button
+        className={cn(
+          'flex w-full items-center gap-2 rounded-lg px-2 py-2 transition-colors hover:bg-surface-border',
+          collapsed && 'justify-center'
+        )}
+      >
+        <div className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-md bg-primary text-[10px] font-bold text-white">
+          {initials}
+        </div>
+        {!collapsed && (
+          <>
+            <div className="min-w-0 flex-1 text-start">
+              <p className="truncate text-xs font-semibold text-text-primary">{displayName}</p>
+              <p className="text-[10px] text-text-muted">{orgSlug ?? orgRole ?? '—'}</p>
+            </div>
+            <ChevronDown className="h-3.5 w-3.5 shrink-0 text-text-muted" />
+          </>
+        )}
+      </button>
+    </DropdownMenu.Trigger>
+  )
+
+  const menu = (
+    <DropdownMenu.Portal>
+      <DropdownMenu.Content
+        side={collapsed ? 'right' : 'bottom'}
+        align={collapsed ? 'start' : 'start'}
+        sideOffset={8}
+        className="z-50 min-w-45 rounded-lg border border-surface-border bg-surface p-1 shadow-lg"
+      >
+        <DropdownMenu.Label className="px-2 py-1 text-[10px] font-semibold uppercase tracking-widest text-text-muted">
+          {displayName}
+        </DropdownMenu.Label>
+        <DropdownMenu.Separator className="my-1 h-px bg-surface-border" />
+        <DropdownMenu.Item
+          onSelect={() => navigate('/org/new')}
+          className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm text-text-secondary outline-none hover:bg-surface-muted hover:text-text-primary"
+        >
+          <Plus className="h-4 w-4" />
+          Create organization
+        </DropdownMenu.Item>
+      </DropdownMenu.Content>
+    </DropdownMenu.Portal>
+  )
 
   return (
     <DropdownMenu.Root>
-      <DropdownMenu.Trigger asChild>
-        <button
-          className={cn(
-            'flex w-full items-center gap-2 rounded-lg px-2 py-2 text-start transition-colors hover:bg-surface-border',
-            collapsed && 'justify-center'
-          )}
-        >
-          <div className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-md bg-primary text-[10px] font-bold text-white">
-            {orgs?.find((o) => o.id === currentOrgId)?.logoUrl
-              ? <img src={orgs.find((o) => o.id === currentOrgId)!.logoUrl!} alt={displayName} className="h-full w-full object-cover" />
-              : initials
-            }
-          </div>
-          {!collapsed && (
-            <>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-xs font-semibold text-text-primary">{displayName}</p>
-                <p className="text-[10px] text-text-muted">{orgRole ?? '—'}</p>
-              </div>
-              <ChevronDown className="h-3.5 w-3.5 shrink-0 text-text-muted" />
-            </>
-          )}
-        </button>
-      </DropdownMenu.Trigger>
-
-      <DropdownMenu.Portal>
-        <DropdownMenu.Content
-          side="right"
-          align="start"
-          sideOffset={8}
-          className="z-50 min-w-55 rounded-lg border border-surface-border bg-surface p-1 shadow-lg"
-        >
-          <div className="mb-1 px-2 py-1.5">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-text-muted">
-              Organizations
-            </p>
-          </div>
-
-          {isLoading && <div className="px-2 py-2 text-xs text-text-muted">Loading…</div>}
-
-          {orgs?.map((org) => {
-            const isCurrent = org.id === currentOrgId
-            return (
-              <DropdownMenu.Item
-                key={org.id}
-                onSelect={() => handleSwitch(org)}
-                className={cn(
-                  'flex cursor-pointer items-center gap-2.5 rounded-md px-2 py-2 text-sm outline-none',
-                  isCurrent
-                    ? 'bg-primary-subtle text-primary'
-                    : 'text-text-secondary hover:bg-surface-muted hover:text-text-primary'
-                )}
-              >
-                <div className={cn(
-                  'flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded text-[9px] font-bold text-white',
-                  !org.logoUrl && (isCurrent ? 'bg-primary' : 'bg-text-muted')
-                )}>
-                  {org.logoUrl
-                    ? <img src={org.logoUrl} alt={org.name} className="h-full w-full object-cover" />
-                    : org.name.slice(0, 2).toUpperCase()
-                  }
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{org.name}</p>
-                  <p className="text-[10px] text-text-muted">{org.slug}</p>
-                </div>
-                {isCurrent && <span className="text-[10px] font-semibold text-primary">Active</span>}
-              </DropdownMenu.Item>
-            )
-          })}
-
-          <DropdownMenu.Separator className="my-1 h-px bg-surface-border" />
-          <DropdownMenu.Item
-            onSelect={() => navigate('/org/new')}
-            className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm text-text-secondary outline-none hover:bg-surface-muted hover:text-text-primary"
-          >
-            <Plus className="h-4 w-4" />
-            Create organization
-          </DropdownMenu.Item>
-        </DropdownMenu.Content>
-      </DropdownMenu.Portal>
+      {trigger}
+      {menu}
     </DropdownMenu.Root>
   )
 }
@@ -311,56 +287,72 @@ function RecentBoardItem({ board, collapsed }: { board: Board; collapsed: boolea
 // ─── Boards nav item with dropdown ───────────────────────────────────────────
 
 function BoardsNavItem({ boards, collapsed }: { boards: Board[]; collapsed: boolean }) {
-  const navigate = useNavigate()
   const { pathname } = useLocation()
+  const navigate = useNavigate()
   const [open, setOpen] = useState(false)
-  const isActive = pathname === '/boards'
+  const isActive = pathname === '/boards' || pathname.startsWith('/boards/')
 
-  const icon = <Kanban className="h-4 w-4 shrink-0" />
+  const boardsLink = (
+    <NavLink
+      to="/boards"
+      className={cn(
+        'relative z-10 flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium transition-colors',
+        collapsed && 'justify-center',
+        isActive ? 'text-primary' : 'text-text-secondary hover:bg-surface-border hover:text-text-primary'
+      )}
+    >
+      <Kanban className="h-4 w-4 shrink-0" />
+      {!collapsed && <span>Boards</span>}
+    </NavLink>
+  )
 
   if (collapsed) {
     return (
-      <Tooltip.Root>
-        <Tooltip.Trigger asChild>
-          <NavLink
-            to="/boards"
-            className={cn(
-              'flex items-center justify-center rounded-lg px-2 py-1.5 text-sm font-medium transition-colors',
-              isActive
-                ? 'bg-primary-subtle text-primary'
-                : 'text-text-secondary hover:bg-surface-border hover:text-text-primary'
-            )}
-          >
-            {icon}
-          </NavLink>
-        </Tooltip.Trigger>
-        <Tooltip.Portal>
-          <Tooltip.Content
-            side="right"
-            sideOffset={12}
-            className="rounded-md border border-surface-border bg-surface px-2 py-1 text-xs text-text-primary shadow-lg"
-          >
-            Boards
-            <Tooltip.Arrow className="fill-surface-border" />
-          </Tooltip.Content>
-        </Tooltip.Portal>
-      </Tooltip.Root>
+      <div className="relative w-full">
+        {isActive && (
+          <motion.div
+            layoutId="sidebar-torch"
+            className="pointer-events-none absolute rounded-full"
+            style={{ ...TORCH_POS, ...TORCH_STYLE }}
+            transition={TORCH_TRANSITION}
+          />
+        )}
+        <Tooltip.Root>
+          <Tooltip.Trigger asChild>{boardsLink}</Tooltip.Trigger>
+          <Tooltip.Portal>
+            <Tooltip.Content
+              side="right"
+              sideOffset={12}
+              className="rounded-md border border-surface-border bg-surface px-2 py-1 text-xs text-text-primary shadow-lg"
+            >
+              Boards
+              <Tooltip.Arrow className="fill-surface-border" />
+            </Tooltip.Content>
+          </Tooltip.Portal>
+        </Tooltip.Root>
+      </div>
     )
   }
 
   return (
-    <div>
+    <div className="relative">
+      {isActive && (
+        <motion.div
+          layoutId="sidebar-torch"
+          className="pointer-events-none absolute rounded-full"
+          style={{ ...TORCH_POS, ...TORCH_STYLE }}
+          transition={TORCH_TRANSITION}
+        />
+      )}
       <div className="flex items-center">
         <NavLink
           to="/boards"
           className={cn(
-            'flex flex-1 items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium transition-colors',
-            isActive
-              ? 'bg-primary-subtle text-primary'
-              : 'text-text-secondary hover:bg-surface-border hover:text-text-primary'
+            'relative z-10 flex flex-1 items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium transition-colors',
+            isActive ? 'text-primary' : 'text-text-secondary hover:bg-surface-border hover:text-text-primary'
           )}
         >
-          {icon}
+          <Kanban className="h-4 w-4 shrink-0" />
           <span>Boards</span>
         </NavLink>
         <button
@@ -425,7 +417,7 @@ function RecentSection({ boards, recent, collapsed }: { boards: Board[]; recent:
   if (recentBoards.length === 0) return null
 
   return (
-    <div className="px-2 py-2">
+    <div className="border-b border-surface-border px-2 pb-2 pt-2">
       {!collapsed && (
         <p className="mb-1 px-2 text-[9px] font-semibold uppercase tracking-widest text-text-muted">
           Recent
@@ -526,49 +518,62 @@ function GlobalNavItem({
   icon: Icon,
   label,
   collapsed,
+  matchPrefix,
 }: {
   to: string
   icon: React.ElementType
   label: string
   collapsed: boolean
+  matchPrefix?: string
 }) {
-  const content = (
+  const { pathname } = useLocation()
+  const isActive = matchPrefix
+    ? pathname.startsWith(matchPrefix)
+    : pathname === to || pathname.startsWith(to + '/')
+
+  const link = (
     <NavLink
       to={to}
-      className={({ isActive }) =>
-        cn(
-          'flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium transition-colors',
-          collapsed && 'justify-center',
-          isActive
-            ? 'bg-primary-subtle text-primary'
-            : 'text-text-secondary hover:bg-surface-border hover:text-text-primary'
-        )
-      }
+      className={cn(
+        'relative z-10 flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium transition-colors',
+        collapsed && 'justify-center',
+        isActive
+          ? 'text-primary'
+          : 'text-text-secondary hover:bg-surface-border hover:text-text-primary'
+      )}
     >
       <Icon className="h-4 w-4 shrink-0" />
       {!collapsed && <span>{label}</span>}
     </NavLink>
   )
 
-  if (collapsed) {
-    return (
-      <Tooltip.Root>
-        <Tooltip.Trigger asChild>{content}</Tooltip.Trigger>
-        <Tooltip.Portal>
-          <Tooltip.Content
-            side="right"
-            sideOffset={12}
-            className="rounded-md border border-surface-border bg-surface px-2 py-1 text-xs text-text-primary shadow-lg"
-          >
-            {label}
-            <Tooltip.Arrow className="fill-surface-border" />
-          </Tooltip.Content>
-        </Tooltip.Portal>
-      </Tooltip.Root>
-    )
-  }
-
-  return content
+  return (
+    <div className="relative w-full">
+      {isActive && (
+        <motion.div
+          layoutId="sidebar-torch"
+          className="pointer-events-none absolute rounded-full"
+          style={{ ...TORCH_POS, ...TORCH_STYLE }}
+          transition={TORCH_TRANSITION}
+        />
+      )}
+      {collapsed ? (
+        <Tooltip.Root>
+          <Tooltip.Trigger asChild>{link}</Tooltip.Trigger>
+          <Tooltip.Portal>
+            <Tooltip.Content
+              side="right"
+              sideOffset={12}
+              className="rounded-md border border-surface-border bg-surface px-2 py-1 text-xs text-text-primary shadow-lg"
+            >
+              {label}
+              <Tooltip.Arrow className="fill-surface-border" />
+            </Tooltip.Content>
+          </Tooltip.Portal>
+        </Tooltip.Root>
+      ) : link}
+    </div>
+  )
 }
 
 // ─── Main sidebar ─────────────────────────────────────────────────────────────
@@ -599,14 +604,14 @@ export function Sidebar() {
     <Tooltip.Provider delayDuration={300}>
       <aside
         className={cn(
-          'flex h-screen flex-col border-e border-surface-border bg-surface-muted transition-all duration-200',
+          'relative flex h-screen flex-col overflow-hidden border-e border-surface-border bg-surface-muted transition-all duration-200',
           collapsed ? 'w-14' : 'w-56'
         )}
       >
         {/* Brand + toggle */}
         <div
           className={cn(
-            'flex h-14 shrink-0 items-center border-b border-surface-border px-3',
+            'relative z-10 flex h-14 shrink-0 items-center border-b border-surface-border px-3',
             collapsed ? 'justify-center' : 'justify-between'
           )}
         >
@@ -627,7 +632,7 @@ export function Sidebar() {
 
         {/* Org switcher */}
         <div className="border-b border-surface-border px-2 py-2">
-          <OrgSwitcher collapsed={collapsed} />
+          <OrgDisplay collapsed={collapsed} />
         </div>
 
         {/* Recent boards */}
@@ -662,7 +667,7 @@ export function Sidebar() {
 
         {/* Bottom: settings + user */}
         <div className="border-t border-surface-border px-2 pb-3 pt-2">
-          <GlobalNavItem to="/settings/org" icon={Settings} label="Settings" collapsed={collapsed} />
+          <GlobalNavItem to="/settings/org" matchPrefix="/settings" icon={Settings} label="Settings" collapsed={collapsed} />
           <div className="mt-1">
             <UserPanel collapsed={collapsed} />
           </div>

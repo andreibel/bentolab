@@ -28,6 +28,7 @@ import ProfilePage from '@/pages/settings/ProfilePage'
 import OrgGeneralPage from '@/pages/settings/OrgGeneralPage'
 import TimelinePage from '@/pages/board/TimelinePage'
 import GlobalTimelinePage from '@/pages/GlobalTimelinePage'
+import NotFoundPage from '@/pages/NotFoundPage'
 import {FeaturePlaceholder} from '@/components/common/FeaturePlaceholder'
 import {BarChart2, LayoutDashboard} from 'lucide-react'
 
@@ -114,7 +115,7 @@ export default function App() {
           <Route path="/settings/profile"      element={<ProfilePage />} />
         </Route>
 
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>
   )
