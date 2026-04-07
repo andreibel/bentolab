@@ -1,7 +1,7 @@
 import {useQuery} from '@tanstack/react-query'
 import client from './client'
 import {queryKeys} from './queryKeys'
-import type {Activity, Comment, Issue, Page, TimeLog} from '@/types/issue'
+import type {Activity, Comment, Issue, IssueSearchResult, Page, TimeLog} from '@/types/issue'
 
 export const issuesApi = {
   list: (boardId: string, page = 0, size = 200, closed?: boolean) =>
@@ -27,6 +27,11 @@ export const issuesApi = {
 
   assign: (issueId: string, assigneeId: string | null) =>
     client.patch<Issue>(`/api/issues/${issueId}/assign`, { assigneeId }).then((r) => r.data),
+
+  search: (q: string, limit = 15) =>
+    client
+      .get<IssueSearchResult[]>('/api/issues/search', { params: { q, limit } })
+      .then((r) => r.data),
 
   mine: (relation: 'all' | 'assigned' | 'created' = 'all', closed?: boolean) =>
     client

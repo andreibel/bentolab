@@ -2,31 +2,41 @@ import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import {createPortal} from 'react-dom'
 import {useNavigate} from 'react-router-dom'
 import Fuse from 'fuse.js'
-import {useMutation, useQueryClient} from '@tanstack/react-query'
+import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query'
 import {toast} from 'sonner'
 import {
   ArrowRight,
   CalendarDays,
   ChevronRight,
+  CircleDot,
   CirclePlus,
   Compass,
   Inbox,
   Layers,
   LayoutGrid,
+  Loader2,
+  MessageSquare,
   Plus,
   Search,
   Sparkles,
+  User,
+  UserCheck,
   UserCircle,
   X,
 } from 'lucide-react'
 import {boardsApi, useBoards} from '@/api/boards'
+import {issuesApi} from '@/api/issues'
+import {orgsApi} from '@/api/orgs'
+import {usersApi} from '@/api/users'
 import {queryKeys} from '@/api/queryKeys'
+import {useAuthStore} from '@/stores/authStore'
 import {cn} from '@/utils/cn'
 import type {Board} from '@/types/board'
+import type {IssueSearchResult} from '@/types/issue'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type CategoryId = 'all' | 'boards' | 'new' | 'navigate'
+type CategoryId = 'all' | 'issues' | 'boards' | 'new' | 'navigate'
 
 type CommandItem = {
   id:           string
@@ -36,15 +46,129 @@ type CommandItem = {
   label:        string
   description?: string
   shortcut?:    string[]
-  /** Marks the inline board-creation preview row */
   isCreatePreview?: boolean
   action:       () => void
+}
+
+// ── Slash command types ───────────────────────────────────────────────────────
+
+type SlashCommandId =
+  | 'assigned-to'
+  | 'created-by'
+  | 'start-after'
+  | 'start-before'
+  | 'due-after'
+  | 'due-before'
+
+type SlashCommandDef = {
+  id:          SlashCommandId
+  label:       string
+  description: string
+  icon:        React.ElementType
+  valueType:   'user' | 'date'
+}
+
+type FilterToken = {
+  uid:          string
+  command:      SlashCommandId
+  value:        string        // internal: userId or ISO date YYYY-MM-DD
+  displayValue: string        // shown in pill
+}
+
+type SlashState =
+  | { type: 'none' }
+  | { type: 'command'; partial: string; replaceFrom: number }
+  | { type: 'value';   command: SlashCommandDef; partial: string; replaceFrom: number }
+
+type Suggestion =
+  | { type: 'command'; id: string; label: string; description: string; icon: React.ElementType; def: SlashCommandDef }
+  | { type: 'value';   id: string; label: string; description?: string; icon: React.ElementType; value: string; displayValue: string }
+
+// ── Slash command definitions ─────────────────────────────────────────────────
+
+const SLASH_COMMANDS: SlashCommandDef[] = [
+  { id: 'assigned-to',  label: 'Assigned to',  description: 'Filter by assignee',      icon: UserCheck,    valueType: 'user' },
+  { id: 'created-by',   label: 'Created by',   description: 'Filter by issue creator', icon: UserCircle,   valueType: 'user' },
+  { id: 'start-after',  label: 'Start after',  description: 'Started after a date',    icon: CalendarDays, valueType: 'date' },
+  { id: 'start-before', label: 'Start before', description: 'Started before a date',   icon: CalendarDays, valueType: 'date' },
+  { id: 'due-after',    label: 'Due after',    description: 'Due date is after',        icon: CalendarDays, valueType: 'date' },
+  { id: 'due-before',   label: 'Due before',   description: 'Due date is before',       icon: CalendarDays, valueType: 'date' },
+]
+
+// ── Date suggestions ──────────────────────────────────────────────────────────
+
+type DateSuggestion = { id: string; label: string; iso: string }
+
+function getDateSuggestions(): DateSuggestion[] {
+  const fmt = (d: Date) => d.toISOString().split('T')[0]
+  const today = new Date()
+
+  const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1)
+  const tomorrow  = new Date(today); tomorrow.setDate(today.getDate() + 1)
+
+  const day = today.getDay()
+  const thisWeekStart = new Date(today)
+  thisWeekStart.setDate(today.getDate() - (day === 0 ? 6 : day - 1))
+
+  const nextWeekStart = new Date(thisWeekStart); nextWeekStart.setDate(thisWeekStart.getDate() + 7)
+  const lastWeekStart = new Date(thisWeekStart); lastWeekStart.setDate(thisWeekStart.getDate() - 7)
+  const thisMonthStart = new Date(today.getFullYear(), today.getMonth(), 1)
+
+  return [
+    { id: 'today',      label: 'Today',      iso: fmt(today)         },
+    { id: 'tomorrow',   label: 'Tomorrow',   iso: fmt(tomorrow)      },
+    { id: 'yesterday',  label: 'Yesterday',  iso: fmt(yesterday)     },
+    { id: 'this-week',  label: 'This week',  iso: fmt(thisWeekStart) },
+    { id: 'next-week',  label: 'Next week',  iso: fmt(nextWeekStart) },
+    { id: 'last-week',  label: 'Last week',  iso: fmt(lastWeekStart) },
+    { id: 'this-month', label: 'This month', iso: fmt(thisMonthStart)},
+  ]
+}
+
+// ── Slash state parser ────────────────────────────────────────────────────────
+
+function parseSlashState(query: string): SlashState {
+  // Match: (start | whitespace) / (word chars and hyphens, may be empty) (optionally: space + more word chars)$
+  const m = query.match(/(^|\s)\/([\w-]*)(\s+([\w-]*))?$/)
+  if (!m) return { type: 'none' }
+
+  const startOffset = m[1].length  // 0 if start of string, 1 if space
+  const replaceFrom = m.index! + startOffset
+  const cmdPartial  = m[2]
+  const hasSpace    = !!m[3]
+  const valPartial  = m[4] ?? ''
+
+  if (hasSpace) {
+    const cmd = SLASH_COMMANDS.find(c => c.id === cmdPartial)
+    if (cmd) return { type: 'value', command: cmd, partial: valPartial, replaceFrom }
+    // Unknown command + space — fall through as generic command partial
+  }
+
+  return { type: 'command', partial: cmdPartial, replaceFrom }
+}
+
+// ── Token filter ──────────────────────────────────────────────────────────────
+
+function applyTokenFilters(results: IssueSearchResult[], tokens: FilterToken[]): IssueSearchResult[] {
+  if (tokens.length === 0) return results
+  return results.filter(r => tokens.every(t => {
+    switch (t.command) {
+      case 'assigned-to':  return r.assigneeId === t.value
+      case 'created-by':   return r.reporterId === t.value
+      case 'start-after':  return r.startDate != null && r.startDate > t.value
+      case 'start-before': return r.startDate != null && r.startDate < t.value
+      case 'due-after':    return r.dueDate != null && r.dueDate > t.value
+      case 'due-before':   return r.dueDate != null && r.dueDate < t.value
+      default:             return true
+    }
+  }))
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const CATEGORIES: { id: CategoryId; label: string; icon: React.ElementType }[] = [
-  { id: 'all',      label: 'All',      icon: Search    },
+  { id: 'all',      label: 'All',      icon: Search     },
+  { id: 'issues',   label: 'Issues',   icon: CircleDot  },
   { id: 'boards',   label: 'Boards',   icon: LayoutGrid },
   { id: 'new',      label: 'New',      icon: Plus       },
   { id: 'navigate', label: 'Navigate', icon: Compass    },
@@ -59,19 +183,18 @@ const BOARD_TYPES: { value: Board['boardType']; label: string }[] = [
   { value: 'CUSTOM',       label: 'Custom'       },
 ]
 
-/** Auto-generate a board key from a name: first letters, uppercase, max 4 */
 function autoKey(name: string): string {
   const initials = name.trim().split(/\s+/).map(w => w[0]?.toUpperCase() ?? '').join('')
   return (initials || name.toUpperCase()).slice(0, 4)
 }
 
 const TEMPLATE_ALIASES: Record<string, Board['boardType']> = {
-  kanban:       'KANBAN',
-  scrum:        'SCRUM',
-  bug:          'BUG_TRACKING',
-  bugs:         'BUG_TRACKING',
-  'bug-tracking': 'BUG_TRACKING',
-  custom:       'CUSTOM',
+  kanban:           'KANBAN',
+  scrum:            'SCRUM',
+  bug:              'BUG_TRACKING',
+  bugs:             'BUG_TRACKING',
+  'bug-tracking':   'BUG_TRACKING',
+  custom:           'CUSTOM',
 }
 
 type ParsedNewBoard = {
@@ -81,10 +204,6 @@ type ParsedNewBoard = {
   detectedTemplate: Board['boardType'] | null
 }
 
-/**
- * Parse "new board [KEY] [Name...] [template?]" from the query.
- * The last word is checked against template aliases and stripped from the name if matched.
- */
 function parseNewBoard(query: string): ParsedNewBoard | null {
   const m = query.match(/^new\s+board(?:\s+(\S+)(?:\s+(.+))?)?$/i)
   if (!m) return null
@@ -92,9 +211,8 @@ function parseNewBoard(query: string): ParsedNewBoard | null {
   const rawKey  = (m[1] ?? '').toUpperCase().slice(0, 4)
   let   rawName = m[2]?.trim() ?? ''
 
-  // Detect template keyword as the last word of the name
   let detectedTemplate: Board['boardType'] | null = null
-  const words = rawName.split(/\s+/)
+  const words    = rawName.split(/\s+/)
   const lastWord = words[words.length - 1]?.toLowerCase() ?? ''
   if (TEMPLATE_ALIASES[lastWord]) {
     detectedTemplate = TEMPLATE_ALIASES[lastWord]
@@ -129,6 +247,31 @@ function BoardDot({ bg }: { bg: string }) {
   return <span className="h-3.5 w-3.5 rounded" style={{ backgroundColor: bg }} />
 }
 
+function TokenPill({
+  token,
+  onRemove,
+}: {
+  token: FilterToken
+  onRemove: () => void
+}) {
+  const def = SLASH_COMMANDS.find(c => c.id === token.command)
+  const Icon = def?.icon ?? User
+  return (
+    <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-primary/50 bg-primary/8 px-2 py-0.5 text-xs font-medium text-primary">
+      <Icon className="h-3 w-3 shrink-0" />
+      <span className="opacity-70">{def?.label ?? token.command}:</span>
+      <span>{token.displayValue}</span>
+      <button
+        type="button"
+        onClick={onRemove}
+        className="ms-0.5 rounded-full p-0.5 opacity-60 transition-all hover:bg-primary/20 hover:opacity-100"
+      >
+        <X className="h-2.5 w-2.5" />
+      </button>
+    </span>
+  )
+}
+
 // ── Create-board preview row ──────────────────────────────────────────────────
 
 function CreateBoardRow({
@@ -153,15 +296,12 @@ function CreateBoardRow({
       </span>
 
       <span className="min-w-0 flex-1">
-        {/* Title */}
         <span className="block text-sm font-medium text-text-primary">
           {parsed.ready ? (
             <>
               Create <span className="text-primary">"{parsed.name}"</span>
-              <span
-                className="ms-2 font-mono text-xs text-text-muted"
-                style={{ boxShadow: '0 1px 0 0 var(--color-surface-border)' }}
-              >
+              <span className="ms-2 font-mono text-xs text-text-muted"
+                style={{ boxShadow: '0 1px 0 0 var(--color-surface-border)' }}>
                 <kbd className="rounded border border-surface-border bg-surface px-1.5 py-0.5 font-mono text-[10px]">
                   {parsed.key}
                 </kbd>
@@ -177,7 +317,6 @@ function CreateBoardRow({
           )}
         </span>
 
-        {/* Template picker */}
         {parsed.ready && (
           <span className="mt-1.5 flex flex-wrap items-center gap-1">
             <span className="me-0.5 text-[10px] text-text-muted">Template:</span>
@@ -202,10 +341,7 @@ function CreateBoardRow({
 
       {active && parsed.ready && (
         <span className="mt-0.5 flex shrink-0 items-center gap-1 text-[11px] text-primary">
-          {isPending
-            ? <span className="text-text-muted">Creating…</span>
-            : <><Kbd>↵</Kbd> create</>
-          }
+          {isPending ? <span className="text-text-muted">Creating…</span> : <><Kbd>↵</Kbd> create</>}
         </span>
       )}
     </div>
@@ -223,18 +359,172 @@ export function CommandPalette({
   onClose:        () => void
   onCreateIssue?: () => void
 }) {
-  const navigate                      = useNavigate()
-  const queryClient                   = useQueryClient()
-  const [query,          setQuery]         = useState('')
-  const [category,       setCategory]      = useState<CategoryId>('all')
-  const [activeIdx,      setActiveIdx]     = useState(0)
-  const [createTemplate, setCreateTemplate] = useState<Board['boardType']>('KANBAN')
-  const inputRef                      = useRef<HTMLInputElement>(null)
-  const listRef                       = useRef<HTMLDivElement>(null)
+  const navigate     = useNavigate()
+  const queryClient  = useQueryClient()
+  const currentUser  = useAuthStore(s => s.user)
+  const currentOrgId = useAuthStore(s => s.currentOrgId)
+
+  const [query,          setQuery]          = useState('')
+  const [tokens,         setTokens]         = useState<FilterToken[]>([])
+  const [category,       setCategory]       = useState<CategoryId>('all')
+  const [activeIdx,      setActiveIdx]       = useState(0)
+  const [suggestionIdx,  setSuggestionIdx]   = useState(0)
+  const [createTemplate, setCreateTemplate]  = useState<Board['boardType']>('KANBAN')
+
+  const inputRef = useRef<HTMLInputElement>(null)
+  const listRef  = useRef<HTMLDivElement>(null)
 
   const { data: boards = [] } = useBoards()
 
-  // ── Board creation mutation ────────────────────────────────────────────────
+  // ── Slash state (derived from query) ───────────────────────────────────────
+
+  const slashState = useMemo(() => parseSlashState(query), [query])
+  const isSuggesting = slashState.type !== 'none'
+
+  // ── Org members + profiles (loaded lazily when a user command is in-flight) ─
+
+  const needsUsers = slashState.type === 'value' && slashState.command.valueType === 'user'
+
+  const { data: orgMembers = [] } = useQuery({
+    queryKey: ['org-members', currentOrgId],
+    queryFn:  () => orgsApi.listMembers(currentOrgId!),
+    enabled:  !!currentOrgId && needsUsers,
+    staleTime: 5 * 60_000,
+  })
+
+  const memberIds = useMemo(() => orgMembers.map(m => m.userId), [orgMembers])
+
+  const { data: memberProfiles = [] } = useQuery({
+    queryKey: ['user-profiles', memberIds],
+    queryFn:  () => usersApi.batchGet(memberIds),
+    enabled:  memberIds.length > 0 && needsUsers,
+    staleTime: 5 * 60_000,
+  })
+
+  const profileMap = useMemo(
+    () => new Map(memberProfiles.map(p => [p.id, p])),
+    [memberProfiles],
+  )
+
+  // ── Current suggestions list ───────────────────────────────────────────────
+
+  const suggestions = useMemo<Suggestion[]>(() => {
+    if (slashState.type === 'command') {
+      const partial = slashState.partial.toLowerCase()
+      return SLASH_COMMANDS
+        .filter(c => c.id.includes(partial) || c.label.toLowerCase().includes(partial))
+        .map(c => ({
+          type:        'command' as const,
+          id:          c.id,
+          label:       c.label,
+          description: c.description,
+          icon:        c.icon,
+          def:         c,
+        }))
+    }
+
+    if (slashState.type === 'value') {
+      const partial = slashState.partial.toLowerCase()
+      const cmd     = slashState.command
+
+      if (cmd.valueType === 'date') {
+        return getDateSuggestions()
+          .filter(d => d.id.includes(partial) || d.label.toLowerCase().includes(partial))
+          .map(d => ({
+            type:         'value' as const,
+            id:           d.id,
+            label:        d.label,
+            description:  d.iso,
+            icon:         CalendarDays,
+            value:        d.iso,
+            displayValue: d.label,
+          }))
+      }
+
+      if (cmd.valueType === 'user') {
+        const results: Suggestion[] = []
+
+        // "Me" option first
+        const meName = currentUser
+          ? [currentUser.firstName, currentUser.lastName].filter(Boolean).join(' ') || currentUser.email
+          : 'Me'
+        if ('me'.includes(partial) || meName.toLowerCase().includes(partial)) {
+          results.push({
+            type:         'value',
+            id:           'me',
+            label:        `Me (${meName})`,
+            description:  'Yourself',
+            icon:         User,
+            value:        currentUser?.id ?? '',
+            displayValue: 'me',
+          })
+        }
+
+        // Org members
+        for (const member of orgMembers) {
+          if (member.userId === currentUser?.id) continue
+          const profile = profileMap.get(member.userId)
+          const name    = profile
+            ? [profile.firstName, profile.lastName].filter(Boolean).join(' ') || profile.email
+            : member.userId
+          if (partial && !name.toLowerCase().includes(partial) && !profile?.email.toLowerCase().includes(partial)) continue
+          results.push({
+            type:         'value',
+            id:           member.userId,
+            label:        name,
+            description:  profile?.email,
+            icon:         User,
+            value:        member.userId,
+            displayValue: profile?.firstName ?? name.split(' ')[0] ?? name,
+          })
+        }
+        return results
+      }
+    }
+
+    return []
+  }, [slashState, currentUser, orgMembers, profileMap])
+
+  // Reset suggestion index when suggestions change
+  useEffect(() => { setSuggestionIdx(0) }, [suggestions.length])
+
+  // ── Issue search (debounced, backend) ─────────────────────────────────────
+
+  const [debouncedQuery, setDebouncedQuery] = useState('')
+  const [issueResults,   setIssueResults]   = useState<IssueSearchResult[]>([])
+  const [issueLoading,   setIssueLoading]   = useState(false)
+
+  // The free-text portion of the query (excludes the current in-progress slash segment)
+  const freeTextQuery = useMemo(() => {
+    if (slashState.type === 'none') return query.trim()
+    return query.slice(0, slashState.replaceFrom).trimEnd()
+  }, [query, slashState])
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQuery(freeTextQuery), 300)
+    return () => clearTimeout(t)
+  }, [freeTextQuery])
+
+  useEffect(() => {
+    const q           = debouncedQuery
+    const shouldSearch = q.length >= 2 && (category === 'all' || category === 'issues')
+    if (!shouldSearch) { setIssueResults([]); return }
+    let cancelled = false
+    setIssueLoading(true)
+    issuesApi.search(q, 20)
+      .then(data  => { if (!cancelled) setIssueResults(data)  })
+      .catch(()   => { if (!cancelled) setIssueResults([])    })
+      .finally(() => { if (!cancelled) setIssueLoading(false) })
+    return () => { cancelled = true }
+  }, [debouncedQuery, category])
+
+  // Apply token filters client-side
+  const filteredIssueResults = useMemo(
+    () => applyTokenFilters(issueResults, tokens),
+    [issueResults, tokens],
+  )
+
+  // ── Board creation mutation ───────────────────────────────────────────────
 
   const createBoard = useMutation({
     mutationFn: boardsApi.create,
@@ -254,17 +544,49 @@ export function CommandPalette({
     },
   })
 
-  // ── Reset state on close so the palette is clean next time it opens ────────
+  // ── Commit/remove tokens ──────────────────────────────────────────────────
+
+  function applySuggestion(s: Suggestion) {
+    const state = parseSlashState(query)
+    if (state.type === 'none') return
+
+    if (s.type === 'command') {
+      const before = query.slice(0, state.replaceFrom)
+      setQuery(`${before}/${s.def.id} `)
+    } else {
+      const before  = query.slice(0, state.replaceFrom).trimEnd()
+      const command = state.type === 'value' ? state.command.id : ('' as SlashCommandId)
+      setTokens(prev => [...prev, {
+        uid:          Math.random().toString(36).slice(2),
+        command,
+        value:        s.value,
+        displayValue: s.displayValue,
+      }])
+      setQuery(before)
+    }
+    setSuggestionIdx(0)
+    requestAnimationFrame(() => inputRef.current?.focus())
+  }
+
+  function removeToken(uid: string) {
+    setTokens(prev => prev.filter(t => t.uid !== uid))
+  }
+
+  // ── Reset on close ────────────────────────────────────────────────────────
 
   const handleClose = useCallback(() => {
     setQuery('')
+    setTokens([])
     setCategory('all')
     setActiveIdx(0)
+    setSuggestionIdx(0)
     setCreateTemplate('KANBAN')
+    setIssueResults([])
+    setDebouncedQuery('')
     onClose()
   }, [onClose])
 
-  // ── Focus input when palette opens ─────────────────────────────────────────
+  // ── Focus on open ─────────────────────────────────────────────────────────
 
   useEffect(() => {
     if (!open) return
@@ -272,7 +594,7 @@ export function CommandPalette({
     return () => clearTimeout(t)
   }, [open])
 
-  // ── Board commands ─────────────────────────────────────────────────────────
+  // ── Board commands ────────────────────────────────────────────────────────
 
   const boardFuse = useMemo(
     () => new Fuse(boards, { keys: ['name', 'boardKey'], threshold: 0.4 }),
@@ -281,8 +603,8 @@ export function CommandPalette({
 
   const boardItems = useMemo<CommandItem[]>(
     () => boards.map(b => ({
-      id:      `board-${b.id}`,
-      group:   'Boards',
+      id:       `board-${b.id}`,
+      group:    'Boards',
       iconNode: <BoardDot bg={b.background ?? '#6B7280'} />,
       label:       b.name,
       description: b.boardKey,
@@ -291,10 +613,9 @@ export function CommandPalette({
     [boards, navigate, handleClose],
   )
 
-  // ── Static commands ────────────────────────────────────────────────────────
+  // ── Static commands ───────────────────────────────────────────────────────
 
   const staticCommands = useMemo<CommandItem[]>(() => [
-    // ── New ──────────────────────────────────────────────────────────────────
     {
       id: 'new-board-hint', group: 'New',
       icon: Plus, label: 'Create Board…',
@@ -308,7 +629,6 @@ export function CommandPalette({
       shortcut: ['C'],
       action: () => { handleClose(); onCreateIssue?.() },
     },
-    // ── Navigate ──────────────────────────────────────────────────────────────
     {
       id: 'nav-all-boards', group: 'Navigate',
       icon: LayoutGrid, label: 'All Boards',
@@ -337,19 +657,33 @@ export function CommandPalette({
     },
   ], [navigate, handleClose, onCreateIssue])
 
-  // ── Inline "new board" detection ───────────────────────────────────────────
+  // ── Issue results as CommandItems ─────────────────────────────────────────
 
-  const newBoardParsed = useMemo(() => parseNewBoard(query), [query])
+  const issueItems = useMemo<CommandItem[]>(
+    () => filteredIssueResults.map(r => ({
+      id:      `issue-${r.issueId}`,
+      group:   'Issues',
+      icon:    r.matchIn === 'COMMENT' ? MessageSquare : CircleDot,
+      label:   `${r.issueKey}  ${r.title}`,
+      description: r.snippet || undefined,
+      action: () => {
+        navigate(`/boards/${r.boardId}?issue=${r.issueId}`)
+        handleClose()
+      },
+    })),
+    [filteredIssueResults, navigate, handleClose],
+  )
 
-  // Query-detected template takes priority over manually chosen one
+  // ── Inline "new board" detection ──────────────────────────────────────────
+
+  const newBoardParsed   = useMemo(() => parseNewBoard(query), [query])
   const effectiveTemplate = newBoardParsed?.detectedTemplate ?? createTemplate
 
-  // ── Combined results ───────────────────────────────────────────────────────
+  // ── Combined results ──────────────────────────────────────────────────────
 
   const results = useMemo<CommandItem[]>(() => {
-    const q = query.trim()
+    const q = freeTextQuery
 
-    // Always surface the create-preview when the prefix is typed
     const createPreview: CommandItem[] = newBoardParsed ? [{
       id:              'quick-create-board',
       group:           'Create',
@@ -366,10 +700,9 @@ export function CommandPalette({
       },
     }] : []
 
-    // Filter boards
     let filteredBoards: CommandItem[]
     if (newBoardParsed) {
-      filteredBoards = []                           // hide board list while creating
+      filteredBoards = []
     } else if (!q) {
       filteredBoards = boardItems
     } else {
@@ -378,45 +711,32 @@ export function CommandPalette({
       ).filter(Boolean)
     }
 
-    // Filter static commands
     const filteredStatic = (() => {
       const words = q.toLowerCase().split(/\s+/).filter(Boolean)
       return staticCommands.filter(cmd => {
-        // Category gate
+        if (category === 'issues')  return false
         if (category === 'new'      && cmd.group !== 'New')      return false
         if (category === 'navigate' && cmd.group !== 'Navigate') return false
-        if (category === 'boards'   && cmd.group !== 'New' && cmd.id !== 'new-board-hint') return false
-        // For 'boards' category we only keep the board create hint + board items
-        if (category === 'boards' && cmd.id !== 'new-board-hint') return false
-
+        if (category === 'boards'   && cmd.id !== 'new-board-hint') return false
         if (!words.length) return true
         const hay = `${cmd.label} ${cmd.description ?? ''} ${cmd.group}`.toLowerCase()
         return words.every(w => hay.includes(w))
       })
     })()
 
-    // Boards category: show board items + the "create board" hint
-    if (category === 'boards') {
-      return [...createPreview, ...filteredBoards, ...filteredStatic]
-    }
-    // New category: only create commands + creation preview
-    if (category === 'new') {
-      return [...createPreview, ...filteredStatic]
-    }
-    // Navigate: only nav commands
-    if (category === 'navigate') {
-      return [...filteredStatic]
-    }
-    // All
-    return [...createPreview, ...filteredBoards, ...filteredStatic]
-  }, [query, category, boardItems, boardFuse, staticCommands, newBoardParsed, createBoard, effectiveTemplate])
+    if (category === 'issues')   return [...issueItems]
+    if (category === 'boards')   return [...createPreview, ...filteredBoards, ...filteredStatic]
+    if (category === 'new')      return [...createPreview, ...filteredStatic]
+    if (category === 'navigate') return [...filteredStatic]
+    return [...createPreview, ...issueItems, ...filteredBoards, ...filteredStatic]
+  }, [freeTextQuery, query, category, boardItems, boardFuse, staticCommands, issueItems, newBoardParsed, createBoard, effectiveTemplate])
 
-  // ── Grouped ────────────────────────────────────────────────────────────────
+  // ── Grouped ───────────────────────────────────────────────────────────────
 
   const grouped = useMemo(() => {
     const map = new Map<string, CommandItem[]>()
     for (const cmd of results) {
-      if (cmd.isCreatePreview) continue   // rendered separately at top
+      if (cmd.isCreatePreview) continue
       const arr = map.get(cmd.group) ?? []
       arr.push(cmd)
       map.set(cmd.group, arr)
@@ -425,15 +745,12 @@ export function CommandPalette({
   }, [results])
 
   const createPreviewItem = results.find(r => r.isCreatePreview) ?? null
-
-  // The flat list for arrow navigation includes the preview item at index 0
-  const flat = results
-
-  // ── Keep activeIdx in bounds (derived, not state) ─────────────────────────
+  const flat              = results
 
   const safeActiveIdx = flat.length === 0 ? 0 : Math.min(activeIdx, flat.length - 1)
+  const safeSugIdx    = suggestions.length === 0 ? 0 : Math.min(suggestionIdx, suggestions.length - 1)
 
-  // ── Scroll active item into view ───────────────────────────────────────────
+  // ── Scroll active item into view ──────────────────────────────────────────
 
   useEffect(() => {
     if (!listRef.current) return
@@ -441,12 +758,41 @@ export function CommandPalette({
       ?.scrollIntoView({ block: 'nearest' })
   }, [safeActiveIdx])
 
-  // ── Keyboard handler ───────────────────────────────────────────────────────
+  // ── Keyboard handler ──────────────────────────────────────────────────────
 
   function handleKeyDown(e: React.KeyboardEvent) {
-    // Left/right: cycle template when create-preview is active and cursor is at end
+    // ── When slash suggestions are visible ─────────────────────────────────
+    if (isSuggesting && suggestions.length > 0) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        setSuggestionIdx(i => (i + 1) % suggestions.length)
+        return
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        setSuggestionIdx(i => (i - 1 + suggestions.length) % suggestions.length)
+        return
+      }
+      if (e.key === 'Tab' || e.key === 'Enter') {
+        e.preventDefault()
+        applySuggestion(suggestions[safeSugIdx])
+        return
+      }
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        // Remove the current slash segment from the query
+        const state = parseSlashState(query)
+        if (state.type !== 'none') {
+          setQuery(query.slice(0, state.replaceFrom).trimEnd())
+        }
+        return
+      }
+      return  // Other keys fall through to native input behavior
+    }
+
+    // ── Template cycling when create-preview is active ────────────────────
     const atEnd = inputRef.current?.selectionStart === query.length
-                && inputRef.current?.selectionEnd   === query.length
+               && inputRef.current?.selectionEnd   === query.length
     if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && newBoardParsed && atEnd) {
       e.preventDefault()
       const types = BOARD_TYPES.map(t => t.value)
@@ -458,6 +804,7 @@ export function CommandPalette({
       return
     }
 
+    // ── Normal navigation ─────────────────────────────────────────────────
     if (e.key === 'ArrowDown') {
       e.preventDefault()
       setActiveIdx(i => (i + 1) % Math.max(1, flat.length))
@@ -466,7 +813,7 @@ export function CommandPalette({
       setActiveIdx(i => (i - 1 + Math.max(1, flat.length)) % Math.max(1, flat.length))
     } else if (e.key === 'Tab') {
       e.preventDefault()
-      const idx = CATEGORIES.findIndex(c => c.id === category)
+      const idx  = CATEGORIES.findIndex(c => c.id === category)
       const next = CATEGORIES[(idx + (e.shiftKey ? -1 + CATEGORIES.length : 1)) % CATEGORIES.length]
       setCategory(next.id)
       setActiveIdx(0)
@@ -478,9 +825,25 @@ export function CommandPalette({
     }
   }
 
+  // ── Input placeholder ─────────────────────────────────────────────────────
+
+  const placeholder = useMemo(() => {
+    if (slashState.type === 'value') {
+      const cmd = slashState.command
+      if (cmd.valueType === 'date') return `Pick a date: today, tomorrow, this-week…`
+      return `Type a name or "me"…`
+    }
+    if (slashState.type === 'command') return `Type a command name or pick from the list…`
+    if (category === 'issues')         return 'Search issues, descriptions, comments… or use / for filters'
+    if (category === 'boards')         return 'Search boards or type: new board KEY Name…'
+    if (category === 'new')            return 'Type: new board KEY Name  or  create issue…'
+    if (category === 'navigate')       return 'Jump to a page…'
+    return 'Search or type / for filter commands…'
+  }, [slashState, category])
+
   if (!open) return null
 
-  // ── Render ─────────────────────────────────────────────────────────────────
+  // ── Render ────────────────────────────────────────────────────────────────
 
   return createPortal(
     <div
@@ -495,27 +858,29 @@ export function CommandPalette({
         className="animate-palette-in relative flex w-3/4 max-w-3xl flex-col overflow-hidden rounded-2xl border border-surface-border bg-surface shadow-2xl"
         style={{ maxHeight: '66vh' }}
       >
-        {/* Search row — full width */}
-        <div className="flex items-center gap-3 border-b border-surface-border px-5 py-4">
+        {/* Search row — tokens + input */}
+        <div className="flex min-h-[60px] flex-wrap items-center gap-2 border-b border-surface-border px-5 py-3">
           <Search className="h-5 w-5 shrink-0 text-text-muted" />
+
+          {/* Applied filter tokens */}
+          {tokens.map(t => (
+            <TokenPill key={t.uid} token={t} onRemove={() => removeToken(t.uid)} />
+          ))}
+
           <input
             ref={inputRef}
             value={query}
             onChange={e => { setQuery(e.target.value); setActiveIdx(0) }}
             onKeyDown={handleKeyDown}
-            placeholder={
-              category === 'boards'   ? 'Search boards or type: new board KEY Name…' :
-              category === 'new'      ? 'Type: new board KEY Name  or  create issue…' :
-              category === 'navigate' ? 'Jump to a page…' :
-              'Search boards, create, navigate…'
-            }
-            className="flex-1 bg-transparent text-base text-text-primary outline-none placeholder:text-text-muted"
+            placeholder={placeholder}
+            className="min-w-[120px] flex-1 bg-transparent text-base text-text-primary outline-none placeholder:text-text-muted"
             autoComplete="off"
             spellCheck={false}
           />
-          {query && (
+
+          {(query || tokens.length > 0) && (
             <button
-              onClick={() => { setQuery(''); inputRef.current?.focus() }}
+              onClick={() => { setQuery(''); setTokens([]); inputRef.current?.focus() }}
               className="rounded p-0.5 text-text-muted hover:text-text-primary"
             >
               <X className="h-4 w-4" />
@@ -528,6 +893,59 @@ export function CommandPalette({
             Esc
           </button>
         </div>
+
+        {/* Slash command suggestions — shown between input and body */}
+        {isSuggesting && suggestions.length > 0 && (
+          <div className="shrink-0 border-b border-primary/15 bg-primary/[0.03]">
+            <div className="flex items-center gap-2 px-5 py-1.5">
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-primary/50">
+                {slashState.type === 'command' ? 'Commands' : `/${slashState.command.id} — choose a value`}
+              </span>
+              <span className="ms-auto text-[10px] text-text-muted opacity-40">
+                <Kbd>↑</Kbd><Kbd>↓</Kbd> navigate · <Kbd>↵</Kbd> select · <Kbd>Esc</Kbd> dismiss
+              </span>
+            </div>
+
+            {suggestions.map((s, i) => {
+              const Icon   = s.icon
+              const active = i === safeSugIdx
+              return (
+                <button
+                  key={s.id}
+                  onMouseEnter={() => setSuggestionIdx(i)}
+                  onClick={() => applySuggestion(s)}
+                  className={cn(
+                    'flex w-full items-center gap-3 px-5 py-2 text-left transition-colors',
+                    active
+                      ? 'bg-primary/10 text-text-primary'
+                      : 'text-text-secondary hover:bg-surface-muted',
+                  )}
+                >
+                  <span className={cn(
+                    'flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-xs',
+                    active ? 'bg-primary/15 text-primary' : 'bg-surface-muted text-text-muted',
+                  )}>
+                    <Icon className="h-3.5 w-3.5" />
+                  </span>
+
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-medium">
+                      {s.type === 'command'
+                        ? <><span className="font-mono text-primary">/</span>{s.def.id}</>
+                        : s.label
+                      }
+                    </span>
+                    {s.description && (
+                      <span className="block text-xs text-text-muted">{s.description}</span>
+                    )}
+                  </span>
+
+                  {active && <ChevronRight className="h-3.5 w-3.5 shrink-0 text-primary" />}
+                </button>
+              )
+            })}
+          </div>
+        )}
 
         {/* Body: sidebar + results */}
         <div className="flex min-h-0 flex-1 overflow-hidden">
@@ -553,20 +971,42 @@ export function CommandPalette({
               )
             })}
 
-            {/* Board count hint */}
-            {boards.length > 0 && (
-              <div className="mt-auto px-2.5 pb-1 pt-2">
-                <span className="text-[10px] text-text-muted opacity-60">
-                  {boards.length} board{boards.length !== 1 ? 's' : ''}
+            {/* Active filter token count */}
+            {tokens.length > 0 && (
+              <div className="mt-1 rounded-lg border border-primary/30 bg-primary/5 px-2.5 py-1.5">
+                <span className="text-[10px] font-medium text-primary">
+                  {tokens.length} filter{tokens.length !== 1 ? 's' : ''} active
                 </span>
               </div>
             )}
+
+            {/* Counts / loading */}
+            <div className="mt-auto flex flex-col gap-1 px-2.5 pb-1 pt-2">
+              {issueLoading && (
+                <span className="flex items-center gap-1 text-[10px] text-primary">
+                  <Loader2 className="h-3 w-3 animate-spin" /> searching…
+                </span>
+              )}
+              {!issueLoading && filteredIssueResults.length > 0 && (
+                <span className="text-[10px] text-text-muted opacity-60">
+                  {filteredIssueResults.length} issue{filteredIssueResults.length !== 1 ? 's' : ''}
+                  {tokens.length > 0 && issueResults.length !== filteredIssueResults.length && (
+                    <span className="block opacity-70">of {issueResults.length}</span>
+                  )}
+                </span>
+              )}
+              {boards.length > 0 && (
+                <span className="text-[10px] text-text-muted opacity-60">
+                  {boards.length} board{boards.length !== 1 ? 's' : ''}
+                </span>
+              )}
+            </div>
           </nav>
 
           {/* Results */}
           <div ref={listRef} className="flex-1 overflow-y-auto">
 
-            {/* Inline create-board preview — always on top when present */}
+            {/* Inline create-board preview */}
             {createPreviewItem && (
               <div
                 data-active={safeActiveIdx === flat.indexOf(createPreviewItem)}
@@ -585,29 +1025,37 @@ export function CommandPalette({
             )}
 
             {/* Empty state */}
-            {flat.length === 0 || (flat.length === 1 && createPreviewItem && !newBoardParsed?.ready && grouped.size === 0) ? (
+            {(flat.length === 0 || (flat.length === 1 && createPreviewItem && !newBoardParsed?.ready && grouped.size === 0)) && !issueLoading ? (
               <div className="flex flex-col items-center gap-2 py-12">
                 <p className="text-sm text-text-muted">
-                  {query ? <>No results for <span className="font-medium text-text-primary">"{query}"</span></> : 'Nothing here yet'}
+                  {tokens.length > 0 && !freeTextQuery
+                    ? <><span className="font-medium text-text-primary">Add a search term</span> to use filters</>
+                    : query
+                    ? <>No results for <span className="font-medium text-text-primary">"{freeTextQuery || query}"</span></>
+                    : 'Nothing here yet'
+                  }
                 </p>
+                {!query && !isSuggesting && (
+                  <p className="text-xs text-text-muted opacity-50">
+                    Type <span className="font-mono text-primary">/</span> for filter commands
+                  </p>
+                )}
               </div>
             ) : (
               <>
                 {[...grouped.entries()].map(([group, items]) => (
                   <div key={group}>
-                    {/* Group header */}
                     <div className="flex items-center gap-2 px-4 pb-1 pt-3">
                       <span className="text-[10px] font-semibold uppercase tracking-widest text-text-muted">
                         {group}
                       </span>
-                      {group === 'Boards' && (
+                      {(group === 'Boards' || group === 'Issues') && (
                         <span className="text-[10px] text-text-muted opacity-50">
                           {items.length}
                         </span>
                       )}
                     </div>
 
-                    {/* Items */}
                     {items.map(cmd => {
                       const idx    = flat.indexOf(cmd)
                       const active = idx === safeActiveIdx
@@ -660,12 +1108,12 @@ export function CommandPalette({
                   </div>
                 ))}
 
-                {/* Coming soon hint */}
-                {!newBoardParsed && (
+                {/* Hint when no query */}
+                {!newBoardParsed && !query && tokens.length === 0 && (
                   <div className="flex items-center gap-2 border-t border-surface-border/40 px-4 py-2.5">
                     <ArrowRight className="h-3 w-3 shrink-0 text-text-muted opacity-30" />
                     <span className="text-[11px] text-text-muted opacity-50">
-                      Issue search, member lookup and more coming soon
+                      Type to search · <span className="font-mono text-primary/70">/</span> for filter commands
                     </span>
                   </div>
                 )}
@@ -676,25 +1124,41 @@ export function CommandPalette({
 
         {/* Footer */}
         <div className="flex shrink-0 items-center gap-4 border-t border-surface-border bg-surface-muted/50 px-5 py-2">
-          <span className="flex items-center gap-1.5 text-[11px] text-text-muted">
-            <Kbd>↑</Kbd><Kbd>↓</Kbd> navigate
-          </span>
-          <span className="flex items-center gap-1.5 text-[11px] text-text-muted">
-            <Kbd>↵</Kbd> select
-          </span>
-          {newBoardParsed?.ready && (
-            <span className="flex items-center gap-1.5 text-[11px] text-primary">
-              <Kbd>←</Kbd><Kbd>→</Kbd> template
-            </span>
+          {isSuggesting ? (
+            <>
+              <span className="flex items-center gap-1.5 text-[11px] text-primary">
+                <Kbd>↑</Kbd><Kbd>↓</Kbd> navigate
+              </span>
+              <span className="flex items-center gap-1.5 text-[11px] text-primary">
+                <Kbd>↵</Kbd> apply
+              </span>
+              <span className="flex items-center gap-1.5 text-[11px] text-text-muted">
+                <Kbd>Esc</Kbd> dismiss
+              </span>
+            </>
+          ) : (
+            <>
+              <span className="flex items-center gap-1.5 text-[11px] text-text-muted">
+                <Kbd>↑</Kbd><Kbd>↓</Kbd> navigate
+              </span>
+              <span className="flex items-center gap-1.5 text-[11px] text-text-muted">
+                <Kbd>↵</Kbd> select
+              </span>
+              {newBoardParsed?.ready && (
+                <span className="flex items-center gap-1.5 text-[11px] text-primary">
+                  <Kbd>←</Kbd><Kbd>→</Kbd> template
+                </span>
+              )}
+              <span className="flex items-center gap-1.5 text-[11px] text-text-muted">
+                <Kbd>Tab</Kbd> category
+              </span>
+              <span className="flex items-center gap-1.5 text-[11px] text-text-muted">
+                <Kbd>Esc</Kbd> close
+              </span>
+            </>
           )}
-          <span className="flex items-center gap-1.5 text-[11px] text-text-muted">
-            <Kbd>Tab</Kbd> category
-          </span>
-          <span className="flex items-center gap-1.5 text-[11px] text-text-muted">
-            <Kbd>Esc</Kbd> close
-          </span>
           <span className="ms-auto text-[11px] text-text-muted opacity-40">
-            <kbd className="font-mono">/</kbd> or <kbd className="font-mono">⌘K</kbd> to open
+            <kbd className="font-mono text-primary">/</kbd> for filters · <kbd className="font-mono">⌘K</kbd> to open
           </span>
         </div>
       </div>

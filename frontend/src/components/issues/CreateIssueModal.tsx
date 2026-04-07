@@ -158,10 +158,11 @@ export function CreateIssueModal({
   const watchedBoardId   = watch('boardId')
   const effectiveBoardId = propBoardId ?? watchedBoardId
 
-  const { data: boardData }      = useBoard(effectiveBoardId || '')
-  const { data: issuesPage }     = useIssues(effectiveBoardId || '')
+  const { data: boardData }        = useBoard(effectiveBoardId || '')
+  const { data: issuesPage }       = useIssues(effectiveBoardId || '')
   const { data: epicsData   = [] } = useEpics(effectiveBoardId || '')
   const { data: sprintsData = [] } = useSprints(effectiveBoardId || '')
+  const isKanban = boardData?.boardType === 'KANBAN'
   const columns   = [...(boardData?.columns ?? [])].sort((a, b) => a.position - b.position)
   const allIssues = issuesPage?.content ?? []
 
@@ -364,7 +365,7 @@ export function CreateIssueModal({
                     </NativeSelect>
                   </Field>
                 )}
-                {epicsData.length > 0 && (
+                {!isKanban && epicsData.length > 0 && (
                   <Field label="Epic">
                     <NativeSelect {...register('epicId')}>
                       <option value="">None</option>
@@ -372,7 +373,7 @@ export function CreateIssueModal({
                     </NativeSelect>
                   </Field>
                 )}
-                {sprintsData.filter((s) => s.status !== 'COMPLETED').length > 0 && (
+                {!isKanban && sprintsData.filter((s) => s.status !== 'COMPLETED').length > 0 && (
                   <Field label="Sprint">
                     <NativeSelect {...register('sprintId')}>
                       <option value="">Backlog</option>
@@ -390,13 +391,15 @@ export function CreateIssueModal({
                     </NativeSelect>
                   </Field>
                 )}
-                <Field label="Story points">
-                  <input
-                    {...register('storyPoints')}
-                    type="number" min={0} placeholder="—"
-                    className="w-full rounded-lg border border-surface-border bg-surface-muted px-2.5 py-1.5 text-sm text-text-primary placeholder:text-text-muted outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-colors"
-                  />
-                </Field>
+                {!isKanban && (
+                  <Field label="Story points">
+                    <input
+                      {...register('storyPoints')}
+                      type="number" min={0} placeholder="—"
+                      className="w-full rounded-lg border border-surface-border bg-surface-muted px-2.5 py-1.5 text-sm text-text-primary placeholder:text-text-muted outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-colors"
+                    />
+                  </Field>
+                )}
                 <Field label="Start date">
                   <Controller
                     name="startDate"

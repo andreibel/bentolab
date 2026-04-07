@@ -68,4 +68,9 @@ public interface IssueRepository extends MongoRepository<Issue, String> {
 
     @Query("{'orgId': ?0, '$or': [{'assigneeId': ?1}, {'reporterId': ?1}], 'closed': true}")
     Page<Issue> findAllClosedByOrgIdAndUserId(String orgId, String userId, Pageable pageable);
+
+    // ── Full-text search ──────────────────────────────────────────────────────
+
+    @Query("{'orgId': ?0, '$or': [{'title': {$regex: ?1, $options: 'i'}}, {'description': {$regex: ?1, $options: 'i'}}]}")
+    List<Issue> searchByOrgIdAndText(String orgId, String regex, Pageable pageable);
 }

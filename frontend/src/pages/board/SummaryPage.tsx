@@ -1,9 +1,10 @@
-import {useCallback, useState} from 'react'
+import {useCallback, useEffect, useRef, useState} from 'react'
 import {useParams} from 'react-router-dom'
 import GridLayout, {type Layout, type LayoutItem} from 'react-grid-layout'
 import {useResizeObserver} from '@/hooks/useResizeObserver'
 import {GripHorizontal, LayoutGrid, Plus, RefreshCw, Settings2, X,} from 'lucide-react'
 import {cn} from '@/utils/cn'
+import {useBoard} from '@/api/boards'
 import 'react-grid-layout/css/styles.css'
 import 'react-resizable/css/styles.css'
 
@@ -102,6 +103,10 @@ interface StoredLayout {
 
 // ── Defaults ──────────────────────────────────────────────────────────────────
 
+// Scrum-only widgets — hidden from Kanban add-widget panel
+const SCRUM_ONLY_WIDGETS = new Set<WidgetType>(['SPRINT_HEALTH', 'VELOCITY'])
+
+// ── Scrum defaults ────────────────────────────────────────────────────────────
 const DEFAULT_WIDGETS: DashboardWidget[] = [
   { id: 'w-sprint',    type: 'SPRINT_HEALTH'    },
   { id: 'w-breakdown', type: 'ISSUE_BREAKDOWN'  },
@@ -112,6 +117,21 @@ const DEFAULT_LAYOUT: LayoutItem[] = [
   { i: 'w-sprint',    x: 0,  y: 0, w: 14, h: 6, minW: 3, minH: 3 },
   { i: 'w-breakdown', x: 14, y: 0, w: 10, h: 6, minW: 3, minH: 3 },
   { i: 'w-workload',  x: 0,  y: 6, w: 12, h: 6, minW: 3, minH: 3 },
+]
+
+// ── Kanban defaults ───────────────────────────────────────────────────────────
+const KANBAN_DEFAULT_WIDGETS: DashboardWidget[] = [
+  { id: 'w-wip',       type: 'WIP'              },
+  { id: 'w-cycletime', type: 'CYCLE_TIME'        },
+  { id: 'w-breakdown', type: 'ISSUE_BREAKDOWN'  },
+  { id: 'w-workload',  type: 'WORKLOAD'         },
+]
+
+const KANBAN_DEFAULT_LAYOUT: LayoutItem[] = [
+  { i: 'w-wip',       x: 0,  y: 0, w: 10, h: 6, minW: 3, minH: 3 },
+  { i: 'w-cycletime', x: 10, y: 0, w: 14, h: 6, minW: 3, minH: 3 },
+  { i: 'w-breakdown', x: 0,  y: 6, w: 10, h: 6, minW: 3, minH: 3 },
+  { i: 'w-workload',  x: 10, y: 6, w: 14, h: 6, minW: 3, minH: 3 },
 ]
 
 const COLS = 24
@@ -185,15 +205,18 @@ function WidgetShell({
 
 function AddWidgetPanel({
   presentTypes,
+  isKanban,
   onAdd,
   onClose,
 }: {
   presentTypes: Set<WidgetType>
+  isKanban:     boolean
   onAdd:        (type: WidgetType) => void
   onClose:      () => void
 }) {
   const [search, setSearch] = useState('')
   const entries = (Object.entries(WIDGET_REGISTRY) as [WidgetType, WidgetMeta][])
+    .filter(([type]) => !(isKanban && SCRUM_ONLY_WIDGETS.has(type)))
     .filter(([, m]) => m.label.toLowerCase().includes(search.toLowerCase()) ||
                        m.description.toLowerCase().includes(search.toLowerCase()))
 
@@ -269,11 +292,25 @@ export default function SummaryPage() {
   const bid = boardId!
 
   const stored = loadLayout(bid)
+  const { data: board } = useBoard(bid)
+  const isKanban = board?.boardType === 'KANBAN'
 
   const [widgets,   setWidgets]   = useState<DashboardWidget[]>(stored?.widgets ?? DEFAULT_WIDGETS)
   const [layout,    setLayout]    = useState<LayoutItem[]>(stored?.layout ?? DEFAULT_LAYOUT)
   const [editMode,  setEditMode]  = useState(false)
   const [addOpen,   setAddOpen]   = useState(false)
+
+  // On first visit (no stored layout), apply board-type-appropriate defaults
+  const defaultsApplied = useRef(false)
+  useEffect(() => {
+    if (defaultsApplied.current || stored || !board) return
+    defaultsApplied.current = true
+    if (board.boardType === 'KANBAN') {
+      setWidgets(KANBAN_DEFAULT_WIDGETS)
+      setLayout(KANBAN_DEFAULT_LAYOUT)
+      saveLayout(bid, { widgets: KANBAN_DEFAULT_WIDGETS, layout: KANBAN_DEFAULT_LAYOUT })
+    }
+  }, [board, stored, bid])
 
   const [containerRef, containerWidth] = useResizeObserver<HTMLDivElement>()
 
@@ -312,10 +349,12 @@ export default function SummaryPage() {
   }, [bid, widgets, layout])
 
   const resetLayout = useCallback(() => {
-    setWidgets(DEFAULT_WIDGETS)
-    setLayout(DEFAULT_LAYOUT)
-    localStorage.removeItem(`bento-dashboard-${bid}`)
-  }, [bid])
+    const defWidgets = isKanban ? KANBAN_DEFAULT_WIDGETS : DEFAULT_WIDGETS
+    const defLayout  = isKanban ? KANBAN_DEFAULT_LAYOUT  : DEFAULT_LAYOUT
+    setWidgets(defWidgets)
+    setLayout(defLayout)
+    saveLayout(bid, { widgets: defWidgets, layout: defLayout })
+  }, [bid, isKanban])
 
   const presentTypes = new Set(widgets.map((w) => w.type))
   const colWidth = containerWidth > 0 ? containerWidth : 800
@@ -426,6 +465,7 @@ export default function SummaryPage() {
       {addOpen && (
         <AddWidgetPanel
           presentTypes={presentTypes}
+          isKanban={isKanban}
           onAdd={addWidget}
           onClose={() => setAddOpen(false)}
         />

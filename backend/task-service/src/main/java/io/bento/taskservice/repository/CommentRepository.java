@@ -12,4 +12,9 @@ public interface CommentRepository extends MongoRepository<Comment, String> {
     Optional<Comment> findByOrgIdAndId(String orgId, String id);
 
     Page<Comment> findAllByOrgIdAndIssueIdAndIsDeletedFalse(String orgId, String issueId, Pageable pageable);
+
+    @org.springframework.data.mongodb.repository.Query(
+        "{'orgId': ?0, 'isDeleted': false, 'text': {$regex: ?1, $options: 'i'}}"
+    )
+    java.util.List<Comment> searchByOrgIdAndText(String orgId, String regex, org.springframework.data.domain.Pageable pageable);
 }

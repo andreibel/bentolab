@@ -4,10 +4,12 @@ import io.bento.taskservice.dto.request.AssignIssueRequest;
 import io.bento.taskservice.dto.request.CreateIssueRequest;
 import io.bento.taskservice.dto.request.MoveIssueRequest;
 import io.bento.taskservice.dto.request.UpdateIssueRequest;
+import io.bento.taskservice.dto.response.IssueSearchResultDto;
 import io.bento.taskservice.entity.Issue;
 import io.bento.taskservice.service.IssueService;
 import io.bento.taskservice.service.TaskAccessService;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,6 +25,16 @@ public class IssueController {
 
     private final IssueService issueService;
     private final TaskAccessService accessService;
+
+    @GetMapping("/search")
+    public ResponseEntity<List<IssueSearchResultDto>> search(
+            @RequestHeader("X-Org-Id") String orgId,
+            @RequestHeader("X-Org-Role") String orgRole,
+            @RequestParam String q,
+            @RequestParam(defaultValue = "15") int limit) {
+        accessService.requireOrgMember(orgRole);
+        return ResponseEntity.ok(issueService.search(orgId, q, Math.min(limit, 30)));
+    }
 
     @GetMapping("/mine")
     public ResponseEntity<Page<Issue>> getMyIssues(

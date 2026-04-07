@@ -416,6 +416,7 @@ const PRIORITIES  = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'] as const
 interface IssueMetaPanelProps {
   issue: Issue
   boardId: string
+  boardType?: string
   columns: BoardColumn[]
   epics: Epic[]
   sprints: Sprint[]
@@ -425,7 +426,8 @@ interface IssueMetaPanelProps {
   onUpdate: (data: Partial<Issue>) => void
 }
 
-export function IssueMetaPanel({ issue, boardId, columns, epics, sprints, milestones = [], parentIssue, onUpdate }: IssueMetaPanelProps) {
+export function IssueMetaPanel({ issue, boardId, boardType, columns, epics, sprints, milestones = [], parentIssue, onUpdate }: IssueMetaPanelProps) {
+  const isKanban = boardType === 'KANBAN'
   const { data: boardMembers = [] } = useQuery({
     queryKey: ['board-members', boardId],
     queryFn: () => boardsApi.listMembers(boardId),
@@ -533,24 +535,28 @@ export function IssueMetaPanel({ issue, boardId, columns, epics, sprints, milest
         />
       </MetaCell>
 
-      <MetaCell label="Epic">
-        <EpicSelect
-          value={issue.epicId ?? null}
-          epics={epics}
-          onSave={(epicId) => epicId === null
-            ? onUpdate({ clearEpicId: true } as unknown as Partial<Issue>)
-            : onUpdate({ epicId } as Partial<Issue>)
-          }
-        />
-      </MetaCell>
+      {!isKanban && (
+        <MetaCell label="Epic">
+          <EpicSelect
+            value={issue.epicId ?? null}
+            epics={epics}
+            onSave={(epicId) => epicId === null
+              ? onUpdate({ clearEpicId: true } as unknown as Partial<Issue>)
+              : onUpdate({ epicId } as Partial<Issue>)
+            }
+          />
+        </MetaCell>
+      )}
 
-      <MetaCell label="Sprint">
-        <SprintSelect
-          value={issue.sprintId ?? null}
-          sprints={sprints}
-          onSave={(sprintId) => onUpdate({ sprintId } as Partial<Issue>)}
-        />
-      </MetaCell>
+      {!isKanban && (
+        <MetaCell label="Sprint">
+          <SprintSelect
+            value={issue.sprintId ?? null}
+            sprints={sprints}
+            onSave={(sprintId) => onUpdate({ sprintId } as Partial<Issue>)}
+          />
+        </MetaCell>
+      )}
 
       <MetaCell label="Assignee">
         <AssigneeSelect
@@ -561,9 +567,11 @@ export function IssueMetaPanel({ issue, boardId, columns, epics, sprints, milest
         />
       </MetaCell>
 
-      <MetaCell label="Story points">
-        <StoryPointsField value={issue.storyPoints} onSave={(n) => onUpdate({ storyPoints: n } as Partial<Issue>)} />
-      </MetaCell>
+      {!isKanban && (
+        <MetaCell label="Story points">
+          <StoryPointsField value={issue.storyPoints} onSave={(n) => onUpdate({ storyPoints: n } as Partial<Issue>)} />
+        </MetaCell>
+      )}
 
       <MetaCell label="Reporter">
         <div className="flex items-center gap-1.5 px-1.5 py-1">

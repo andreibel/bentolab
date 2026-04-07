@@ -17,9 +17,13 @@ import io.bento.taskservice.event.IssueEventPublisher;
 import io.bento.kafka.event.IssuePriorityChangedEvent;
 import io.bento.kafka.event.IssueStatusChangedEvent;
 import io.bento.taskservice.exception.IssueNotFoundException;
+import io.bento.taskservice.dto.response.IssueSearchResultDto;
+import io.bento.taskservice.entity.Comment;
+import io.bento.taskservice.repository.CommentRepository;
 import io.bento.taskservice.repository.IssueRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
@@ -30,15 +34,20 @@ import io.bento.taskservice.entity.BoardCounter;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
 public class IssueService {
 
     private final IssueRepository issueRepository;
+    private final CommentRepository commentRepository;
     private final ActivityService activityService;
     private final MongoTemplate mongoTemplate;
     private final IssueEventPublisher issueEventPublisher;
@@ -316,6 +325,89 @@ public class IssueService {
         activityService.log(orgId, issueId, issue.getBoardId(), issue.getSprintId(),
                 userId, EntityType.ISSUE, ActivityAction.REOPENED, null);
         return issue;
+    }
+
+    // ── Search ────────────────────────────────────────────────────────────────
+
+    public List<IssueSearchResultDto> search(String orgId, String q, int limit) {
+        if (q == null || q.isBlank()) return List.of();
+
+        // Escape the query so regex-special chars don't break the query
+        String escaped = Pattern.quote(q.trim());
+        Pageable page  = PageRequest.of(0, limit);
+
+        // Track seen issue IDs so we don't surface duplicates (title/desc match wins over comment match)
+        Map<String, IssueSearchResultDto> seen = new LinkedHashMap<>();
+
+        // 1. Match issues whose title or description contains the query
+        List<Issue> issueMatches = issueRepository.searchByOrgIdAndText(orgId, escaped, page);
+        for (Issue issue : issueMatches) {
+            if (seen.size() >= limit) break;
+            String matchIn = matchesTitle(issue.getTitle(), q) ? "TITLE" : "DESCRIPTION";
+            String snippet = matchIn.equals("TITLE")
+                    ? issue.getTitle()
+                    : buildSnippet(issue.getDescription(), q);
+            seen.put(issue.getId(), new IssueSearchResultDto(
+                    issue.getId(), issue.getIssueKey(), issue.getTitle(),
+                    issue.getBoardId(),
+                    issue.getPriority() != null ? issue.getPriority().name() : null,
+                    Boolean.TRUE.equals(issue.getClosed()),
+                    issue.getAssigneeId(),
+                    issue.getReporterId(),
+                    formatDate(issue.getStartDate()),
+                    formatDate(issue.getDueDate()),
+                    matchIn, snippet, null));
+        }
+
+        // 2. Match comments whose text contains the query, surface their parent issue
+        if (seen.size() < limit) {
+            List<Comment> commentMatches = commentRepository.searchByOrgIdAndText(orgId, escaped,
+                    PageRequest.of(0, limit * 2));
+            for (Comment comment : commentMatches) {
+                if (seen.size() >= limit) break;
+                if (seen.containsKey(comment.getIssueId())) continue; // issue already matched
+
+                issueRepository.findByOrgIdAndId(orgId, comment.getIssueId()).ifPresent(issue -> {
+                    if (seen.size() < limit) {
+                        seen.put(issue.getId(), new IssueSearchResultDto(
+                                issue.getId(), issue.getIssueKey(), issue.getTitle(),
+                                issue.getBoardId(),
+                                issue.getPriority() != null ? issue.getPriority().name() : null,
+                                Boolean.TRUE.equals(issue.getClosed()),
+                                issue.getAssigneeId(),
+                                issue.getReporterId(),
+                                formatDate(issue.getStartDate()),
+                                formatDate(issue.getDueDate()),
+                                "COMMENT", buildSnippet(comment.getText(), q),
+                                comment.getUserId()));
+                    }
+                });
+            }
+        }
+
+        return new ArrayList<>(seen.values());
+    }
+
+    private String formatDate(Instant instant) {
+        if (instant == null) return null;
+        return instant.atZone(ZoneOffset.UTC).toLocalDate().toString();
+    }
+
+    private boolean matchesTitle(String title, String q) {
+        return title != null && title.toLowerCase().contains(q.toLowerCase());
+    }
+
+    /** Returns up to ~120 chars around the first occurrence of the query term. */
+    private String buildSnippet(String text, String q) {
+        if (text == null || text.isBlank()) return "";
+        int idx = text.toLowerCase().indexOf(q.toLowerCase());
+        if (idx < 0) return text.length() > 120 ? text.substring(0, 120) + "…" : text;
+        int start = Math.max(0, idx - 40);
+        int end   = Math.min(text.length(), idx + q.length() + 80);
+        String snippet = text.substring(start, end).replaceAll("\\s+", " ").trim();
+        if (start > 0)         snippet = "…" + snippet;
+        if (end < text.length()) snippet = snippet + "…";
+        return snippet;
     }
 
     private String generateIssueKey(String boardId, String boardKey) {

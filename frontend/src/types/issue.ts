@@ -1,3 +1,19 @@
+export interface IssueSearchResult {
+  issueId:         string
+  issueKey:        string
+  title:           string
+  boardId:         string
+  priority:        string | null
+  closed:          boolean
+  assigneeId:      string | null
+  reporterId:      string
+  startDate:       string | null
+  dueDate:         string | null
+  matchIn:         'TITLE' | 'DESCRIPTION' | 'COMMENT'
+  snippet:         string
+  commentAuthorId: string | null
+}
+
 export type IssueType     = 'STORY' | 'TASK' | 'BUG' | 'SUBTASK'
 export type IssuePriority = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW'
 export type IssueSeverity = 'BLOCKER' | 'CRITICAL' | 'MAJOR' | 'MINOR' | 'TRIVIAL'

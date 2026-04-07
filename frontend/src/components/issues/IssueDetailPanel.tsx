@@ -3,6 +3,7 @@ import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query'
 import {AlertCircle, Link2, Loader2, Maximize2, Minimize2, Pencil, RotateCcw, X, XCircle} from 'lucide-react'
 import {toast} from 'sonner'
 import {issuesApi, useIssues} from '@/api/issues'
+import {useBoard} from '@/api/boards'
 import {useEpics} from '@/api/epics'
 import {useSprints} from '@/api/sprints'
 import {useMilestones} from '@/api/milestones'
@@ -95,6 +96,7 @@ export function IssueDetailPanel({
   })
 
   const effectiveBoardId = propBoardId ?? issue?.boardId ?? ''
+  const { data: board }            = useBoard(effectiveBoardId)
   const { data: epics      = [] } = useEpics(effectiveBoardId)
   const { data: sprints    = [] } = useSprints(effectiveBoardId)
   const { data: milestones = [] } = useMilestones(effectiveBoardId)
@@ -274,6 +276,7 @@ export function IssueDetailPanel({
               <IssueMetaPanel
                 issue={issue}
                 boardId={effectiveBoardId}
+                boardType={board?.boardType}
                 columns={columns}
                 epics={epics}
                 sprints={sprints}

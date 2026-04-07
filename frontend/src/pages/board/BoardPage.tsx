@@ -1,4 +1,4 @@
-import {useCallback, useLayoutEffect, useMemo, useRef, useState} from 'react'
+import {useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState} from 'react'
 import {Link, useParams, useSearchParams} from 'react-router-dom'
 import {
   closestCenter,
@@ -86,7 +86,7 @@ function toColumnId(id: string) {
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function BoardPage() {
   const { boardId } = useParams<{ boardId: string }>()
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const queryClient = useQueryClient()
 
   const { data: board, isLoading: boardLoading, isError: boardError } = useBoard(boardId!)
@@ -188,10 +188,19 @@ export default function BoardPage() {
     document.addEventListener('mouseup', onUp)
   }, [panelWidth])
 
+  // Sync panel when ?issue= param changes (e.g. navigated here from search)
+  useEffect(() => {
+    if (urlIssueId) {
+      setDetailIssueId(urlIssueId)
+      openedFromUrl.current = true
+    }
+  }, [urlIssueId])
+
   function closeDetail() {
     setDetailIssueId(null)
     setPanelWidth(MIN_PANEL)
     openedFromUrl.current = false
+    setSearchParams(p => { const n = new URLSearchParams(p); n.delete('issue'); return n }, { replace: true })
   }
 
   const sensors = useSensors(
