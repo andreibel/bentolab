@@ -4,9 +4,12 @@ export interface IssueSearchResult {
   title:           string
   boardId:         string
   priority:        string | null
+  type:            string | null
   closed:          boolean
   assigneeId:      string | null
   reporterId:      string
+  epicId:          string | null
+  labelIds:        string[]
   startDate:       string | null
   dueDate:         string | null
   matchIn:         'TITLE' | 'DESCRIPTION' | 'COMMENT'

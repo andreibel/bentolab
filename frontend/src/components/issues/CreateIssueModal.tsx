@@ -7,20 +7,26 @@ import {
   ArrowUp,
   BookOpen,
   Bug,
+  Check,
   CheckSquare,
+  ChevronDown,
   GripHorizontal,
   Maximize2,
   Minimize2,
   Minus,
+  Tag,
   X,
   Zap,
 } from 'lucide-react'
-import {useQueryClient} from '@tanstack/react-query'
+import {useQuery, useQueryClient} from '@tanstack/react-query'
 import {toast} from 'sonner'
 import {issuesApi, useIssues} from '@/api/issues'
 import {useBoard, useBoards} from '@/api/boards'
 import {useEpics} from '@/api/epics'
 import {useSprints} from '@/api/sprints'
+import {labelsApi, type Label} from '@/api/labels'
+import {queryKeys} from '@/api/queryKeys'
+import {useAuthStore} from '@/stores/authStore'
 import {Button} from '@/components/ui/Button'
 import {Input} from '@/components/ui/Input'
 import {DatePicker, toDatePart} from '@/components/ui/DatePicker'
@@ -59,6 +65,7 @@ interface FormValues {
   storyPoints:   string
   startDate:     string
   dueDate:       string
+  labelIds:      string[]
 }
 
 export interface CreateIssueModalProps {
@@ -140,8 +147,14 @@ export function CreateIssueModal({
   const drag = useDraggable()
 
   const isGlobalMode = !propBoardId
+  const { currentOrgId } = useAuthStore()
 
   const { data: allBoards } = useBoards()
+  const { data: allLabels = [] } = useQuery({
+    queryKey: queryKeys.labels.list(currentOrgId!),
+    queryFn:  labelsApi.list,
+    enabled:  !!currentOrgId,
+  })
 
   const {
     register, control, handleSubmit, watch, reset,
@@ -152,6 +165,7 @@ export function CreateIssueModal({
       title: '', description: '',
       boardId: propBoardId ?? '', columnId: propColumnId ?? '',
       epicId: '', sprintId: propSprintId ?? '', parentIssueId: '', storyPoints: '', startDate: '', dueDate: '',
+      labelIds: [],
     },
   })
 
@@ -173,6 +187,7 @@ export function CreateIssueModal({
       title: '', description: '',
       boardId: propBoardId ?? '', columnId: propColumnId ?? '',
       epicId: '', sprintId: propSprintId ?? '', parentIssueId: '', storyPoints: '', startDate: '', dueDate: '',
+      labelIds: [],
     })
     setFullScreen(false)
   }, [open, propBoardId, propColumnId, propSprintId, reset])
@@ -208,6 +223,7 @@ export function CreateIssueModal({
         storyPoints:   values.storyPoints ? Number(values.storyPoints) : undefined,
         startDate:     values.startDate ? new Date(values.startDate + 'T12:00:00').toISOString() : undefined,
         dueDate:       values.dueDate   ? new Date(values.dueDate   + 'T12:00:00').toISOString() : undefined,
+        labelIds:      values.labelIds.length > 0 ? values.labelIds : undefined,
       })
 
       void queryClient.invalidateQueries({ queryKey: ['issues', effectiveBoardId], exact: false })
@@ -419,6 +435,21 @@ export function CreateIssueModal({
                     )}
                   />
                 </Field>
+                {allLabels.length > 0 && (
+                  <Field label="Labels">
+                    <Controller
+                      name="labelIds"
+                      control={control}
+                      render={({ field }) => (
+                        <LabelMultiPickerField
+                          value={field.value}
+                          onChange={field.onChange}
+                          labels={allLabels}
+                        />
+                      )}
+                    />
+                  </Field>
+                )}
               </div>
             </div>
             {footer}
@@ -467,6 +498,80 @@ export function CreateIssueModal({
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
+
+function LabelMultiPickerField({
+  value,
+  onChange,
+  labels,
+}: {
+  value: string[]
+  onChange: (ids: string[]) => void
+  labels: Label[]
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: MouseEvent) => {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  function toggle(id: string) {
+    onChange(value.includes(id) ? value.filter((v) => v !== id) : [...value, id])
+  }
+
+  const selected = labels.filter((l) => value.includes(l.id))
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full min-h-[34px] flex-wrap items-center gap-1 rounded-lg border border-surface-border bg-surface-muted px-2.5 py-1.5 text-sm transition-colors hover:border-primary/50"
+      >
+        {selected.length === 0 ? (
+          <span className="flex items-center gap-1.5 text-text-muted">
+            <Tag className="h-3.5 w-3.5" />
+            None
+          </span>
+        ) : (
+          selected.map((l) => (
+            <span
+              key={l.id}
+              className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium"
+              style={{ backgroundColor: l.color + '22', color: l.color }}
+            >
+              {l.name}
+            </span>
+          ))
+        )}
+        <ChevronDown className="ms-auto h-3 w-3 shrink-0 text-text-muted" />
+      </button>
+      {open && (
+        <div className="absolute start-0 top-full z-50 mt-1 w-full rounded-lg border border-surface-border bg-surface shadow-xl">
+          {labels.map((l) => (
+            <button
+              key={l.id}
+              type="button"
+              onClick={() => toggle(l.id)}
+              className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-surface-muted"
+            >
+              {value.includes(l.id)
+                ? <Check className="h-3 w-3 shrink-0 text-primary" />
+                : <span className="h-3 w-3 shrink-0" />}
+              <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: l.color }} />
+              <span className="truncate text-text-primary">{l.name}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 
 function TypePicker({ control }: { control: Control<FormValues> }) {
   return (

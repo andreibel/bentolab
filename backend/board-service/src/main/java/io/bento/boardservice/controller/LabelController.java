@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/boards/{boardId}/labels")
+@RequestMapping("/api/labels")
 @RequiredArgsConstructor
 public class LabelController {
 
@@ -22,44 +22,38 @@ public class LabelController {
 
     @GetMapping
     public ResponseEntity<List<LabelResponse>> getLabels(
-            @RequestHeader("X-User-Id") UUID userId,
-            @RequestHeader("X-Org-Role") String orgRole,
-            @PathVariable UUID boardId
+            @RequestHeader("X-Org-Id") UUID orgId
     ) {
-        return ResponseEntity.ok(labelService.getLabels(userId, orgRole, boardId));
+        return ResponseEntity.ok(labelService.getLabels(orgId));
     }
 
     @PostMapping
     public ResponseEntity<LabelResponse> createLabel(
-            @RequestHeader("X-User-Id") UUID userId,
-            @RequestHeader("X-Org-Role") String orgRole,
             @RequestHeader("X-Org-Id") UUID orgId,
-            @PathVariable UUID boardId,
+            @RequestHeader("X-Org-Role") String orgRole,
             @Valid @RequestBody CreateLabelRequest request
     ) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(labelService.createLabel(userId, orgRole, orgId, boardId, request));
+                .body(labelService.createLabel(orgId, orgRole, request));
     }
 
     @PatchMapping("/{labelId}")
     public ResponseEntity<LabelResponse> updateLabel(
-            @RequestHeader("X-User-Id") UUID userId,
+            @RequestHeader("X-Org-Id") UUID orgId,
             @RequestHeader("X-Org-Role") String orgRole,
-            @PathVariable UUID boardId,
             @PathVariable UUID labelId,
             @Valid @RequestBody UpdateLabelRequest request
     ) {
-        return ResponseEntity.ok(labelService.updateLabel(userId, orgRole, boardId, labelId, request));
+        return ResponseEntity.ok(labelService.updateLabel(orgId, orgRole, labelId, request));
     }
 
     @DeleteMapping("/{labelId}")
     public ResponseEntity<Void> deleteLabel(
-            @RequestHeader("X-User-Id") UUID userId,
+            @RequestHeader("X-Org-Id") UUID orgId,
             @RequestHeader("X-Org-Role") String orgRole,
-            @PathVariable UUID boardId,
             @PathVariable UUID labelId
     ) {
-        labelService.deleteLabel(userId, orgRole, boardId, labelId);
+        labelService.deleteLabel(orgId, orgRole, labelId);
         return ResponseEntity.noContent().build();
     }
 }

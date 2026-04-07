@@ -8,7 +8,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface LabelRepository extends JpaRepository<Label, UUID> {
-    List<Label> findAllByBoard_Id(UUID boardId);
-    Optional<Label> findByBoard_IdAndId(UUID boardId, UUID labelId);
-    boolean existsByBoard_IdAndName(UUID boardId, String name);
+    List<Label> findAllByOrgId(UUID orgId);
+    Optional<Label> findByOrgIdAndId(UUID orgId, UUID labelId);
+    boolean existsByOrgIdAndName(UUID orgId, String name);
 }

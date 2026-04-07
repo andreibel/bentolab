@@ -5,8 +5,13 @@ import Fuse from 'fuse.js'
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query'
 import {toast} from 'sonner'
 import {
+  ArrowDown,
   ArrowRight,
+  ArrowUp,
+  BookOpen,
+  Bug,
   CalendarDays,
+  CheckSquare,
   ChevronRight,
   CircleDot,
   CirclePlus,
@@ -16,16 +21,20 @@ import {
   LayoutGrid,
   Loader2,
   MessageSquare,
+  Minus,
   Plus,
   Search,
   Sparkles,
+  Tag,
   User,
   UserCheck,
   UserCircle,
   X,
+  Zap,
 } from 'lucide-react'
 import {boardsApi, useBoards} from '@/api/boards'
 import {issuesApi} from '@/api/issues'
+import {labelsApi} from '@/api/labels'
 import {orgsApi} from '@/api/orgs'
 import {usersApi} from '@/api/users'
 import {queryKeys} from '@/api/queryKeys'
@@ -59,13 +68,18 @@ type SlashCommandId =
   | 'start-before'
   | 'due-after'
   | 'due-before'
+  | 'priority'
+  | 'type'
+  | 'status'
+  | 'label'
+  | 'board'
 
 type SlashCommandDef = {
   id:          SlashCommandId
   label:       string
   description: string
   icon:        React.ElementType
-  valueType:   'user' | 'date'
+  valueType:   'user' | 'date' | 'priority' | 'type' | 'status' | 'label' | 'board'
 }
 
 type FilterToken = {
@@ -87,12 +101,36 @@ type Suggestion =
 // ── Slash command definitions ─────────────────────────────────────────────────
 
 const SLASH_COMMANDS: SlashCommandDef[] = [
-  { id: 'assigned-to',  label: 'Assigned to',  description: 'Filter by assignee',      icon: UserCheck,    valueType: 'user' },
-  { id: 'created-by',   label: 'Created by',   description: 'Filter by issue creator', icon: UserCircle,   valueType: 'user' },
-  { id: 'start-after',  label: 'Start after',  description: 'Started after a date',    icon: CalendarDays, valueType: 'date' },
-  { id: 'start-before', label: 'Start before', description: 'Started before a date',   icon: CalendarDays, valueType: 'date' },
-  { id: 'due-after',    label: 'Due after',    description: 'Due date is after',        icon: CalendarDays, valueType: 'date' },
-  { id: 'due-before',   label: 'Due before',   description: 'Due date is before',       icon: CalendarDays, valueType: 'date' },
+  { id: 'priority',     label: 'Priority',     description: 'Filter by priority level',  icon: ArrowUp,      valueType: 'priority' },
+  { id: 'type',         label: 'Type',         description: 'Filter by issue type',       icon: CircleDot,    valueType: 'type'     },
+  { id: 'status',       label: 'Status',       description: 'Filter open or closed',      icon: CheckSquare,  valueType: 'status'   },
+  { id: 'label',        label: 'Label',        description: 'Filter by label tag',         icon: Tag,          valueType: 'label'    },
+  { id: 'board',        label: 'Board',        description: 'Filter by board',             icon: LayoutGrid,   valueType: 'board'    },
+  { id: 'assigned-to',  label: 'Assigned to',  description: 'Filter by assignee',          icon: UserCheck,    valueType: 'user'     },
+  { id: 'created-by',   label: 'Created by',   description: 'Filter by issue creator',     icon: UserCircle,   valueType: 'user'     },
+  { id: 'start-after',  label: 'Start after',  description: 'Started after a date',        icon: CalendarDays, valueType: 'date'     },
+  { id: 'start-before', label: 'Start before', description: 'Started before a date',       icon: CalendarDays, valueType: 'date'     },
+  { id: 'due-after',    label: 'Due after',    description: 'Due date is after',            icon: CalendarDays, valueType: 'date'     },
+  { id: 'due-before',   label: 'Due before',   description: 'Due date is before',           icon: CalendarDays, valueType: 'date'     },
+]
+
+const PRIORITY_OPTIONS = [
+  { value: 'CRITICAL', label: 'Critical', icon: ArrowUp,   color: 'text-red-500'    },
+  { value: 'HIGH',     label: 'High',     icon: ArrowUp,   color: 'text-orange-500' },
+  { value: 'MEDIUM',   label: 'Medium',   icon: Minus,     color: 'text-yellow-500' },
+  { value: 'LOW',      label: 'Low',      icon: ArrowDown, color: 'text-blue-400'   },
+]
+
+const TYPE_OPTIONS = [
+  { value: 'STORY',   label: 'Story',    icon: BookOpen,    color: 'text-emerald-500' },
+  { value: 'TASK',    label: 'Task',     icon: CheckSquare, color: 'text-blue-500'    },
+  { value: 'BUG',     label: 'Bug',      icon: Bug,         color: 'text-red-500'     },
+  { value: 'SUBTASK', label: 'Sub-task', icon: Zap,         color: 'text-yellow-500'  },
+]
+
+const STATUS_OPTIONS = [
+  { value: 'open',   label: 'Open',   color: 'text-green-500' },
+  { value: 'closed', label: 'Closed', color: 'text-text-muted' },
 ]
 
 // ── Date suggestions ──────────────────────────────────────────────────────────
@@ -159,6 +197,11 @@ function applyTokenFilters(results: IssueSearchResult[], tokens: FilterToken[]):
       case 'start-before': return r.startDate != null && r.startDate < t.value
       case 'due-after':    return r.dueDate != null && r.dueDate > t.value
       case 'due-before':   return r.dueDate != null && r.dueDate < t.value
+      case 'priority':     return r.priority === t.value
+      case 'type':         return r.type === t.value
+      case 'status':       return t.value === 'closed' ? r.closed : !r.closed
+      case 'label':        return r.labelIds?.includes(t.value) ?? false
+      case 'board':        return r.boardId === t.value
       default:             return true
     }
   }))
@@ -383,7 +426,15 @@ export function CommandPalette({
 
   // ── Org members + profiles (loaded lazily when a user command is in-flight) ─
 
-  const needsUsers = slashState.type === 'value' && slashState.command.valueType === 'user'
+  const needsUsers  = slashState.type === 'value' && slashState.command.valueType === 'user'
+  const needsLabels = slashState.type === 'value' && slashState.command.valueType === 'label'
+
+  const { data: orgLabels = [] } = useQuery({
+    queryKey: queryKeys.labels.list(currentOrgId!),
+    queryFn:  labelsApi.list,
+    enabled:  !!currentOrgId && needsLabels,
+    staleTime: 5 * 60_000,
+  })
 
   const { data: orgMembers = [] } = useQuery({
     queryKey: ['org-members', currentOrgId],
@@ -426,6 +477,73 @@ export function CommandPalette({
     if (slashState.type === 'value') {
       const partial = slashState.partial.toLowerCase()
       const cmd     = slashState.command
+
+      if (cmd.valueType === 'priority') {
+        return PRIORITY_OPTIONS
+          .filter(p => p.label.toLowerCase().includes(partial))
+          .map(p => ({
+            type:         'value' as const,
+            id:           p.value,
+            label:        p.label,
+            icon:         p.icon,
+            value:        p.value,
+            displayValue: p.label,
+          }))
+      }
+
+      if (cmd.valueType === 'type') {
+        return TYPE_OPTIONS
+          .filter(t => t.label.toLowerCase().includes(partial))
+          .map(t => ({
+            type:         'value' as const,
+            id:           t.value,
+            label:        t.label,
+            icon:         t.icon,
+            value:        t.value,
+            displayValue: t.label,
+          }))
+      }
+
+      if (cmd.valueType === 'status') {
+        return STATUS_OPTIONS
+          .filter(s => s.label.toLowerCase().includes(partial))
+          .map(s => ({
+            type:         'value' as const,
+            id:           s.value,
+            label:        s.label,
+            icon:         CircleDot,
+            value:        s.value,
+            displayValue: s.label,
+          }))
+      }
+
+      if (cmd.valueType === 'label') {
+        return orgLabels
+          .filter(l => l.name.toLowerCase().includes(partial))
+          .map(l => ({
+            type:         'value' as const,
+            id:           l.id,
+            label:        l.name,
+            description:  l.description ?? undefined,
+            icon:         Tag,
+            value:        l.id,
+            displayValue: l.name,
+          }))
+      }
+
+      if (cmd.valueType === 'board') {
+        return boards
+          .filter(b => b.name.toLowerCase().includes(partial) || b.boardKey.toLowerCase().includes(partial))
+          .map(b => ({
+            type:         'value' as const,
+            id:           b.id,
+            label:        b.name,
+            description:  b.boardKey,
+            icon:         LayoutGrid,
+            value:        b.id,
+            displayValue: b.name,
+          }))
+      }
 
       if (cmd.valueType === 'date') {
         return getDateSuggestions()
@@ -483,7 +601,7 @@ export function CommandPalette({
     }
 
     return []
-  }, [slashState, currentUser, orgMembers, profileMap])
+  }, [slashState, currentUser, orgMembers, orgLabels, boards, profileMap])
 
   // Reset suggestion index when suggestions change
   useEffect(() => { setSuggestionIdx(0) }, [suggestions.length])
@@ -536,9 +654,12 @@ export function CommandPalette({
       title:           i.title,
       boardId:         i.boardId,
       priority:        i.priority,
+      type:            i.type,
       closed:          i.closed,
       assigneeId:      i.assigneeId,
       reporterId:      i.reporterId,
+      epicId:          i.epicId ?? null,
+      labelIds:        i.labelIds ?? [],
       startDate:       i.startDate,
       dueDate:         i.dueDate,
       matchIn:         'TITLE' as const,

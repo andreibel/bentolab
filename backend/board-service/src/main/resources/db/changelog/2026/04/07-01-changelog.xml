@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-5.0.xsd">
+
+    <!-- Drop FK and board-scoped unique constraint -->
+    <changeSet id="2026040701-1" author="andreibeloziorove">
+        <dropForeignKeyConstraint baseTableName="labels" constraintName="FK_LABELS_ON_BOARD"/>
+    </changeSet>
+
+    <changeSet id="2026040701-2" author="andreibeloziorove">
+        <dropUniqueConstraint tableName="labels" constraintName="uc_3f48dd652659195c9858a8811"/>
+    </changeSet>
+
+    <changeSet id="2026040701-3" author="andreibeloziorove">
+        <dropIndex tableName="labels" indexName="IDX_LABELS_ON_ORG_ID_BOARD_ID"/>
+    </changeSet>
+
+    <!-- Remove board_id column -->
+    <changeSet id="2026040701-4" author="andreibeloziorove">
+        <dropColumn tableName="labels" columnName="board_id"/>
+    </changeSet>
+
+    <!-- Add org-scoped unique constraint and index -->
+    <changeSet id="2026040701-5" author="andreibeloziorove">
+        <addUniqueConstraint tableName="labels" columnNames="org_id, name"
+                             constraintName="uc_labels_org_id_name"/>
+    </changeSet>
+
+    <changeSet id="2026040701-6" author="andreibeloziorove">
+        <createIndex tableName="labels" indexName="IDX_LABELS_ON_ORG_ID">
+            <column name="org_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

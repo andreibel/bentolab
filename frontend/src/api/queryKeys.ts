@@ -12,7 +12,9 @@ export const queryKeys = {
     detail:  (boardId: string) => ['boards', boardId],
     columns: (boardId: string) => ['boards', boardId, 'columns'],
     members: (boardId: string) => ['boards', boardId, 'members'],
-    labels:  (boardId: string) => ['boards', boardId, 'labels'],
+  },
+  labels: {
+    list: (orgId: string) => ['labels', orgId],
   },
   issues: {
     mine:       (relation: string, closed?: boolean) => ['issues', 'mine', relation, closed],

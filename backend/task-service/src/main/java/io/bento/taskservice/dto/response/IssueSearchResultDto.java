@@ -1,14 +1,19 @@
 package io.bento.taskservice.dto.response;
 
+import java.util.List;
+
 public record IssueSearchResultDto(
         String issueId,
         String issueKey,
         String title,
         String boardId,
         String priority,
+        String type,
         boolean closed,
         String assigneeId,
         String reporterId,
+        String epicId,
+        List<String> labelIds,
         /** ISO-8601 date string (YYYY-MM-DD) or null */
         String startDate,
         /** ISO-8601 date string (YYYY-MM-DD) or null */

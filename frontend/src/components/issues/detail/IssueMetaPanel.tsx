@@ -1,6 +1,6 @@
 import {useEffect, useMemo, useRef, useState} from 'react'
 import {useQuery} from '@tanstack/react-query'
-import {AlertTriangle, Check, ChevronDown, Search} from 'lucide-react'
+import {AlertTriangle, Check, ChevronDown, Search, Tag} from 'lucide-react'
 import Fuse from 'fuse.js'
 import {Avatar} from '@/components/ui/Avatar'
 import {IssueTypeBadge, PriorityBadge} from '@/components/ui/Badge'
@@ -8,6 +8,9 @@ import {DatePicker, toDatePart} from '@/components/ui/DatePicker'
 import {cn} from '@/utils/cn'
 import {boardsApi} from '@/api/boards'
 import {usersApi} from '@/api/users'
+import {labelsApi} from '@/api/labels'
+import {queryKeys} from '@/api/queryKeys'
+import {useAuthStore} from '@/stores/authStore'
 import type {Issue} from '@/types/issue'
 import type {Epic} from '@/types/epic'
 import type {Sprint} from '@/types/sprint'
@@ -254,6 +257,81 @@ function MilestoneSelect({ value, milestones, onSave }: { value: string | null; 
           ))}
           {milestones.length === 0 && (
             <div className="px-3 py-2 text-xs text-text-muted">No milestones</div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function LabelMultiSelect({ value, onSave }: { value: string[]; onSave: (ids: string[]) => void }) {
+  const { currentOrgId } = useAuthStore()
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  const { data: allLabels = [] } = useQuery({
+    queryKey: queryKeys.labels.list(currentOrgId!),
+    queryFn:  labelsApi.list,
+    enabled:  !!currentOrgId,
+  })
+
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: MouseEvent) => {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  function toggle(id: string) {
+    onSave(value.includes(id) ? value.filter((v) => v !== id) : [...value, id])
+  }
+
+  const selected = allLabels.filter((l) => value.includes(l.id))
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="flex min-h-[30px] flex-wrap items-center gap-1 rounded-md px-1.5 py-1 text-sm transition-colors hover:bg-surface-muted"
+      >
+        {selected.length === 0 ? (
+          <span className="flex items-center gap-1 text-text-muted">
+            <Tag className="h-3 w-3" />
+            None
+          </span>
+        ) : (
+          selected.map((l) => (
+            <span
+              key={l.id}
+              className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium"
+              style={{ backgroundColor: l.color + '22', color: l.color }}
+            >
+              {l.name}
+            </span>
+          ))
+        )}
+        <ChevronDown className="ms-auto h-3 w-3 shrink-0 text-text-muted" />
+      </button>
+      {open && (
+        <div className="absolute start-0 top-full z-50 mt-1 min-w-[180px] rounded-lg border border-surface-border bg-surface shadow-xl">
+          {allLabels.length === 0 ? (
+            <div className="px-3 py-2 text-xs text-text-muted">No labels defined yet.</div>
+          ) : (
+            allLabels.map((l) => (
+              <button
+                key={l.id}
+                onClick={() => toggle(l.id)}
+                className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-surface-muted"
+              >
+                {value.includes(l.id)
+                  ? <Check className="h-3 w-3 shrink-0 text-primary" />
+                  : <span className="h-3 w-3 shrink-0" />}
+                <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: l.color }} />
+                <span className="truncate text-text-primary">{l.name}</span>
+              </button>
+            ))
           )}
         </div>
       )}
@@ -625,6 +703,13 @@ export function IssueMetaPanel({ issue, boardId, boardType, columns, epics, spri
           </span>
         </MetaCell>
       )}
+
+      <MetaCell label="Labels">
+        <LabelMultiSelect
+          value={issue.labelIds ?? []}
+          onSave={(labelIds) => onUpdate({ labelIds } as Partial<Issue>)}
+        />
+      </MetaCell>
 
     </div>
     </div>

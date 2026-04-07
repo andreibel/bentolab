@@ -14,7 +14,7 @@ import java.util.UUID;
 @Entity
 @Table(
         name = "labels",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"board_id", "name"})
+        uniqueConstraints = @UniqueConstraint(columnNames = {"org_id", "name"})
 )
 public class Label {
     @Id
@@ -24,10 +24,6 @@ public class Label {
 
     @Column(name = "org_id", nullable = false)
     private UUID orgId;
-
-    @ManyToOne(optional = false, fetch =  FetchType.LAZY)
-    @JoinColumn(name = "board_id", nullable = false)
-    private Board board;
 
     @Column(name = "name", nullable = false, length = 100)
     private String name;

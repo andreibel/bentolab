@@ -10,7 +10,6 @@ public class LabelMapper {
     public LabelResponse toResponse(Label label) {
         return new LabelResponse(
                 label.getId(),
-                label.getBoard().getId(),
                 label.getOrgId(),
                 label.getName(),
                 label.getColor(),

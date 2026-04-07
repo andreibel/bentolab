@@ -5,7 +5,6 @@ import java.util.UUID;
 
 public record LabelResponse(
         UUID id,
-        UUID boardId,
         UUID orgId,
         String name,
         String color,

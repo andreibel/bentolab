@@ -26,6 +26,7 @@ import SecurityPage from '@/pages/settings/SecurityPage'
 import MembersPage from '@/pages/settings/MembersPage'
 import ProfilePage from '@/pages/settings/ProfilePage'
 import OrgGeneralPage from '@/pages/settings/OrgGeneralPage'
+import LabelsPage from '@/pages/settings/LabelsPage'
 import TimelinePage from '@/pages/board/TimelinePage'
 import GlobalTimelinePage from '@/pages/GlobalTimelinePage'
 import NotFoundPage from '@/pages/NotFoundPage'
@@ -108,7 +109,7 @@ export default function App() {
 
           {/* Settings */}
           <Route path="/settings/members"      element={<MembersPage />} />
-          <Route path="/settings/labels"       element={<div className="p-6 text-sm text-text-muted">Labels — coming soon</div>} />
+          <Route path="/settings/labels"       element={<LabelsPage />} />
           <Route path="/settings/automations"  element={<AutomationsPage />} />
           <Route path="/settings/org"          element={<OrgGeneralPage />} />
           <Route path="/settings/security"     element={<SecurityPage />} />
