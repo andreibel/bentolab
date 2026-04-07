@@ -27,9 +27,17 @@ interface IssueEvent {
  * Events from the current user are still processed so the cache stays
  * consistent across tabs/devices.
  */
-export function useBoardRealtime(boardId: string, columns: BoardColumn[]) {
+export function useBoardRealtime(
+  boardId: string,
+  columns: BoardColumn[],
+  issueOnBoard?: boolean,
+  issueSprintId?: string,
+) {
   const queryClient = useQueryClient()
   const currentUserId = useAuthStore(s => s.user?.id)
+
+  // Must match the exact key useIssues() subscribes to in BoardPage
+  const issueListKey = queryKeys.issues.list(boardId, undefined, false, issueOnBoard, issueSprintId)
 
   useStompSubscription(
     `/topic/board/${boardId}/issues`,
@@ -39,7 +47,7 @@ export function useBoardRealtime(boardId: string, columns: BoardColumn[]) {
 
       if (event.eventType === 'IssueCreatedEvent') {
         void queryClient.invalidateQueries({
-          queryKey: queryKeys.issues.list(boardId, undefined, false),
+          queryKey: issueListKey,
           refetchType: 'active',
         })
         return
@@ -53,7 +61,7 @@ export function useBoardRealtime(boardId: string, columns: BoardColumn[]) {
           // (only for events from other users; own events are already applied)
           if (event.changedByUserId !== currentUserId) {
             queryClient.setQueryData(
-              queryKeys.issues.list(boardId, undefined, false),
+              issueListKey,
               (old: { content: Issue[] } | undefined) => {
                 if (!old) return old
                 return {
@@ -71,7 +79,7 @@ export function useBoardRealtime(boardId: string, columns: BoardColumn[]) {
 
         // Background refetch to confirm server state regardless
         void queryClient.invalidateQueries({
-          queryKey: queryKeys.issues.list(boardId, undefined, false),
+          queryKey: issueListKey,
           refetchType: event.changedByUserId === currentUserId ? 'none' : 'active',
         })
         return
@@ -79,7 +87,7 @@ export function useBoardRealtime(boardId: string, columns: BoardColumn[]) {
 
       // All other events: invalidate so data stays fresh
       void queryClient.invalidateQueries({
-        queryKey: queryKeys.issues.list(boardId, undefined, false),
+        queryKey: issueListKey,
         refetchType: 'active',
       })
     },

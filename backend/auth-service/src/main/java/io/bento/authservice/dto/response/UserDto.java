@@ -14,6 +14,8 @@ public record UserDto(
         SystemRole systemRole,
         boolean emailVerified,
         UUID currentOrgId,
+        String locale,
+        String timezone,
         Instant lastLoginAt,
         Instant createdAt
 ) {}

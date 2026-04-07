@@ -17,6 +17,8 @@ public class UserMapper {
                 user.getSystemRole(),
                 user.isEmailVerified(),
                 user.getCurrentOrgId(),
+                user.getLocale(),
+                user.getTimezone(),
                 user.getLastLoginAt(),
                 user.getCreatedAt()
         );

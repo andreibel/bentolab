@@ -1,7 +1,8 @@
 import {useCallback, useRef, useState} from 'react'
+import {useNavigate} from 'react-router-dom'
 import Cropper from 'react-easy-crop'
 import type {Area} from 'react-easy-crop'
-import {Building2, Camera, Loader2, Minus, Plus, X, ZoomIn} from 'lucide-react'
+import {AlertTriangle, Building2, Camera, ChevronDown, Loader2, Minus, Plus, X, ZoomIn} from 'lucide-react'
 import {toast} from 'sonner'
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query'
 import {attachmentsApi} from '@/api/attachments'
@@ -9,6 +10,9 @@ import {orgsApi} from '@/api/orgs'
 import {queryKeys} from '@/api/queryKeys'
 import {useAuthStore} from '@/stores/authStore'
 import {cn} from '@/utils/cn'
+import type {OrgMember} from '@/types/org'
+import type {UserProfile} from '@/types/board'
+import {usersApi} from '@/api/users'
 
 // ── Crop helper ───────────────────────────────────────────────────────────────
 
@@ -114,9 +118,202 @@ function CropModal({ imageSrc, onApply, onCancel }: { imageSrc: string; onApply:
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
+// ── Danger Zone ───────────────────────────────────────────────────────────────
+
+function DangerZone({
+  orgId, orgName, currentUserId, queryClient, onDeleted,
+}: {
+  orgId: string
+  orgName: string
+  currentUserId: string
+  queryClient: ReturnType<typeof useQueryClient>
+  onDeleted: () => void
+}) {
+  // Transfer ownership
+  const [showTransfer, setShowTransfer]     = useState(false)
+  const [selectedNewOwner, setSelectedNewOwner] = useState<string>('')
+  const [ownerPickerOpen, setOwnerPickerOpen]   = useState(false)
+
+  // Delete org
+  const [showDelete, setShowDelete]   = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState('')
+
+  const { data: members = [] } = useQuery<OrgMember[]>({
+    queryKey: queryKeys.orgs.members(orgId),
+    queryFn: () => orgsApi.listMembers(orgId),
+    enabled: showTransfer,
+  })
+
+  const eligibleMembers = members.filter(
+    (m) => m.userId !== currentUserId && m.orgRole !== 'ORG_OWNER',
+  )
+
+  const memberIds = eligibleMembers.map((m) => m.userId)
+  const { data: profiles = [] } = useQuery<UserProfile[]>({
+    queryKey: ['users', 'batch', ...memberIds],
+    queryFn: () => usersApi.batchGet(memberIds),
+    enabled: memberIds.length > 0 && showTransfer,
+  })
+  const profileMap = Object.fromEntries(profiles.map((p) => [p.id, p]))
+
+  const transferMutation = useMutation({
+    mutationFn: () => orgsApi.transferOwnership(orgId, selectedNewOwner),
+    onSuccess: () => {
+      toast.success('Ownership transferred')
+      queryClient.invalidateQueries({ queryKey: queryKeys.orgs.detail(orgId) })
+      setShowTransfer(false)
+    },
+    onError: () => toast.error('Failed to transfer ownership'),
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: () => orgsApi.deleteOrg(orgId),
+    onSuccess: () => { toast.success('Organization deleted'); onDeleted() },
+    onError: () => toast.error('Failed to delete organization'),
+  })
+
+  const selectedProfile = selectedNewOwner ? profileMap[selectedNewOwner] : null
+  const selectedName    = selectedProfile
+    ? `${selectedProfile.firstName} ${selectedProfile.lastName}`
+    : 'Select a member…'
+
+  return (
+    <section className="rounded-xl border border-red-200 bg-surface dark:border-red-900/40">
+      <div className="border-b border-red-200 px-6 py-4 dark:border-red-900/40">
+        <div className="flex items-center gap-2">
+          <AlertTriangle className="h-4 w-4 text-red-500" />
+          <h2 className="text-sm font-semibold text-red-600 dark:text-red-400">Danger Zone</h2>
+        </div>
+      </div>
+
+      <div className="divide-y divide-surface-border">
+        {/* Transfer ownership */}
+        <div className="flex items-start justify-between gap-6 p-6">
+          <div>
+            <p className="text-sm font-semibold text-text-primary">Transfer ownership</p>
+            <p className="mt-0.5 text-xs text-text-muted">
+              Assign a new owner. You will become an Admin after transfer.
+            </p>
+          </div>
+          <button
+            onClick={() => setShowTransfer((v) => !v)}
+            className="shrink-0 rounded-lg border border-red-300 px-3 py-1.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+          >
+            Transfer
+          </button>
+        </div>
+
+        {showTransfer && (
+          <div className="px-6 pb-6 pt-4">
+            <p className="mb-3 text-xs text-text-muted">Choose the new owner:</p>
+            <div className="relative mb-3 max-w-sm">
+              <button
+                onClick={() => setOwnerPickerOpen((v) => !v)}
+                className="flex w-full items-center justify-between gap-2 rounded-lg border border-surface-border bg-surface px-3 py-2 text-sm text-text-primary hover:border-primary"
+              >
+                <span className={selectedNewOwner ? 'text-text-primary' : 'text-text-muted'}>{selectedName}</span>
+                <ChevronDown className={cn('h-4 w-4 text-text-muted transition-transform', ownerPickerOpen && 'rotate-180')} />
+              </button>
+              {ownerPickerOpen && (
+                <div className="absolute z-20 mt-1 w-full overflow-hidden rounded-lg border border-surface-border bg-surface shadow-lg">
+                  {eligibleMembers.length === 0 ? (
+                    <p className="px-3 py-2 text-sm text-text-muted">No eligible members</p>
+                  ) : (
+                    eligibleMembers.map((m) => {
+                      const p = profileMap[m.userId]
+                      const name = p ? `${p.firstName} ${p.lastName}` : m.userId
+                      return (
+                        <button
+                          key={m.userId}
+                          onClick={() => { setSelectedNewOwner(m.userId); setOwnerPickerOpen(false) }}
+                          className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-surface-muted"
+                        >
+                          <span className="text-text-primary">{name}</span>
+                          <span className="ms-auto text-xs text-text-muted">{m.orgRole === 'ORG_ADMIN' ? 'Admin' : 'Member'}</span>
+                        </button>
+                      )
+                    })
+                  )}
+                </div>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => transferMutation.mutate()}
+                disabled={!selectedNewOwner || transferMutation.isPending}
+                className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+              >
+                {transferMutation.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                Confirm transfer
+              </button>
+              <button
+                onClick={() => setShowTransfer(false)}
+                className="rounded-lg border border-surface-border px-4 py-1.5 text-sm text-text-secondary hover:text-text-primary"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Delete org */}
+        <div className="flex items-start justify-between gap-6 p-6">
+          <div>
+            <p className="text-sm font-semibold text-text-primary">Delete organization</p>
+            <p className="mt-0.5 text-xs text-text-muted">
+              Permanently delete <span className="font-medium">{orgName}</span> and all its data. This cannot be undone.
+            </p>
+          </div>
+          <button
+            onClick={() => setShowDelete((v) => !v)}
+            className="shrink-0 rounded-lg border border-red-300 px-3 py-1.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+          >
+            Delete
+          </button>
+        </div>
+
+        {showDelete && (
+          <div className="px-6 pb-6 pt-4">
+            <p className="mb-3 text-xs text-text-muted">
+              Type <span className="font-mono font-semibold text-text-primary">{orgName}</span> to confirm:
+            </p>
+            <input
+              type="text"
+              value={deleteConfirm}
+              onChange={(e) => setDeleteConfirm(e.target.value)}
+              placeholder={orgName}
+              className="mb-3 w-full max-w-sm rounded-lg border border-surface-border bg-surface px-3 py-2 text-sm text-text-primary outline-none focus:border-red-400 focus:ring-2 focus:ring-red-400/10"
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={() => deleteMutation.mutate()}
+                disabled={deleteConfirm !== orgName || deleteMutation.isPending}
+                className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+              >
+                {deleteMutation.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                Delete organization
+              </button>
+              <button
+                onClick={() => { setShowDelete(false); setDeleteConfirm('') }}
+                className="rounded-lg border border-surface-border px-4 py-1.5 text-sm text-text-secondary hover:text-text-primary"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
+  )
+}
+
+// ── Page ──────────────────────────────────────────────────────────────────────
+
 export default function OrgGeneralPage() {
-  const { currentOrgId } = useAuthStore()
+  const { currentOrgId, orgRole, user, logout } = useAuthStore()
+  const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const isOwner = orgRole === 'ORG_OWNER'
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const { data: org } = useQuery({
@@ -288,7 +485,7 @@ export default function OrgGeneralPage() {
         </section>
 
         {/* Info section */}
-        <section className="rounded-xl border border-surface-border bg-surface p-6">
+        <section className="mb-8 rounded-xl border border-surface-border bg-surface p-6">
           <h2 className="mb-5 text-sm font-semibold text-text-primary">Organization info</h2>
           <form onSubmit={handleSave} className="space-y-4">
             <div>
@@ -341,6 +538,17 @@ export default function OrgGeneralPage() {
             </div>
           </form>
         </section>
+
+        {/* Danger Zone — owner only */}
+        {isOwner && (
+          <DangerZone
+            orgId={currentOrgId!}
+            orgName={org?.name ?? ''}
+            currentUserId={user?.id ?? ''}
+            queryClient={queryClient}
+            onDeleted={() => { logout(); navigate('/login') }}
+          />
+        )}
       </div>
     </>
   )

@@ -77,6 +77,15 @@ function SortableColumn({
   )
 }
 
+// ── Torch colors by issue type ────────────────────────────────────────────────
+
+const ISSUE_TORCH_COLORS: Record<string, string> = {
+  STORY:   '#10b981', // emerald-500
+  TASK:    '#3b82f6', // blue-500
+  BUG:     '#ef4444', // red-500
+  SUBTASK: '#eab308', // yellow-500
+}
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 /** Strip the col: prefix if present, otherwise return the id as-is */
@@ -131,6 +140,11 @@ export default function BoardPage() {
   const serverIssuesRef = useRef(serverIssues)
   useLayoutEffect(() => { serverIssuesRef.current = serverIssues })
 
+  // Keep a live ref to the exact query key useIssues() is subscribed to
+  const issueQueryKey = queryKeys.issues.list(boardId!, undefined, false, issueOnBoard, issueSprintId)
+  const issueQueryKeyRef = useRef(issueQueryKey)
+  useLayoutEffect(() => { issueQueryKeyRef.current = issueQueryKey })
+
   // ── Columns ──────────────────────────────────────────────────────────────────
   const serverCols = useMemo(
     () => [...(board?.columns ?? [])].sort((a, b) => a.position - b.position),
@@ -150,7 +164,7 @@ export default function BoardPage() {
   const [selectedEpicIds, setSelectedEpicIds] = useState<Set<string>>(new Set())
 
   const currentUserId = useAuthStore(s => s.user?.id)
-  useBoardRealtime(boardId!, sortedColumns)
+  useBoardRealtime(boardId!, sortedColumns, issueOnBoard, issueSprintId)
   const presenceUsers = useBoardPresence(boardId!)
 
   const issuesByColumn = useMemo(() => {
@@ -179,6 +193,24 @@ export default function BoardPage() {
   const [settingsOpen,   setSettingsOpen]   = useState(false)
   const MIN_PANEL = 680
   const [panelWidth, setPanelWidth] = useState(MIN_PANEL)
+
+  // ── Drag torch ───────────────────────────────────────────────────────────────
+  const torchRef   = useRef<HTMLDivElement>(null)
+  const torchColor = activeIssue?.type
+    ? (ISSUE_TORCH_COLORS[activeIssue.type] ?? '#5B47E0')
+    : '#5B47E0'
+
+  useEffect(() => {
+    if (!activeIssue) return
+    const onMove = (e: PointerEvent) => {
+      torchRef.current?.style.setProperty(
+        'transform',
+        `translate(${e.clientX}px, ${e.clientY}px) translate(-50%, -50%)`,
+      )
+    }
+    window.addEventListener('pointermove', onMove, { passive: true })
+    return () => window.removeEventListener('pointermove', onMove)
+  }, [activeIssue])
 
   const startResize = useCallback((e: React.MouseEvent) => {
     e.preventDefault()
@@ -391,7 +423,7 @@ export default function BoardPage() {
 
       // Commit to React Query cache before clearing local state
       queryClient.setQueryData(
-        queryKeys.issues.list(boardId!, undefined, false),
+        issueQueryKeyRef.current,
         (old: { content: Issue[] } | undefined) =>
           old ? { ...old, content: snapshot } : old,
       )
@@ -400,7 +432,7 @@ export default function BoardPage() {
         await issuesApi.move(movedIssue.id, movedIssue.columnId, position, fromColumnName, toColumnName)
       } catch {
         toast.error('Failed to move issue')
-        queryClient.invalidateQueries({ queryKey: queryKeys.issues.list(boardId!, undefined, false) })
+        queryClient.invalidateQueries({ queryKey: issueQueryKeyRef.current })
       }
     }
   }, [boardId, board, queryClient])
@@ -593,6 +625,23 @@ export default function BoardPage() {
         <BoardSettingsPanel
           board={board}
           onClose={() => setSettingsOpen(false)}
+        />
+      )}
+
+      {/* Drag torch — only mounted while dragging, so no compositor-layer leak at rest */}
+      {activeIssue && (
+        <div
+          ref={torchRef}
+          aria-hidden
+          className="pointer-events-none fixed left-0 top-0 z-10"
+          style={{
+            width:  260,
+            height: 260,
+            background: `radial-gradient(circle at 50% 50%, ${torchColor}66 0%, ${torchColor}00 70%)`,
+            filter:  'blur(28px)',
+            transform: 'translate(-9999px, -9999px) translate(-50%, -50%)',
+            transition: 'background 250ms ease',
+          }}
         />
       )}
     </div>

@@ -8,6 +8,7 @@ import {
   ArrowLeft,
   BarChart2,
   Building2,
+  Cable,
   CalendarDays,
   ChevronDown,
   CircleDot,
@@ -22,9 +23,11 @@ import {
   Settings,
   ShieldCheck,
   SlidersHorizontal,
+  SunMoon,
   Tags,
   User,
   Users,
+  Wrench,
   Zap,
 } from 'lucide-react'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
@@ -77,13 +80,16 @@ const settingsGroups = [
       { label: 'Members',     icon: Users,             to: '/settings/members'     },
       { label: 'Labels',      icon: Tags,              to: '/settings/labels'      },
       { label: 'Security',    icon: ShieldCheck,       to: '/settings/security'    },
-      { label: 'Automations', icon: Zap,               to: '/settings/automations' },
+      { label: 'Advanced',    icon: Wrench,            to: '/settings/advanced'    },
+      { label: 'Automations',   icon: Zap,               to: '/settings/automations'  },
+      { label: 'Integrations',  icon: Cable,             to: '/settings/integrations' },
     ],
   },
   {
     label: 'Personal',
     items: [
-      { label: 'Profile', icon: User, to: '/settings/profile' },
+      { label: 'Profile',     icon: User,    to: '/settings/profile'      },
+      { label: 'Preferences', icon: SunMoon, to: '/settings/preferences'  },
     ],
   },
 ]

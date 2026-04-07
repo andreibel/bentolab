@@ -53,6 +53,12 @@ public class UserService {
         if (request.avatarUrl() != null) {
             user.setAvatarUrl(request.avatarUrl());
         }
+        if (request.locale() != null) {
+            user.setLocale(request.locale());
+        }
+        if (request.timezone() != null) {
+            user.setTimezone(request.timezone());
+        }
 
         user = userRepository.save(user);
 
@@ -60,6 +66,8 @@ public class UserService {
         if (request.firstName() != null) changedFields.add("firstName");
         if (request.lastName() != null) changedFields.add("lastName");
         if (request.avatarUrl() != null) changedFields.add("avatarUrl");
+        if (request.locale() != null)   changedFields.add("locale");
+        if (request.timezone() != null) changedFields.add("timezone");
         userEventPublisher.publishUserUpdated(new UserUpdatedEvent(userId, changedFields, Instant.now().toString()));
 
         return userMapper.toDto(user);

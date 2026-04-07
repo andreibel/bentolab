@@ -37,6 +37,29 @@ export const orgsApi = {
   revokeInvitation: (orgId: string, invitationId: string) =>
     client.delete(`/api/orgs/${orgId}/invitations/${invitationId}`),
 
+  // ── Member management ────────────────────────────────────────────────────
+
+  updateMemberRole: (orgId: string, userId: string, orgRole: string) =>
+    client.patch<OrgMember>(`/api/orgs/${orgId}/members/${userId}/role`, { orgRole }).then((r) => r.data),
+
+  removeMember: (orgId: string, userId: string) =>
+    client.delete(`/api/orgs/${orgId}/members/${userId}`),
+
+  // ── Danger zone ──────────────────────────────────────────────────────────
+
+  transferOwnership: (orgId: string, newOwnerId: string) =>
+    client.post(`/api/orgs/${orgId}/transfer`, { newOwnerId }),
+
+  deleteOrg: (orgId: string) =>
+    client.delete(`/api/orgs/${orgId}`),
+
+  // ── Advanced settings ────────────────────────────────────────────────────
+
+  updateSettings: (orgId: string, settings: Partial<{
+    maxUsers: number; maxBoards: number; maxStorageGB: number;
+    allowDiscord: boolean; allowExport: boolean; customBranding: boolean; ssoEnabled: boolean;
+  }>) => client.patch<Org>(`/api/orgs/${orgId}/settings`, settings).then((r) => r.data),
+
   /** Public — preview an invitation without being logged in. */
   previewInvitation: (token: string) =>
     client.get<InvitationPreview>(`/api/invitations/${token}/preview`).then((r) => r.data),

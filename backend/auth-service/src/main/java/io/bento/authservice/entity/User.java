@@ -51,6 +51,14 @@ public class User {
 
     private UUID currentOrgId;
 
+    @Column(nullable = false, length = 10)
+    @Builder.Default
+    private String locale = "en";
+
+    @Column(nullable = false, length = 100)
+    @Builder.Default
+    private String timezone = "UTC";
+
     private Instant lastLoginAt;
 
     @Column(nullable = false, updatable = false)

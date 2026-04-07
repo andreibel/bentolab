@@ -27,6 +27,9 @@ import MembersPage from '@/pages/settings/MembersPage'
 import ProfilePage from '@/pages/settings/ProfilePage'
 import OrgGeneralPage from '@/pages/settings/OrgGeneralPage'
 import LabelsPage from '@/pages/settings/LabelsPage'
+import IntegrationsPage from '@/pages/settings/IntegrationsPage'
+import PreferencesPage from '@/pages/settings/PreferencesPage'
+import OrgAdvancedPage from '@/pages/settings/OrgAdvancedPage'
 import TimelinePage from '@/pages/board/TimelinePage'
 import GlobalTimelinePage from '@/pages/GlobalTimelinePage'
 import NotFoundPage from '@/pages/NotFoundPage'
@@ -110,10 +113,13 @@ export default function App() {
           {/* Settings */}
           <Route path="/settings/members"      element={<MembersPage />} />
           <Route path="/settings/labels"       element={<LabelsPage />} />
-          <Route path="/settings/automations"  element={<AutomationsPage />} />
+          <Route path="/settings/automations"   element={<AutomationsPage />} />
+          <Route path="/settings/integrations" element={<IntegrationsPage />} />
+          <Route path="/settings/advanced"     element={<OrgAdvancedPage />} />
           <Route path="/settings/org"          element={<OrgGeneralPage />} />
           <Route path="/settings/security"     element={<SecurityPage />} />
           <Route path="/settings/profile"      element={<ProfilePage />} />
+          <Route path="/settings/preferences" element={<PreferencesPage />} />
         </Route>
 
         <Route path="*" element={<NotFoundPage />} />

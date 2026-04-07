@@ -1,10 +1,11 @@
 import {useCallback, useRef, useState} from 'react'
 import Cropper from 'react-easy-crop'
 import type {Area} from 'react-easy-crop'
-import {Camera, Loader2, Minus, Plus, User, X, ZoomIn} from 'lucide-react'
+import {Camera, CheckCircle2, KeyRound, Loader2, MailCheck, Minus, Plus, User, X, ZoomIn} from 'lucide-react'
 import {toast} from 'sonner'
 import {attachmentsApi} from '@/api/attachments'
 import {usersApi} from '@/api/users'
+import {authApi} from '@/api/auth'
 import {useAuthStore} from '@/stores/authStore'
 import {cn} from '@/utils/cn'
 
@@ -300,6 +301,44 @@ export default function ProfilePage() {
   const nameChanged = firstName.trim() !== (user?.firstName ?? '') ||
                       lastName.trim()  !== (user?.lastName  ?? '')
 
+  // ── Password reset ─────────────────────────────────────────────────────────
+
+  const [sentReset, setSentReset] = useState(false)
+  const [sendingReset, setSendingReset] = useState(false)
+
+  async function handleSendPasswordReset() {
+    if (!user?.email) return
+    setSendingReset(true)
+    try {
+      await authApi.forgotPassword(user.email)
+      setSentReset(true)
+      toast.success('Password reset email sent')
+    } catch {
+      toast.error('Failed to send reset email')
+    } finally {
+      setSendingReset(false)
+    }
+  }
+
+  // ── Resend verification ────────────────────────────────────────────────────
+
+  const [sentVerification, setSentVerification] = useState(false)
+  const [sendingVerification, setSendingVerification] = useState(false)
+
+  async function handleResendVerification() {
+    if (!user?.email) return
+    setSendingVerification(true)
+    try {
+      await authApi.resendVerification(user.email)
+      setSentVerification(true)
+      toast.success('Verification email sent')
+    } catch {
+      toast.error('Failed to send verification email')
+    } finally {
+      setSendingVerification(false)
+    }
+  }
+
   return (
     <>
       {/* Crop modal */}
@@ -387,7 +426,7 @@ export default function ProfilePage() {
         </section>
 
         {/* Name section */}
-        <section className="rounded-xl border border-surface-border bg-surface p-6">
+        <section className="mb-8 rounded-xl border border-surface-border bg-surface p-6">
           <h2 className="mb-5 text-sm font-semibold text-text-primary">Personal information</h2>
 
           <form onSubmit={handleSaveName} className="space-y-4">
@@ -447,6 +486,76 @@ export default function ProfilePage() {
             </div>
           </form>
         </section>
+        {/* Password section */}
+        <section className="mb-8 rounded-xl border border-surface-border bg-surface p-6">
+          <div className="flex items-start gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-surface-muted">
+              <KeyRound className="h-4 w-4 text-text-muted" />
+            </div>
+            <div className="flex-1">
+              <h2 className="text-sm font-semibold text-text-primary">Password</h2>
+              <p className="mt-0.5 text-xs text-text-muted">
+                We'll send a reset link to <span className="font-medium text-text-primary">{user?.email}</span>.
+                Follow the link to set a new password.
+              </p>
+              <div className="mt-4">
+                {sentReset ? (
+                  <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
+                    <CheckCircle2 className="h-4 w-4" />
+                    Reset email sent — check your inbox.
+                  </div>
+                ) : (
+                  <button
+                    onClick={handleSendPasswordReset}
+                    disabled={sendingReset}
+                    className={cn(
+                      'flex h-8 items-center gap-2 rounded-lg border border-surface-border px-4 text-sm font-medium transition-colors',
+                      'text-text-primary hover:border-primary/40 hover:bg-primary-subtle hover:text-primary',
+                      'disabled:cursor-not-allowed disabled:opacity-50',
+                    )}
+                  >
+                    {sendingReset && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                    Send password reset email
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Email verification */}
+        {!user?.emailVerified && (
+          <section className="rounded-xl border border-amber-200 bg-amber-50 p-6 dark:border-amber-900/40 dark:bg-amber-900/10">
+            <div className="flex items-start gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-900/30">
+                <MailCheck className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+              </div>
+              <div className="flex-1">
+                <h2 className="text-sm font-semibold text-amber-800 dark:text-amber-300">Email not verified</h2>
+                <p className="mt-0.5 text-xs text-amber-700 dark:text-amber-400">
+                  Verify your email address to unlock all features.
+                </p>
+                <div className="mt-4">
+                  {sentVerification ? (
+                    <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
+                      <CheckCircle2 className="h-4 w-4" />
+                      Verification email sent — check your inbox.
+                    </div>
+                  ) : (
+                    <button
+                      onClick={handleResendVerification}
+                      disabled={sendingVerification}
+                      className="flex h-8 items-center gap-2 rounded-lg border border-amber-300 bg-white px-4 text-sm font-medium text-amber-700 transition-colors hover:bg-amber-50 disabled:opacity-50 dark:border-amber-700 dark:bg-transparent dark:text-amber-300"
+                    >
+                      {sendingVerification && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                      Resend verification email
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
       </div>
     </>
   )
