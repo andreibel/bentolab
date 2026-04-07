@@ -18,6 +18,7 @@ import {cn} from '@/utils/cn'
 import type {Issue} from '@/types/issue'
 import type {Sprint} from '@/types/sprint'
 import type {Epic} from '@/types/epic'
+import type {BoardColumn} from '@/types/board'
 
 const EPIC_COLORS = ['#EF4444', '#F97316', '#EAB308', '#22C55E', '#06B6D4', '#3B82F6', '#8B5CF6', '#EC4899']
 
@@ -365,6 +366,137 @@ function BacklogSection({
   )
 }
 
+// ── Pull-to-board menu (Kanban) ───────────────────────────────────────────────
+
+function PullToBoardMenu({
+  columns,
+  onPull,
+}: {
+  columns: BoardColumn[]
+  onPull: (columnId: string) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: MouseEvent) => {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={(e) => { e.stopPropagation(); setOpen((v) => !v) }}
+        className="flex items-center gap-1 rounded px-2 py-0.5 text-[11px] text-text-muted transition-colors hover:bg-surface-border hover:text-text-primary"
+      >
+        Pull to board
+      </button>
+      {open && (
+        <div className="absolute start-0 top-full z-50 mt-1 min-w-[160px] rounded-lg border border-surface-border bg-surface shadow-xl">
+          {columns.map((col) => (
+            <button
+              key={col.id}
+              onClick={(e) => { e.stopPropagation(); onPull(col.id); setOpen(false) }}
+              className="flex w-full items-center gap-2 px-3 py-2 text-xs text-text-primary hover:bg-surface-muted"
+            >
+              <span
+                className="h-1.5 w-1.5 shrink-0 rounded-full"
+                style={{ backgroundColor: col.color ?? '#6B7280' }}
+              />
+              {col.name}
+            </button>
+          ))}
+          {columns.length === 0 && (
+            <div className="px-3 py-2 text-xs text-text-muted">No columns on board</div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Kanban backlog section ─────────────────────────────────────────────────────
+
+function KanbanBacklogSection({
+  issues,
+  columns,
+  epicsMap,
+  onOpen,
+  onPull,
+  onAddIssue,
+}: {
+  issues: Issue[]
+  columns: BoardColumn[]
+  epicsMap: Map<string, Epic>
+  onOpen: (id: string) => void
+  onPull: (issueId: string, columnId: string) => void
+  onAddIssue: () => void
+}) {
+  const [collapsed, setCollapsed] = useState(false)
+
+  return (
+    <div>
+      <div className="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-surface-muted/40">
+        <button
+          onClick={() => setCollapsed((v) => !v)}
+          className="shrink-0 text-text-muted hover:text-text-primary"
+        >
+          {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        </button>
+        <span className="flex-1 text-sm font-semibold text-text-primary">Backlog</span>
+        <span className="text-xs text-text-muted">{issues.length} issue{issues.length !== 1 ? 's' : ''}</span>
+      </div>
+
+      {!collapsed && (
+        <div className="ms-4 border-s border-surface-border/50 ps-3">
+          {issues.length === 0 && (
+            <p className="py-6 text-center text-xs text-text-muted">No issues in backlog</p>
+          )}
+          {issues.map((issue) => {
+            const epic = issue.epicId ? epicsMap.get(issue.epicId) : undefined
+            return (
+              <div
+                key={issue.id}
+                onClick={() => onOpen(issue.id)}
+                className="group flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-surface-muted/60"
+              >
+                <div className="shrink-0"><IssueTypeIcon type={issue.type} /></div>
+                <span className="w-16 shrink-0 font-mono text-[11px] text-text-muted">{issue.issueKey}</span>
+                <span className="flex-1 truncate text-sm text-text-primary">{issue.title}</span>
+                {epic && <EpicTag title={epic.title} color={epic.color} />}
+                {issue.closed && (
+                  <span className="shrink-0 rounded-full bg-surface-muted px-1.5 py-0.5 text-[10px] font-semibold text-text-muted">
+                    Closed
+                  </span>
+                )}
+                <div className="shrink-0"><PriorityIcon priority={issue.priority} /></div>
+                <Avatar userId={issue.assigneeId} size="sm" className="shrink-0" />
+                <div
+                  className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <PullToBoardMenu columns={columns} onPull={(colId) => onPull(issue.id, colId)} />
+                </div>
+              </div>
+            )
+          })}
+          <button
+            onClick={onAddIssue}
+            className="flex items-center gap-2 px-3 py-2 text-xs text-text-muted transition-colors hover:text-primary"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Add issue
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Create Epic Modal ─────────────────────────────────────────────────────────
 
 function CreateEpicModal({ boardId, onClose }: { boardId: string; onClose: () => void }) {
@@ -686,6 +818,9 @@ export default function BacklogPage() {
   const { data: sprints = [], isLoading: spLoading } = useSprints(boardId!)
   const { data: epics   = [] }                    = useEpics(boardId!)
 
+  const isKanban  = board?.boardType === 'KANBAN'
+  const boardCols = [...(board?.columns ?? [])].sort((a, b) => a.position - b.position)
+
   const allIssues = issuesPage?.content ?? []
   const epicsMap  = useMemo(() => new Map(epics.map((e) => [e.id, e])), [epics])
 
@@ -785,6 +920,16 @@ export default function BacklogPage() {
     }
   }
 
+  const handlePull = async (issueId: string, columnId: string) => {
+    try {
+      await issuesApi.update(issueId, { columnId } as Partial<Issue>)
+      queryClient.invalidateQueries({ queryKey: queryKeys.issues.list(boardId!) })
+      toast.success('Pulled to board')
+    } catch {
+      toast.error('Failed to pull to board')
+    }
+  }
+
   const handleStart = async (sprintId: string) => {
     try {
       await sprintsApi.start(sprintId)
@@ -860,13 +1005,15 @@ export default function BacklogPage() {
             <Plus className="h-3.5 w-3.5" />
             Epic
           </button>
-          <button
-            onClick={() => setCreateSprintOpen(true)}
-            className="flex items-center gap-1.5 rounded-lg border border-surface-border px-3 py-1.5 text-xs text-text-muted transition-colors hover:border-primary/30 hover:text-primary"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            Sprint
-          </button>
+          {!isKanban && (
+            <button
+              onClick={() => setCreateSprintOpen(true)}
+              className="flex items-center gap-1.5 rounded-lg border border-surface-border px-3 py-1.5 text-xs text-text-muted transition-colors hover:border-primary/30 hover:text-primary"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Sprint
+            </button>
+          )}
           <button
             onClick={() => setIssueModal({ open: true })}
             className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-primary-light"
@@ -879,41 +1026,54 @@ export default function BacklogPage() {
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
-        {(issLoading || spLoading) ? (
+        {(issLoading || (!isKanban && spLoading)) ? (
           <div className="flex h-full items-center justify-center">
             <Loader2 className="h-5 w-5 animate-spin text-text-muted" />
           </div>
         ) : (
           <div className="mx-auto max-w-4xl px-6 py-5">
-            {/* Sprint sections (active + planned) */}
-            {visibleSprints.map((sprint) => (
-              <SprintSection
-                key={sprint.id}
-                sprint={sprint}
-                issues={issuesBySprint.get(sprint.id) ?? []}
-                allSprintIssues={allIssuesBySprint.get(sprint.id) ?? []}
+            {isKanban ? (
+              <KanbanBacklogSection
+                issues={filteredIssues.filter((i) => !i.columnId)}
+                columns={boardCols}
                 epicsMap={epicsMap}
-                allSprints={sortedSprints}
                 onOpen={setDetailIssueId}
-                onMove={handleMove}
-                onStart={handleStart}
-                onComplete={(id) => setCompleteId(id)}
-                onAddIssue={(sprintId) => setIssueModal({ open: true, sprintId })}
-                onEdit={(id) => setEditSprintId(id)}
+                onPull={handlePull}
+                onAddIssue={() => setIssueModal({ open: true })}
               />
-            ))}
+            ) : (
+              <>
+                {/* Sprint sections (active + planned) */}
+                {visibleSprints.map((sprint) => (
+                  <SprintSection
+                    key={sprint.id}
+                    sprint={sprint}
+                    issues={issuesBySprint.get(sprint.id) ?? []}
+                    allSprintIssues={allIssuesBySprint.get(sprint.id) ?? []}
+                    epicsMap={epicsMap}
+                    allSprints={sortedSprints}
+                    onOpen={setDetailIssueId}
+                    onMove={handleMove}
+                    onStart={handleStart}
+                    onComplete={(id) => setCompleteId(id)}
+                    onAddIssue={(sprintId) => setIssueModal({ open: true, sprintId })}
+                    onEdit={(id) => setEditSprintId(id)}
+                  />
+                ))}
 
-            {/* Backlog */}
-            <BacklogSection
-              issues={backlogIssues}
-              totalCount={backlogTotal}
-              epicsMap={epicsMap}
-              sprints={sortedSprints}
-              onOpen={setDetailIssueId}
-              onMove={handleMove}
-              onAddIssue={() => setIssueModal({ open: true })}
-              onCreateSprint={() => setCreateSprintOpen(true)}
-            />
+                {/* Backlog */}
+                <BacklogSection
+                  issues={backlogIssues}
+                  totalCount={backlogTotal}
+                  epicsMap={epicsMap}
+                  sprints={sortedSprints}
+                  onOpen={setDetailIssueId}
+                  onMove={handleMove}
+                  onAddIssue={() => setIssueModal({ open: true })}
+                  onCreateSprint={() => setCreateSprintOpen(true)}
+                />
+              </>
+            )}
           </div>
         )}
       </div>

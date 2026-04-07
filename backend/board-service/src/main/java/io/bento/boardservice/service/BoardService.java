@@ -158,7 +158,7 @@ public class BoardService {
                     buildColumn(board, "Done",         4, false, true,  "#10B981")
             );
             case KANBAN -> List.of(
-                    buildColumn(board, "Backlog",      1, true,  false, "#6B7280"),
+                    buildColumn(board, "To Do",        1, true,  false, "#6B7280"),
                     buildColumn(board, "In Progress",  2, false, false, "#3B82F6"),
                     buildColumn(board, "Done",         3, false, true,  "#10B981")
             );

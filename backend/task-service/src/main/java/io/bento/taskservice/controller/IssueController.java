@@ -55,9 +55,11 @@ public class IssueController {
             @RequestHeader("X-Org-Role") String orgRole,
             @RequestParam String boardId,
             @RequestParam(required = false) Boolean closed,
+            @RequestParam(required = false) Boolean onBoard,
+            @RequestParam(required = false) String sprintId,
             @PageableDefault(size = 50) Pageable pageable) {
         accessService.requireOrgMember(orgRole);
-        return ResponseEntity.ok(issueService.getIssues(orgId, boardId, closed, pageable));
+        return ResponseEntity.ok(issueService.getIssues(orgId, boardId, closed, onBoard, sprintId, pageable));
     }
 
     // Any org member can view an issue

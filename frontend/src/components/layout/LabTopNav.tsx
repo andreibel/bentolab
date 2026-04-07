@@ -22,7 +22,7 @@ const ALL_TABS: LabTab[] = [
 function getTabsForBoardType(boardType: BoardType | undefined): LabTab[] {
   switch (boardType) {
     case 'KANBAN':
-      return ALL_TABS.filter((t) => !['Backlog', 'Sprints', 'Triage'].includes(t.label))
+      return ALL_TABS.filter((t) => !['Sprints', 'Triage'].includes(t.label))
     case 'BUG_TRACKING':
       return ALL_TABS.filter((t) => !['Backlog', 'Sprints'].includes(t.label))
     case 'SCRUM':

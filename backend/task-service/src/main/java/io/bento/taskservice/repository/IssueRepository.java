@@ -69,6 +69,20 @@ public interface IssueRepository extends MongoRepository<Issue, String> {
     @Query("{'orgId': ?0, '$or': [{'assigneeId': ?1}, {'reporterId': ?1}], 'closed': true}")
     Page<Issue> findAllClosedByOrgIdAndUserId(String orgId, String userId, Pageable pageable);
 
+    // ── Board / backlog views ─────────────────────────────────────────────────
+
+    /** Kanban board: open issues that have been placed in a column */
+    @Query("{'orgId': ?0, 'boardId': ?1, 'columnId': {$ne: null}, 'closed': {$ne: true}}")
+    Page<Issue> findAllOpenByOrgIdAndBoardIdOnBoard(String orgId, String boardId, Pageable pageable);
+
+    /** Kanban/Scrum backlog: issues not yet placed on the board */
+    @Query("{'orgId': ?0, 'boardId': ?1, 'columnId': null}")
+    Page<Issue> findAllByOrgIdAndBoardIdInBacklog(String orgId, String boardId, Pageable pageable);
+
+    /** Scrum board: open issues in a specific sprint */
+    @Query("{'orgId': ?0, 'boardId': ?1, 'sprintId': ?2, 'closed': {$ne: true}}")
+    Page<Issue> findAllOpenByOrgIdAndBoardIdAndSprintId(String orgId, String boardId, String sprintId, Pageable pageable);
+
     // ── Full-text search ──────────────────────────────────────────────────────
 
     @Query("{'orgId': ?0, '$or': [{'title': {$regex: ?1, $options: 'i'}}, {'description': {$regex: ?1, $options: 'i'}}]}")

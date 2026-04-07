@@ -28,10 +28,11 @@ type Zoom    = 'week' | 'month' | 'quarter' | 'year'
 type GroupBy = 'epic' | 'sprint' | 'none'
 
 const DAY_WIDTH: Record<Zoom, number> = { week: 56, month: 30, quarter: 13, year: 5 }
-const LEFT_W   = 264   // px — left label panel width
-const ROW_H    = 40    // px — default row height
-const GROUP_H  = 44    // px — group header row height
-const HEADER_H = 54    // px — date header height (2 sub-rows)
+const LEFT_W         = 264   // px — left label panel width
+const ROW_H          = 40    // px — default row height
+const GROUP_H        = 44    // px — group header row height
+const SPRINT_TRACK_H = 36    // px — single sprint-track row height
+const HEADER_H       = 54    // px — date header height (2 sub-rows)
 
 const PRIORITY_COLORS: Record<string, string> = {
   CRITICAL: '#ef4444',
@@ -46,11 +47,11 @@ const MILESTONE_PALETTE = [
 ]
 
 type GanttRow =
-  | { kind: 'milestone'; id: string; milestone: Milestone }
-  | { kind: 'epic';      id: string; epic: Epic;     collapsed: boolean }
-  | { kind: 'sprint';    id: string; sprint: Sprint; collapsed: boolean }
-  | { kind: 'issue';     id: string; issue: Issue;   indent: number }
-  | { kind: 'divider';   id: string; label: string;  collapsed: boolean }
+  | { kind: 'milestone';    id: string; milestone: Milestone }
+  | { kind: 'epic';         id: string; epic: Epic;       collapsed: boolean }
+  | { kind: 'sprint-track'; id: '__sprints__'; sprints: Sprint[] }
+  | { kind: 'issue';        id: string; issue: Issue;     indent: number }
+  | { kind: 'divider';      id: string; label: string;    collapsed: boolean }
 
 // ── Date helpers ───────────────────────────────────────────────────────────────
 
@@ -200,14 +201,14 @@ function buildRows(
       .forEach(m => rows.push({ kind: 'milestone', id: m.id, milestone: m }))
   }
 
-  if (groupBy === 'epic') {
-    // Sprints as flat bars (no children in this mode)
-    if (show.sprints) {
-      ;[...sprints]
-        .sort((a, b) => (a.startDate ?? '').localeCompare(b.startDate ?? ''))
-        .forEach(s => rows.push({ kind: 'sprint', id: s.id, sprint: s, collapsed: false }))
-    }
+  const sortedSprints = [...sprints].sort((a, b) => (a.startDate ?? '').localeCompare(b.startDate ?? ''))
 
+  // Sprints always render as a single flat track row (side-by-side bars)
+  if (show.sprints && sortedSprints.length > 0) {
+    rows.push({ kind: 'sprint-track', id: '__sprints__', sprints: sortedSprints })
+  }
+
+  if (groupBy === 'epic') {
     // Epics as collapsible groups
     if (show.epics) {
       ;[...epics]
@@ -241,26 +242,27 @@ function buildRows(
   }
 
   else if (groupBy === 'sprint') {
-    // Epics as flat bars (no children in this mode)
+    // Epics as flat bars
     if (show.epics) {
       ;[...epics]
         .sort((a, b) => (a.startDate ?? '').localeCompare(b.startDate ?? ''))
         .forEach(e => rows.push({ kind: 'epic', id: e.id, epic: e, collapsed: false }))
     }
 
-    if (show.sprints) {
-      ;[...sprints]
-        .sort((a, b) => (a.startDate ?? '').localeCompare(b.startDate ?? ''))
-        .forEach(s => {
-          const isCollapsed = collapsed.has(s.id)
-          rows.push({ kind: 'sprint', id: s.id, sprint: s, collapsed: isCollapsed })
-          if (!isCollapsed && show.issues) {
-            ;[...issues]
-              .filter(i => i.sprintId === s.id)
-              .sort((a, b) => (a.startDate ?? a.createdAt).localeCompare(b.startDate ?? b.createdAt))
-              .forEach(i => rows.push({ kind: 'issue', id: i.id, issue: i, indent: 1 }))
-          }
-        })
+    // Issues grouped under sprint dividers
+    if (show.sprints && show.issues) {
+      sortedSprints.forEach(s => {
+        const sprintIssues = [...issues].filter(i => i.sprintId === s.id)
+        if (sprintIssues.length === 0) return
+        const divId = `sprint-div-${s.id}`
+        const isCollapsed = collapsed.has(divId)
+        rows.push({ kind: 'divider', id: divId, label: s.name, collapsed: isCollapsed })
+        if (!isCollapsed) {
+          sprintIssues
+            .sort((a, b) => (a.startDate ?? a.createdAt).localeCompare(b.startDate ?? b.createdAt))
+            .forEach(i => rows.push({ kind: 'issue', id: i.id, issue: i, indent: 1 }))
+        }
+      })
     }
 
     // Backlog (no sprint)
@@ -285,11 +287,6 @@ function buildRows(
       ;[...epics]
         .sort((a, b) => (a.startDate ?? '').localeCompare(b.startDate ?? ''))
         .forEach(e => rows.push({ kind: 'epic', id: e.id, epic: e, collapsed: false }))
-    }
-    if (show.sprints) {
-      ;[...sprints]
-        .sort((a, b) => (a.startDate ?? '').localeCompare(b.startDate ?? ''))
-        .forEach(s => rows.push({ kind: 'sprint', id: s.id, sprint: s, collapsed: false }))
     }
     if (show.issues) {
       ;[...issues]
@@ -560,11 +557,16 @@ export default function TimelinePage() {
   )
 
   // ── Row Y-center map (for arrow positioning) ──────────────────────────────
+  const rowHeight = (row: GanttRow) =>
+    row.kind === 'sprint-track' ? SPRINT_TRACK_H
+    : (row.kind === 'epic' || row.kind === 'divider') ? GROUP_H
+    : ROW_H
+
   const rowYMap = useMemo(() => {
     const map = new Map<string, number>()
     let y = 0
     rows.forEach(row => {
-      const h = (row.kind === 'epic' || row.kind === 'sprint' || row.kind === 'divider') ? GROUP_H : ROW_H
+      const h = rowHeight(row)
       map.set(row.id, y + h / 2)
       y += h
     })
@@ -572,8 +574,7 @@ export default function TimelinePage() {
   }, [rows])
 
   const totalRowsHeight = useMemo(() =>
-    rows.reduce((sum, row) =>
-      sum + ((row.kind === 'epic' || row.kind === 'sprint' || row.kind === 'divider') ? GROUP_H : ROW_H), 0),
+    rows.reduce((sum, row) => sum + rowHeight(row), 0),
     [rows],
   )
 
@@ -706,23 +707,13 @@ export default function TimelinePage() {
       )
     }
 
-    if (row.kind === 'sprint') {
-      const s = row.sprint
-      const isCollapsible = groupBy === 'sprint'
-      const statusColor = s.status === 'ACTIVE' ? 'text-emerald-500' : s.status === 'COMPLETED' ? 'text-text-muted' : 'text-primary'
+    if (row.kind === 'sprint-track') {
       return (
-        <button
-          onClick={() => isCollapsible && toggleCollapse(s.id)}
-          className="flex w-full items-center gap-1.5 px-3 text-start hover:bg-surface-muted"
-        >
-          {isCollapsible
-            ? (row.collapsed
-                ? <ChevronRight className="h-3.5 w-3.5 shrink-0 text-text-muted" />
-                : <ChevronDown  className="h-3.5 w-3.5 shrink-0 text-text-muted" />)
-            : <span className="h-3.5 w-3.5 shrink-0" />}
-          <Layers className={cn('h-3 w-3 shrink-0', statusColor)} />
-          <span className="truncate text-xs font-semibold text-text-primary">{s.name}</span>
-        </button>
+        <div className="flex w-full items-center gap-1.5 px-3">
+          <Layers className="h-3 w-3 shrink-0 text-text-muted" />
+          <span className="text-xs font-semibold text-text-muted">Sprints</span>
+          <span className="ms-1 text-[10px] text-text-muted opacity-60">{row.sprints.length}</span>
+        </div>
       )
     }
 
@@ -804,27 +795,52 @@ export default function TimelinePage() {
       )
     }
 
-    if (row.kind === 'sprint') {
-      const s      = row.sprint
-      const start  = pd(s.startDate)
-      const end    = pd(s.endDate)
-      if (!start && !end) return null
-      const from = start ?? end!
-      const to   = end   ?? start!
-      const left  = xOf(viewStart, from, dw)
-      const width = wOf(from, to, dw)
-      const progress = s.totalIssues > 0 ? (s.completedIssues / s.totalIssues) * 100 : 0
+    if (row.kind === 'sprint-track') {
       return (
-        <div
-          className="absolute top-1/2 flex h-7 -translate-y-1/2 cursor-default items-center overflow-hidden rounded-full"
-          style={{ left, width, backgroundColor: 'color-mix(in srgb, var(--color-primary) 15%, transparent)' }}
-          title={s.name}
-        >
-          <div className="absolute inset-0 rounded-full" style={{ width: `${progress}%`, backgroundColor: 'color-mix(in srgb, var(--color-primary) 35%, transparent)' }} />
-          <span className="relative truncate px-3 text-[11px] font-semibold text-primary">
-            {s.name}
-          </span>
-        </div>
+        <>
+          {row.sprints.map(s => {
+            const start = pd(s.startDate)
+            const end   = pd(s.endDate)
+            if (!start && !end) return null
+            const from  = start ?? end!
+            const to    = end   ?? start!
+            const left  = xOf(viewStart, from, dw)
+            const width = wOf(from, to, dw)
+            if (left > totalWidth || left + width < 0) return null
+            const progress = s.totalIssues > 0 ? (s.completedIssues / s.totalIssues) * 100 : 0
+            const statusColor = s.status === 'ACTIVE'
+              ? 'var(--color-primary)'
+              : s.status === 'COMPLETED'
+                ? 'var(--color-text-muted)'
+                : 'var(--color-primary)'
+            return (
+              <div
+                key={s.id}
+                className="absolute top-1/2 flex h-6 -translate-y-1/2 cursor-default items-center overflow-hidden rounded-full"
+                style={{
+                  left,
+                  width: Math.max(width, 4),
+                  backgroundColor: `color-mix(in srgb, ${statusColor} 15%, transparent)`,
+                  border: `1.5px solid color-mix(in srgb, ${statusColor} 40%, transparent)`,
+                }}
+                title={`${s.name}${s.totalIssues > 0 ? ` — ${s.completedIssues}/${s.totalIssues} done` : ''}`}
+              >
+                {progress > 0 && (
+                  <div
+                    className="absolute inset-y-0 left-0 rounded-full"
+                    style={{ width: `${progress}%`, backgroundColor: `color-mix(in srgb, ${statusColor} 35%, transparent)` }}
+                  />
+                )}
+                <span
+                  className="relative truncate px-2.5 text-[11px] font-semibold"
+                  style={{ color: statusColor }}
+                >
+                  {s.name}
+                </span>
+              </div>
+            )
+          })}
+        </>
       )
     }
 
@@ -1005,16 +1021,15 @@ export default function TimelinePage() {
         ) : (
           <div className="relative" style={{ minWidth: LEFT_W + totalWidth }}>
             {rows.map(row => {
-              const isGroup = row.kind === 'epic' || row.kind === 'sprint' || row.kind === 'divider'
-              const rowH    = isGroup ? GROUP_H : ROW_H
+              const rowH = rowHeight(row)
               return (
                 <div
                   key={row.id}
                   className={cn(
                     'flex border-b border-surface-border/60',
-                    row.kind === 'epic'    && 'bg-surface-muted/30',
-                    row.kind === 'sprint'  && 'bg-surface-muted/20',
-                    row.kind === 'divider' && 'bg-surface-muted/50',
+                    row.kind === 'epic'          && 'bg-surface-muted/30',
+                    row.kind === 'sprint-track'  && 'bg-primary/[0.03]',
+                    row.kind === 'divider'       && 'bg-surface-muted/50',
                   )}
                   style={{ height: rowH, minWidth: LEFT_W + totalWidth }}
                 >

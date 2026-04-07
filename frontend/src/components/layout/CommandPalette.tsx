@@ -491,8 +491,8 @@ export function CommandPalette({
   // ── Issue search (debounced, backend) ─────────────────────────────────────
 
   const [debouncedQuery, setDebouncedQuery] = useState('')
-  const [issueResults,   setIssueResults]   = useState<IssueSearchResult[]>([])
-  const [issueLoading,   setIssueLoading]   = useState(false)
+  const [searchResults,  setSearchResults]  = useState<IssueSearchResult[]>([])
+  const [searchLoading,  setSearchLoading]  = useState(false)
 
   // The free-text portion of the query (excludes the current in-progress slash segment)
   const freeTextQuery = useMemo(() => {
@@ -505,23 +505,56 @@ export function CommandPalette({
     return () => clearTimeout(t)
   }, [freeTextQuery])
 
+  const inIssueCategory = category === 'all' || category === 'issues'
+
+  // Full-text search when user typed something
   useEffect(() => {
-    const q           = debouncedQuery
-    const shouldSearch = q.length >= 2 && (category === 'all' || category === 'issues')
-    if (!shouldSearch) { setIssueResults([]); return }
+    const q = debouncedQuery
+    if (q.length < 2 || !inIssueCategory) { setSearchResults([]); return }
     let cancelled = false
-    setIssueLoading(true)
+    setSearchLoading(true)
     issuesApi.search(q, 20)
-      .then(data  => { if (!cancelled) setIssueResults(data)  })
-      .catch(()   => { if (!cancelled) setIssueResults([])    })
-      .finally(() => { if (!cancelled) setIssueLoading(false) })
+      .then(data  => { if (!cancelled) setSearchResults(data)  })
+      .catch(()   => { if (!cancelled) setSearchResults([])    })
+      .finally(() => { if (!cancelled) setSearchLoading(false) })
     return () => { cancelled = true }
-  }, [debouncedQuery, category])
+  }, [debouncedQuery, category])  // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Mine fallback — used when tokens are active but no free text typed
+  const usesMine = tokens.length > 0 && debouncedQuery.length < 2 && inIssueCategory
+  const { data: minePage, isLoading: mineLoading } = useQuery({
+    queryKey: ['issues', 'mine-palette'],
+    queryFn:  () => issuesApi.mine('all', false),
+    enabled:  usesMine,
+    staleTime: 60_000,
+  })
+  const mineResults = useMemo<IssueSearchResult[]>(() => {
+    if (!minePage) return []
+    return minePage.content.map(i => ({
+      issueId:         i.id,
+      issueKey:        i.issueKey,
+      title:           i.title,
+      boardId:         i.boardId,
+      priority:        i.priority,
+      closed:          i.closed,
+      assigneeId:      i.assigneeId,
+      reporterId:      i.reporterId,
+      startDate:       i.startDate,
+      dueDate:         i.dueDate,
+      matchIn:         'TITLE' as const,
+      snippet:         '',
+      commentAuthorId: null,
+    }))
+  }, [minePage])
+
+  // Base dataset: text search results OR mine fallback for token-only queries
+  const baseResults   = debouncedQuery.length >= 2 ? searchResults : mineResults
+  const issueLoading  = debouncedQuery.length >= 2 ? searchLoading : mineLoading
 
   // Apply token filters client-side
   const filteredIssueResults = useMemo(
-    () => applyTokenFilters(issueResults, tokens),
-    [issueResults, tokens],
+    () => applyTokenFilters(baseResults, tokens),
+    [baseResults, tokens],
   )
 
   // ── Board creation mutation ───────────────────────────────────────────────
@@ -581,7 +614,7 @@ export function CommandPalette({
     setActiveIdx(0)
     setSuggestionIdx(0)
     setCreateTemplate('KANBAN')
-    setIssueResults([])
+    setSearchResults([])
     setDebouncedQuery('')
     onClose()
   }, [onClose])
@@ -990,8 +1023,8 @@ export function CommandPalette({
               {!issueLoading && filteredIssueResults.length > 0 && (
                 <span className="text-[10px] text-text-muted opacity-60">
                   {filteredIssueResults.length} issue{filteredIssueResults.length !== 1 ? 's' : ''}
-                  {tokens.length > 0 && issueResults.length !== filteredIssueResults.length && (
-                    <span className="block opacity-70">of {issueResults.length}</span>
+                  {tokens.length > 0 && baseResults.length !== filteredIssueResults.length && (
+                    <span className="block opacity-70">of {baseResults.length}</span>
                   )}
                 </span>
               )}

@@ -4,9 +4,16 @@ import {queryKeys} from './queryKeys'
 import type {Activity, Comment, Issue, IssueSearchResult, Page, TimeLog} from '@/types/issue'
 
 export const issuesApi = {
-  list: (boardId: string, page = 0, size = 200, closed?: boolean) =>
+  list: (boardId: string, page = 0, size = 200, closed?: boolean, onBoard?: boolean, sprintId?: string) =>
     client
-      .get<Page<Issue>>('/api/issues', { params: { boardId, page, size, ...(closed !== undefined ? { closed } : {}) } })
+      .get<Page<Issue>>('/api/issues', {
+        params: {
+          boardId, page, size,
+          ...(closed    !== undefined ? { closed }   : {}),
+          ...(onBoard   !== undefined ? { onBoard }  : {}),
+          ...(sprintId                ? { sprintId } : {}),
+        },
+      })
       .then((r) => r.data),
 
   get: (issueId: string) =>
@@ -86,10 +93,10 @@ export const issuesApi = {
   },
 }
 
-export function useIssues(boardId: string, closed?: boolean) {
+export function useIssues(boardId: string, closed?: boolean, onBoard?: boolean, sprintId?: string) {
   return useQuery({
-    queryKey: queryKeys.issues.list(boardId, undefined, closed),
-    queryFn: () => issuesApi.list(boardId, 0, 200, closed),
-    enabled: !!boardId,
+    queryKey: queryKeys.issues.list(boardId, undefined, closed, onBoard, sprintId),
+    queryFn: () => issuesApi.list(boardId, 0, 200, closed, onBoard, sprintId),
+    enabled: !!boardId && (sprintId !== 'NONE'),
   })
 }

@@ -144,7 +144,7 @@ export function CreateIssueModal({
   const { data: allBoards } = useBoards()
 
   const {
-    register, control, handleSubmit, watch, setValue, reset,
+    register, control, handleSubmit, watch, reset,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     defaultValues: {
@@ -165,13 +165,6 @@ export function CreateIssueModal({
   const isKanban = boardData?.boardType === 'KANBAN'
   const columns   = [...(boardData?.columns ?? [])].sort((a, b) => a.position - b.position)
   const allIssues = issuesPage?.content ?? []
-
-  useEffect(() => {
-    if (!isGlobalMode || !columns.length) return
-    const initial = columns.find((c) => c.isInitial) ?? columns[0]
-    setValue('columnId', initial?.id ?? '')
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [effectiveBoardId, isGlobalMode, setValue])
 
   useEffect(() => {
     if (!open) return
@@ -200,11 +193,6 @@ export function CreateIssueModal({
       resolvedBoardKey = picked.boardKey
     }
 
-    let resolvedColumnId = values.columnId
-    if (!resolvedColumnId && columns.length) {
-      resolvedColumnId = (columns.find((c) => c.isInitial) ?? columns[0])?.id ?? ''
-    }
-
     try {
       await issuesApi.create({
         boardId:     effectiveBoardId,
@@ -213,7 +201,7 @@ export function CreateIssueModal({
         type:        values.type,
         priority:    values.priority,
         description: values.description.trim() || undefined,
-        columnId:      resolvedColumnId        || undefined,
+        columnId:      values.columnId         || undefined,
         epicId:        values.epicId           || undefined,
         sprintId:      values.sprintId         || undefined,
         parentIssueId: values.parentIssueId    || undefined,
@@ -361,6 +349,7 @@ export function CreateIssueModal({
                 {columns.length > 0 && (
                   <Field label="Column">
                     <NativeSelect {...register('columnId')}>
+                      <option value="">Backlog (no column)</option>
                       {columns.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                     </NativeSelect>
                   </Field>

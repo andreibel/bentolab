@@ -33,7 +33,6 @@ public record CreateIssueRequest(
 
         String description,
 
-        @NotBlank(message = "Column ID is required")
         String columnId,
 
         String assigneeId,

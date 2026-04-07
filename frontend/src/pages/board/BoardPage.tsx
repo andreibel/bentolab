@@ -22,6 +22,7 @@ import {toast} from 'sonner'
 import {boardsApi, useBoard} from '@/api/boards'
 import {issuesApi, useIssues} from '@/api/issues'
 import {useEpics} from '@/api/epics'
+import {useSprints} from '@/api/sprints'
 import {queryKeys} from '@/api/queryKeys'
 import {BoardColumn} from '@/components/board/BoardColumn'
 import {EpicFilter} from '@/components/board/EpicFilter'
@@ -90,7 +91,17 @@ export default function BoardPage() {
   const queryClient = useQueryClient()
 
   const { data: board, isLoading: boardLoading, isError: boardError } = useBoard(boardId!)
-  const { data: issuesPage, isLoading: issuesLoading } = useIssues(boardId!, false)
+  const isScrum  = board?.boardType === 'SCRUM'
+  const isKanban = board?.boardType === 'KANBAN'
+
+  const { data: sprints = [], isLoading: sprintsLoading } = useSprints(boardId!)
+  const activeSprint = isScrum ? sprints.find(s => s.status === 'ACTIVE') : undefined
+
+  // Scrum board: only active sprint issues; Kanban board: only on-board issues; else: all
+  const issueSprintId = isScrum ? (activeSprint?.id ?? 'NONE') : undefined
+  const issueOnBoard  = isKanban ? true : undefined
+
+  const { data: issuesPage, isLoading: issuesLoading } = useIssues(boardId!, false, issueOnBoard, issueSprintId)
   const { data: epicsData = [] } = useEpics(boardId!)
 
   const serverIssues = issuesPage?.content ?? []
@@ -149,6 +160,7 @@ export default function BoardPage() {
     const map = new Map<string, Issue[]>()
     for (const col of sortedColumns) map.set(col.id, [])
     for (const issue of src) {
+      if (!issue.columnId) continue  // backlog issues have no column
       if (!map.has(issue.columnId)) map.set(issue.columnId, [])
       map.get(issue.columnId)!.push(issue)
     }
@@ -394,7 +406,7 @@ export default function BoardPage() {
   }, [boardId, board, queryClient])
 
   // ── Render ───────────────────────────────────────────────────────────────────
-  if (boardLoading || issuesLoading) {
+  if (boardLoading || issuesLoading || (isScrum && sprintsLoading)) {
     return (
       <div className="flex h-full items-center justify-center">
         <Loader2 className="h-6 w-6 animate-spin text-primary" />
@@ -470,7 +482,21 @@ export default function BoardPage() {
         </div>
       </div>
 
-      {/* Kanban board */}
+      {/* No active sprint banner */}
+      {isScrum && !activeSprint && (
+        <div className="flex shrink-0 items-center gap-2 border-b border-amber-500/20 bg-amber-500/5 px-5 py-2.5 text-sm text-amber-700 dark:text-amber-400">
+          <AlertCircle className="h-4 w-4 shrink-0" />
+          <span>No active sprint — the board is empty.</span>
+          <Link
+            to={`/boards/${boardId}/backlog`}
+            className="underline underline-offset-2 hover:no-underline"
+          >
+            Go to Backlog to start a sprint
+          </Link>
+        </div>
+      )}
+
+      {/* Board */}
       <div className="flex-1 overflow-x-auto overflow-y-hidden">
         <DndContext
           sensors={sensors}

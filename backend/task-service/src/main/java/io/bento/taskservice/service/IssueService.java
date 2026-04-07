@@ -73,7 +73,20 @@ public class IssueService {
         };
     }
 
-    public Page<Issue> getIssues(String orgId, String boardId, Boolean closed, Pageable pageable) {
+    public Page<Issue> getIssues(String orgId, String boardId, Boolean closed, Boolean onBoard, String sprintId, Pageable pageable) {
+        // Scrum board: filter by sprint
+        if (sprintId != null) {
+            return issueRepository.findAllOpenByOrgIdAndBoardIdAndSprintId(orgId, boardId, sprintId, pageable);
+        }
+        // Kanban board view: only issues placed in a column
+        if (Boolean.TRUE.equals(onBoard)) {
+            return issueRepository.findAllOpenByOrgIdAndBoardIdOnBoard(orgId, boardId, pageable);
+        }
+        // Backlog view: issues not yet on the board
+        if (Boolean.FALSE.equals(onBoard)) {
+            return issueRepository.findAllByOrgIdAndBoardIdInBacklog(orgId, boardId, pageable);
+        }
+        // Default: all issues (existing behaviour)
         if (closed != null) {
             if (closed) {
                 return issueRepository.findAllByOrgIdAndBoardIdAndClosed(orgId, boardId, true, pageable);
@@ -115,10 +128,12 @@ public class IssueService {
                 .dueDate(request.dueDate())
                 .labelIds(request.labelIds())
                 .components(request.components())
-                .columnHistory(new ArrayList<>(List.of(ColumnHistoryEntry.builder()
-                        .columnId(request.columnId())
-                        .enteredAt(Instant.now())
-                        .build())))
+                .columnHistory(request.columnId() != null
+                        ? new ArrayList<>(List.of(ColumnHistoryEntry.builder()
+                                .columnId(request.columnId())
+                                .enteredAt(Instant.now())
+                                .build()))
+                        : new ArrayList<>())
                 .createdBy(userId)
                 .createdAt(Instant.now())
                 .updatedAt(Instant.now())
