@@ -1,5 +1,6 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useQueries } from '@tanstack/react-query'
 import {
   ChevronRight, ChevronDown, CalendarDays, Layers, ExternalLink,
@@ -191,15 +192,10 @@ function buildRows(
 // ── Board type badge ────────────────────────────────────────────────────────────
 
 function BoardTypeBadge({ boardType }: { boardType: Board['boardType'] }) {
-  const labels: Record<Board['boardType'], string> = {
-    SCRUM:        'Scrum',
-    KANBAN:       'Kanban',
-    BUG_TRACKING: 'Bugs',
-    CUSTOM:       'Custom',
-  }
+  const { t } = useTranslation()
   return (
     <span className="rounded px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wide bg-surface-muted text-text-muted">
-      {labels[boardType]}
+      {t(`globalTimeline.boardTypes.${boardType}`, boardType)}
     </span>
   )
 }
@@ -207,6 +203,7 @@ function BoardTypeBadge({ boardType }: { boardType: Board['boardType'] }) {
 // ── Main component ─────────────────────────────────────────────────────────────
 
 export default function GlobalTimelinePage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
 
   const { data: boardsData } = useBoards()
@@ -365,7 +362,7 @@ export default function GlobalTimelinePage() {
           <button
             onClick={e => { e.stopPropagation(); navigate(`/boards/${b.id}`) }}
             className="ms-auto shrink-0 rounded p-0.5 text-text-muted opacity-0 hover:text-text-primary group-hover:opacity-100"
-            title="Open board"
+            title={t('globalTimeline.openBoard')}
           >
             <ExternalLink className="h-3 w-3" />
           </button>
@@ -426,7 +423,7 @@ export default function GlobalTimelinePage() {
           className="absolute top-1/2 -translate-y-1/2 whitespace-nowrap rounded bg-red-500/10 px-1.5 text-[10px] font-semibold text-red-500"
           style={{ left: todayX + 4 }}
         >
-          today
+          {t('globalTimeline.today')}
         </div>
       )
     }
@@ -488,7 +485,7 @@ export default function GlobalTimelinePage() {
   if (!isLoading && boards.length === 0) {
     return (
       <div className="flex h-full items-center justify-center text-sm text-text-muted">
-        No boards found. Create a board to see it on the timeline.
+        {t('globalTimeline.noBoards')}
       </div>
     )
   }
@@ -509,7 +506,7 @@ export default function GlobalTimelinePage() {
                 zoom === z ? 'bg-primary-subtle text-primary' : 'text-text-secondary hover:bg-surface-muted',
               )}
             >
-              {z.charAt(0).toUpperCase() + z.slice(1)}
+              {t(`timeline.zoom.${z}`)}
             </button>
           ))}
         </div>
@@ -527,14 +524,14 @@ export default function GlobalTimelinePage() {
                   : 'text-text-muted hover:bg-surface-muted',
               )}
             >
-              {key}
+              {t(`timeline.show.${key}`)}
             </button>
           ))}
         </div>
 
         {/* Board count */}
         <span className="text-xs text-text-muted">
-          {boards.length} board{boards.length !== 1 ? 's' : ''}
+          {t('globalTimeline.boardCount', { count: boards.length })}
         </span>
 
         <div className="ms-auto flex items-center gap-2">
@@ -543,7 +540,7 @@ export default function GlobalTimelinePage() {
             className="flex items-center gap-1.5 rounded-lg border border-surface-border px-3 py-1.5 text-xs font-medium text-text-secondary hover:bg-surface-muted"
           >
             <CalendarDays className="h-3.5 w-3.5" />
-            Today
+            {t('globalTimeline.todayButton')}
           </button>
         </div>
       </div>

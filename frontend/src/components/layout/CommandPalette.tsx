@@ -4,6 +4,7 @@ import {useNavigate} from 'react-router-dom'
 import Fuse from 'fuse.js'
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query'
 import {toast} from 'sonner'
+import {useTranslation} from 'react-i18next'
 import {
   ArrowDown,
   ArrowRight,
@@ -209,12 +210,12 @@ function applyTokenFilters(results: IssueSearchResult[], tokens: FilterToken[]):
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const CATEGORIES: { id: CategoryId; label: string; icon: React.ElementType }[] = [
-  { id: 'all',      label: 'All',      icon: Search     },
-  { id: 'issues',   label: 'Issues',   icon: CircleDot  },
-  { id: 'boards',   label: 'Boards',   icon: LayoutGrid },
-  { id: 'new',      label: 'New',      icon: Plus       },
-  { id: 'navigate', label: 'Navigate', icon: Compass    },
+const CATEGORIES: { id: CategoryId; icon: React.ElementType }[] = [
+  { id: 'all',      icon: Search     },
+  { id: 'issues',   icon: CircleDot  },
+  { id: 'boards',   icon: LayoutGrid },
+  { id: 'new',      icon: Plus       },
+  { id: 'navigate', icon: Compass    },
 ]
 
 const DEFAULT_BG = '#5B47E0'
@@ -326,6 +327,7 @@ function CreateBoardRow({
   onTemplate: (t: Board['boardType']) => void
   isPending:  boolean
 }) {
+  const { t } = useTranslation()
   return (
     <div className={cn(
       'flex items-start gap-3 px-4 py-3 transition-colors',
@@ -354,7 +356,7 @@ function CreateBoardRow({
             <span className="text-text-muted">
               Type: <kbd className="rounded border border-surface-border bg-surface px-1.5 py-0.5 font-mono text-[10px]"
                 style={{ boxShadow: '0 2px 0 0 var(--color-surface-border)' }}>
-                new board KEY Name
+                {t('commandPalette.createBoard.typeHint')}
               </kbd>
             </span>
           )}
@@ -362,7 +364,7 @@ function CreateBoardRow({
 
         {parsed.ready && (
           <span className="mt-1.5 flex flex-wrap items-center gap-1">
-            <span className="me-0.5 text-[10px] text-text-muted">Template:</span>
+            <span className="me-0.5 text-[10px] text-text-muted">{t('commandPalette.createBoard.template')}</span>
             {BOARD_TYPES.map(bt => (
               <button
                 key={bt.value}
@@ -384,7 +386,7 @@ function CreateBoardRow({
 
       {active && parsed.ready && (
         <span className="mt-0.5 flex shrink-0 items-center gap-1 text-[11px] text-primary">
-          {isPending ? <span className="text-text-muted">Creating…</span> : <><Kbd>↵</Kbd> create</>}
+          {isPending ? <span className="text-text-muted">{t('commandPalette.createBoard.creating')}</span> : <><Kbd>↵</Kbd> {t('commandPalette.createBoard.create')}</>}
         </span>
       )}
     </div>
@@ -404,6 +406,7 @@ export function CommandPalette({
 }) {
   const navigate     = useNavigate()
   const queryClient  = useQueryClient()
+  const { t }        = useTranslation()
   const currentUser  = useAuthStore(s => s.user)
   const currentOrgId = useAuthStore(s => s.currentOrgId)
 
@@ -684,16 +687,16 @@ export function CommandPalette({
     mutationFn: boardsApi.create,
     onSuccess: (board) => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.boards.all('') })
-      toast.success(`Board "${board.name}" created`)
+      toast.success(t('commandPalette.toasts.boardCreated', { name: board.name }))
       navigate(`/boards/${board.id}`)
       handleClose()
     },
     onError: (err: unknown, variables) => {
       const status = (err as { response?: { status?: number } }).response?.status
       if (status === 409) {
-        toast.error(`Key "${variables.boardKey}" already exists — pick a different key`)
+        toast.error(t('commandPalette.toasts.boardKeyExists', { key: variables.boardKey }))
       } else {
-        toast.error('Failed to create board')
+        toast.error(t('commandPalette.toasts.boardCreateFailed'))
       }
     },
   })
@@ -984,16 +987,16 @@ export function CommandPalette({
   const placeholder = useMemo(() => {
     if (slashState.type === 'value') {
       const cmd = slashState.command
-      if (cmd.valueType === 'date') return `Pick a date: today, tomorrow, this-week…`
-      return `Type a name or "me"…`
+      if (cmd.valueType === 'date') return t('commandPalette.placeholder.date')
+      return t('commandPalette.placeholder.value')
     }
-    if (slashState.type === 'command') return `Type a command name or pick from the list…`
-    if (category === 'issues')         return 'Search issues, descriptions, comments… or use / for filters'
-    if (category === 'boards')         return 'Search boards or type: new board KEY Name…'
-    if (category === 'new')            return 'Type: new board KEY Name  or  create issue…'
-    if (category === 'navigate')       return 'Jump to a page…'
-    return 'Search or type / for filter commands…'
-  }, [slashState, category])
+    if (slashState.type === 'command') return t('commandPalette.placeholder.command')
+    if (category === 'issues')         return t('commandPalette.placeholder.issues')
+    if (category === 'boards')         return t('commandPalette.placeholder.boards')
+    if (category === 'new')            return t('commandPalette.placeholder.new')
+    if (category === 'navigate')       return t('commandPalette.placeholder.navigate')
+    return t('commandPalette.placeholder.default')
+  }, [slashState, category, t])
 
   if (!open) return null
 
@@ -1053,10 +1056,12 @@ export function CommandPalette({
           <div className="shrink-0 border-b border-primary/15 bg-primary/[0.03]">
             <div className="flex items-center gap-2 px-5 py-1.5">
               <span className="text-[10px] font-semibold uppercase tracking-widest text-primary/50">
-                {slashState.type === 'command' ? 'Commands' : `/${slashState.command.id} — choose a value`}
+                {slashState.type === 'command'
+                  ? t('commandPalette.commandsHeader')
+                  : t('commandPalette.chooseValue', { id: slashState.command.id })}
               </span>
               <span className="ms-auto text-[10px] text-text-muted opacity-40">
-                <Kbd>↑</Kbd><Kbd>↓</Kbd> navigate · <Kbd>↵</Kbd> select · <Kbd>Esc</Kbd> dismiss
+                <Kbd>↑</Kbd><Kbd>↓</Kbd> {t('commandPalette.hint.navigate')} · <Kbd>↵</Kbd> {t('commandPalette.hint.select')} · <Kbd>Esc</Kbd> {t('commandPalette.hint.dismiss')}
               </span>
             </div>
 
@@ -1120,7 +1125,7 @@ export function CommandPalette({
                   )}
                 >
                   <Icon className="h-3.5 w-3.5 shrink-0" />
-                  {cat.label}
+                  {t(`commandPalette.categories.${cat.id}`)}
                 </button>
               )
             })}
@@ -1129,7 +1134,7 @@ export function CommandPalette({
             {tokens.length > 0 && (
               <div className="mt-1 rounded-lg border border-primary/30 bg-primary/5 px-2.5 py-1.5">
                 <span className="text-[10px] font-medium text-primary">
-                  {tokens.length} filter{tokens.length !== 1 ? 's' : ''} active
+                  {t('commandPalette.counts.filtersActive', { count: tokens.length })}
                 </span>
               </div>
             )}
@@ -1138,20 +1143,20 @@ export function CommandPalette({
             <div className="mt-auto flex flex-col gap-1 px-2.5 pb-1 pt-2">
               {issueLoading && (
                 <span className="flex items-center gap-1 text-[10px] text-primary">
-                  <Loader2 className="h-3 w-3 animate-spin" /> searching…
+                  <Loader2 className="h-3 w-3 animate-spin" /> {t('commandPalette.loading.searching')}
                 </span>
               )}
               {!issueLoading && filteredIssueResults.length > 0 && (
                 <span className="text-[10px] text-text-muted opacity-60">
-                  {filteredIssueResults.length} issue{filteredIssueResults.length !== 1 ? 's' : ''}
+                  {t('commandPalette.counts.issues', { count: filteredIssueResults.length })}
                   {tokens.length > 0 && baseResults.length !== filteredIssueResults.length && (
-                    <span className="block opacity-70">of {baseResults.length}</span>
+                    <span className="block opacity-70">{t('commandPalette.counts.ofTotal', { total: baseResults.length })}</span>
                   )}
                 </span>
               )}
               {boards.length > 0 && (
                 <span className="text-[10px] text-text-muted opacity-60">
-                  {boards.length} board{boards.length !== 1 ? 's' : ''}
+                  {t('commandPalette.counts.boards', { count: boards.length })}
                 </span>
               )}
             </div>
@@ -1183,15 +1188,15 @@ export function CommandPalette({
               <div className="flex flex-col items-center gap-2 py-12">
                 <p className="text-sm text-text-muted">
                   {tokens.length > 0 && !freeTextQuery
-                    ? <><span className="font-medium text-text-primary">Add a search term</span> to use filters</>
+                    ? <><span className="font-medium text-text-primary">{t('commandPalette.emptyState.addSearchTerm')}</span></>
                     : query
-                    ? <>No results for <span className="font-medium text-text-primary">"{freeTextQuery || query}"</span></>
-                    : 'Nothing here yet'
+                    ? <>{t('commandPalette.emptyState.noResults', { query: freeTextQuery || query })}</>
+                    : t('commandPalette.emptyState.nothingYet')
                   }
                 </p>
                 {!query && !isSuggesting && (
                   <p className="text-xs text-text-muted opacity-50">
-                    Type <span className="font-mono text-primary">/</span> for filter commands
+                    {t('commandPalette.emptyState.filterHint', { slash: '/' })}
                   </p>
                 )}
               </div>
@@ -1201,7 +1206,7 @@ export function CommandPalette({
                   <div key={group}>
                     <div className="flex items-center gap-2 px-4 pb-1 pt-3">
                       <span className="text-[10px] font-semibold uppercase tracking-widest text-text-muted">
-                        {group}
+                        {t(`commandPalette.groups.${group.toLowerCase()}`, group)}
                       </span>
                       {(group === 'Boards' || group === 'Issues') && (
                         <span className="text-[10px] text-text-muted opacity-50">
@@ -1267,7 +1272,7 @@ export function CommandPalette({
                   <div className="flex items-center gap-2 border-t border-surface-border/40 px-4 py-2.5">
                     <ArrowRight className="h-3 w-3 shrink-0 text-text-muted opacity-30" />
                     <span className="text-[11px] text-text-muted opacity-50">
-                      Type to search · <span className="font-mono text-primary/70">/</span> for filter commands
+                      {t('commandPalette.hint.typeToSearch')}
                     </span>
                   </div>
                 )}
@@ -1281,38 +1286,38 @@ export function CommandPalette({
           {isSuggesting ? (
             <>
               <span className="flex items-center gap-1.5 text-[11px] text-primary">
-                <Kbd>↑</Kbd><Kbd>↓</Kbd> navigate
+                <Kbd>↑</Kbd><Kbd>↓</Kbd> {t('commandPalette.hint.navigate')}
               </span>
               <span className="flex items-center gap-1.5 text-[11px] text-primary">
-                <Kbd>↵</Kbd> apply
+                <Kbd>↵</Kbd> {t('commandPalette.hint.apply')}
               </span>
               <span className="flex items-center gap-1.5 text-[11px] text-text-muted">
-                <Kbd>Esc</Kbd> dismiss
+                <Kbd>Esc</Kbd> {t('commandPalette.hint.dismiss')}
               </span>
             </>
           ) : (
             <>
               <span className="flex items-center gap-1.5 text-[11px] text-text-muted">
-                <Kbd>↑</Kbd><Kbd>↓</Kbd> navigate
+                <Kbd>↑</Kbd><Kbd>↓</Kbd> {t('commandPalette.hint.navigate')}
               </span>
               <span className="flex items-center gap-1.5 text-[11px] text-text-muted">
-                <Kbd>↵</Kbd> select
+                <Kbd>↵</Kbd> {t('commandPalette.hint.select')}
               </span>
               {newBoardParsed?.ready && (
                 <span className="flex items-center gap-1.5 text-[11px] text-primary">
-                  <Kbd>←</Kbd><Kbd>→</Kbd> template
+                  <Kbd>←</Kbd><Kbd>→</Kbd> {t('commandPalette.hint.template')}
                 </span>
               )}
               <span className="flex items-center gap-1.5 text-[11px] text-text-muted">
-                <Kbd>Tab</Kbd> category
+                <Kbd>Tab</Kbd> {t('commandPalette.hint.category')}
               </span>
               <span className="flex items-center gap-1.5 text-[11px] text-text-muted">
-                <Kbd>Esc</Kbd> close
+                <Kbd>Esc</Kbd> {t('commandPalette.hint.close')}
               </span>
             </>
           )}
           <span className="ms-auto text-[11px] text-text-muted opacity-40">
-            <kbd className="font-mono text-primary">/</kbd> for filters · <kbd className="font-mono">⌘K</kbd> to open
+            {t('commandPalette.hint.filterBar')}
           </span>
         </div>
       </div>

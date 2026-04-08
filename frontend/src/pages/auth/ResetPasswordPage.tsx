@@ -6,6 +6,7 @@ import {Link, useNavigate, useSearchParams} from 'react-router-dom'
 import {AlertCircle, ArrowLeft} from 'lucide-react'
 import {toast} from 'sonner'
 import {motion, useReducedMotion} from 'framer-motion'
+import {useTranslation} from 'react-i18next'
 import {authApi} from '@/api/auth'
 import {Button} from '@/components/ui/Button'
 import {Input} from '@/components/ui/Input'
@@ -23,6 +24,7 @@ const schema = z
 type FormValues = z.infer<typeof schema>
 
 function PageShell({ children }: { children: React.ReactNode }) {
+  const { t } = useTranslation()
   const reduceMotion = useReducedMotion()
   const cardRef = useRef<HTMLDivElement>(null)
   const [glow, setGlow] = useState({ x: 50, y: 50, visible: false })
@@ -104,7 +106,7 @@ function PageShell({ children }: { children: React.ReactNode }) {
             className="inline-flex items-center gap-1.5 font-medium text-text-secondary transition-colors hover:text-text-primary"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
-            Back to sign in
+            {t('auth.resetPassword.backToLogin')}
           </Link>
         </motion.p>
       </div>
@@ -113,6 +115,7 @@ function PageShell({ children }: { children: React.ReactNode }) {
 }
 
 export default function ResetPasswordPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const token = searchParams.get('token')
@@ -126,10 +129,10 @@ export default function ResetPasswordPage() {
   const onSubmit = async (values: FormValues) => {
     try {
       await authApi.resetPassword(token!, values.newPassword)
-      toast.success('Password updated — please sign in')
+      toast.success(t('auth.resetPassword.successToast'))
       navigate('/login')
     } catch {
-      toast.error('Reset link is invalid or has expired')
+      toast.error(t('auth.resetPassword.expiredToast'))
     }
   }
 
@@ -141,13 +144,13 @@ export default function ResetPasswordPage() {
             <AlertCircle className="h-7 w-7 text-red-400" />
           </div>
           <div className="flex flex-col gap-1.5">
-            <h1 className="text-[1.75rem] font-bold tracking-tight text-text-primary">Invalid reset link</h1>
+            <h1 className="text-[1.75rem] font-bold tracking-tight text-text-primary">{t('auth.resetPassword.noTokenTitle')}</h1>
             <p className="text-sm text-text-secondary">
-              This link is missing a reset token. Please request a new one.
+              {t('auth.resetPassword.noTokenDesc')}
             </p>
           </div>
           <Link to="/forgot-password">
-            <Button size="lg" className="mt-1 w-full">Request new link</Button>
+            <Button size="lg" className="mt-1 w-full">{t('auth.resetPassword.requestNew')}</Button>
           </Link>
         </div>
       </PageShell>
@@ -157,32 +160,32 @@ export default function ResetPasswordPage() {
   return (
     <PageShell>
       <div className="mb-6 text-center">
-        <h1 className="text-[1.75rem] font-bold tracking-tight text-text-primary">Set new password</h1>
+        <h1 className="text-[1.75rem] font-bold tracking-tight text-text-primary">{t('auth.resetPassword.title')}</h1>
         <p className="mt-1.5 text-sm text-text-secondary">
-          Choose a strong password — at least 8 characters.
+          {t('auth.resetPassword.subtitle')}
         </p>
       </div>
 
       <form noValidate onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
         <Input
-          label="New password"
+          label={t('auth.resetPassword.newPassword')}
           type="password"
           autoComplete="new-password"
-          placeholder="At least 8 characters"
+          placeholder={t('auth.resetPassword.newPasswordPlaceholder')}
           autoFocus
           error={errors.newPassword?.message}
           {...register('newPassword')}
         />
         <Input
-          label="Confirm password"
+          label={t('auth.resetPassword.confirmPassword')}
           type="password"
           autoComplete="new-password"
-          placeholder="Repeat your password"
+          placeholder={t('auth.resetPassword.confirmPasswordPlaceholder')}
           error={errors.confirmPassword?.message}
           {...register('confirmPassword')}
         />
         <Button type="submit" size="lg" loading={isSubmitting} className="mt-1 w-full">
-          Update password
+          {t('auth.resetPassword.updateButton')}
         </Button>
       </form>
     </PageShell>

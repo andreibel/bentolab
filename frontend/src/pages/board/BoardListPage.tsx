@@ -3,6 +3,7 @@ import {Archive, Clock, Kanban, LayoutGrid, MoreHorizontal, Plus, RotateCcw} fro
 import {Link} from 'react-router-dom'
 import {useQueryClient} from '@tanstack/react-query'
 import {toast} from 'sonner'
+import {useTranslation} from 'react-i18next'
 import {boardsApi, useBoards} from '@/api/boards'
 import {queryKeys} from '@/api/queryKeys'
 import {CreateBoardWizard} from '@/components/board/CreateBoardWizard'
@@ -10,11 +11,12 @@ import {useAuthStore} from '@/stores/authStore'
 import {cn} from '@/utils/cn'
 import type {Board} from '@/types/board'
 
-const BOARD_TYPE_LABEL: Record<Board['boardType'], string> = {
-  SCRUM:        'Scrum',
-  KANBAN:       'Kanban',
-  BUG_TRACKING: 'Bug Tracking',
-  CUSTOM:       'Custom',
+// Translated at render time via t('boards.types.KEY')
+const BOARD_TYPE_KEYS: Record<Board['boardType'], string> = {
+  SCRUM:        'boards.types.SCRUM',
+  KANBAN:       'boards.types.KANBAN',
+  BUG_TRACKING: 'boards.types.BUG_TRACKING',
+  CUSTOM:       'boards.types.CUSTOM',
 }
 
 const BOARD_TYPE_COLOR: Record<Board['boardType'], string> = {
@@ -35,6 +37,7 @@ function BoardCard({
   onArchiveToggle: (board: Board) => void
   archiving: boolean
 }) {
+  const { t } = useTranslation()
   const { orgRole } = useAuthStore()
   const bg = board.background ?? '#5B47E0'
   const [menuOpen, setMenuOpen] = useState(false)
@@ -55,7 +58,7 @@ function BoardCard({
               <p className="mt-0.5 font-mono text-xs text-text-muted">{board.boardKey}</p>
             </div>
             <span className={cn('shrink-0 rounded-full px-2 py-0.5 text-xs font-medium', BOARD_TYPE_COLOR[board.boardType])}>
-              {BOARD_TYPE_LABEL[board.boardType]}
+              {t(BOARD_TYPE_KEYS[board.boardType])}
             </span>
           </div>
 
@@ -66,7 +69,7 @@ function BoardCard({
           <div className="mt-auto flex items-center gap-4 border-t border-surface-border pt-2 text-xs text-text-muted">
             <span className="flex items-center gap-1">
               <Kanban className="h-3.5 w-3.5" />
-              {board.issueCounter} issues
+              {t('boards.issueCount', { count: board.issueCounter })}
             </span>
             <span className="flex items-center gap-1">
               <Clock className="h-3.5 w-3.5" />
@@ -100,7 +103,7 @@ function BoardCard({
                   className="flex w-full items-center gap-2 px-3 py-2 text-xs text-text-secondary transition-colors hover:bg-surface-muted hover:text-text-primary disabled:opacity-50"
                 >
                   <Archive className="h-3.5 w-3.5" />
-                  {board.isArchived ? 'Unarchive' : 'Archive board'}
+                  {board.isArchived ? t('boards.unarchive') : t('boards.archiveBoard')}
                 </button>
               </div>
             </>
@@ -122,6 +125,7 @@ function ArchivedBoardRow({
   onUnarchive: (board: Board) => void
   unarchiving: boolean
 }) {
+  const { t } = useTranslation()
   const bg = board.background ?? '#5B47E0'
   return (
     <div className="flex items-center gap-3 rounded-lg border border-surface-border bg-surface px-4 py-3 opacity-70">
@@ -131,7 +135,7 @@ function ArchivedBoardRow({
         <p className="font-mono text-xs text-text-muted">{board.boardKey}</p>
       </div>
       <span className={cn('shrink-0 rounded-full px-2 py-0.5 text-xs font-medium', BOARD_TYPE_COLOR[board.boardType])}>
-        {BOARD_TYPE_LABEL[board.boardType]}
+        {t(BOARD_TYPE_KEYS[board.boardType])}
       </span>
       <p className="shrink-0 text-xs text-text-muted">
         {new Date(board.updatedAt).toLocaleDateString()}
@@ -142,7 +146,7 @@ function ArchivedBoardRow({
         className="flex shrink-0 items-center gap-1.5 rounded-lg border border-surface-border px-2.5 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:bg-surface-muted hover:text-text-primary disabled:opacity-50"
       >
         <RotateCcw className="h-3 w-3" />
-        Restore
+        {t('actions.restore')}
       </button>
     </div>
   )
@@ -151,21 +155,20 @@ function ArchivedBoardRow({
 // ── Empty state ────────────────────────────────────────────────────────────────
 
 function EmptyState({ onCreateClick }: { onCreateClick: () => void }) {
+  const { t } = useTranslation()
   return (
     <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-surface-border bg-surface py-16 text-center">
       <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-primary-subtle">
         <LayoutGrid className="h-7 w-7 text-primary" />
       </div>
-      <h3 className="mb-1 text-base font-semibold text-text-primary">No boards yet</h3>
-      <p className="mb-6 text-sm text-text-secondary">
-        Create your first board to start tracking issues.
-      </p>
+      <h3 className="mb-1 text-base font-semibold text-text-primary">{t('boards.noBoards')}</h3>
+      <p className="mb-6 text-sm text-text-secondary">{t('boards.noBoardsDesc')}</p>
       <button
         onClick={onCreateClick}
         className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-light"
       >
         <Plus className="h-4 w-4" />
-        Create board
+        {t('boards.createBoard')}
       </button>
     </div>
   )
@@ -174,6 +177,7 @@ function EmptyState({ onCreateClick }: { onCreateClick: () => void }) {
 // ── Page ───────────────────────────────────────────────────────────────────────
 
 export default function BoardListPage() {
+  const { t } = useTranslation()
   const { data: boards, isLoading, isError } = useBoards()
   const queryClient = useQueryClient()
   const [modalOpen,      setModalOpen]      = useState(false)
@@ -188,9 +192,9 @@ export default function BoardListPage() {
     try {
       await boardsApi.archive(board.id)
       await queryClient.invalidateQueries({ queryKey: queryKeys.boards.all('') })
-      toast.success(board.isArchived ? `"${board.name}" restored` : `"${board.name}" archived`)
+      toast.success(board.isArchived ? `"${board.name}" ${t('actions.restore').toLowerCase()}d` : `"${board.name}" ${t('actions.archive').toLowerCase()}d`)
     } catch {
-      toast.error('Failed to update board')
+      toast.error(t('errors.generic'))
     } finally {
       setArchivingId(null)
     }
@@ -200,10 +204,10 @@ export default function BoardListPage() {
     <div className="mx-auto max-w-5xl">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-text-primary">Boards</h1>
+          <h1 className="text-xl font-bold text-text-primary">{t('boards.title')}</h1>
           <p className="mt-0.5 text-sm text-text-secondary">
-            {activeBoards.length} active board{activeBoards.length !== 1 ? 's' : ''}
-            {archivedBoards.length > 0 && ` · ${archivedBoards.length} archived`}
+            {t('boards.activeCount', { count: activeBoards.length })}
+            {archivedBoards.length > 0 && ` · ${t('boards.archivedBoards', { count: archivedBoards.length })}`}
           </p>
         </div>
         <button
@@ -211,7 +215,7 @@ export default function BoardListPage() {
           className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-light"
         >
           <Plus className="h-4 w-4" />
-          New board
+          {t('boards.newBoard')}
         </button>
       </div>
 
@@ -225,7 +229,7 @@ export default function BoardListPage() {
 
       {isError && (
         <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-400">
-          Failed to load boards. Check that the board service is running.
+          {t('boards.failedToLoad')}
         </div>
       )}
 
@@ -255,7 +259,7 @@ export default function BoardListPage() {
             className="mb-3 flex items-center gap-2 text-sm font-medium text-text-muted transition-colors hover:text-text-primary"
           >
             <Archive className="h-4 w-4" />
-            Archived boards ({archivedBoards.length})
+            {t('boards.archivedBoards', { count: archivedBoards.length })}
             <span className="text-xs">{showArchived ? '▲' : '▼'}</span>
           </button>
 

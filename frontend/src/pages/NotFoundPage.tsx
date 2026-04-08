@@ -1,5 +1,6 @@
 import { useLocation, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import {
   FlaskConical,
   Settings2,
@@ -20,8 +21,8 @@ import { Button } from '@/components/ui/Button'
 
 type EasterEgg = {
   icon: React.ElementType
-  title: string
-  subtitle: string
+  titleKey: string
+  subtitleKey: string
   hint?: string
 }
 
@@ -34,119 +35,43 @@ function getEasterEgg(pathname: string): EasterEgg {
   // /boards/:id/* — lab-specific routes
   if (root === 'boards' && labId) {
     if (sub === 'sprints')
-      return {
-        icon: Rocket,
-        title: 'Sprint not found',
-        subtitle: 'This sprint finished the race and left no trace behind.',
-        hint: `Sprints · Lab ${labId.slice(0, 8)}…`,
-      }
+      return { icon: Rocket,      titleKey: 'notFound.sprint.title',     subtitleKey: 'notFound.sprint.subtitle',     hint: `Sprints · Lab ${labId.slice(0, 8)}…` }
     if (sub === 'timeline')
-      return {
-        icon: Clock,
-        title: 'Off the timeline',
-        subtitle: 'This part of the timeline was never plotted — or was quietly erased.',
-        hint: `Timeline · Lab ${labId.slice(0, 8)}…`,
-      }
+      return { icon: Clock,       titleKey: 'notFound.timeline.title',   subtitleKey: 'notFound.timeline.subtitle',   hint: `Timeline · Lab ${labId.slice(0, 8)}…` }
     if (sub === 'backlog')
-      return {
-        icon: ListTodo,
-        title: 'Backlog lost',
-        subtitle: 'The backlog went so far back it fell off the edge of the board.',
-        hint: `Backlog · Lab ${labId.slice(0, 8)}…`,
-      }
+      return { icon: ListTodo,    titleKey: 'notFound.backlog.title',    subtitleKey: 'notFound.backlog.subtitle',    hint: `Backlog · Lab ${labId.slice(0, 8)}…` }
     if (sub === 'reports')
-      return {
-        icon: BarChart2,
-        title: 'No metrics here',
-        subtitle: 'The data for this lab went dark. Even the error rate is 0.',
-        hint: `Reports · Lab ${labId.slice(0, 8)}…`,
-      }
+      return { icon: BarChart2,   titleKey: 'notFound.reports.title',    subtitleKey: 'notFound.reports.subtitle',   hint: `Reports · Lab ${labId.slice(0, 8)}…` }
     if (sub === 'milestones')
-      return {
-        icon: Milestone,
-        title: 'Milestone missed',
-        subtitle: 'This milestone was either never reached or never set.',
-        hint: `Milestones · Lab ${labId.slice(0, 8)}…`,
-      }
+      return { icon: Milestone,   titleKey: 'notFound.milestones.title', subtitleKey: 'notFound.milestones.subtitle', hint: `Milestones · Lab ${labId.slice(0, 8)}…` }
     if (sub === 'members')
-      return {
-        icon: Users,
-        title: 'No one here',
-        subtitle: "This lab's members page doesn't exist — or the lab itself doesn't.",
-        hint: `Members · Lab ${labId.slice(0, 8)}…`,
-      }
-    // Generic lab not found
-    return {
-      icon: FlaskConical,
-      title: 'Lab not found',
-      subtitle: "This lab doesn't exist, or you haven't been given access.",
-      hint: `Lab ${labId.slice(0, 8)}… — classified or deleted`,
-    }
+      return { icon: Users,       titleKey: 'notFound.members.title',    subtitleKey: 'notFound.members.subtitle',    hint: `Members · Lab ${labId.slice(0, 8)}…` }
+    return { icon: FlaskConical,  titleKey: 'notFound.lab.title',        subtitleKey: 'notFound.lab.subtitle',        hint: `Lab ${labId.slice(0, 8)}… — classified or deleted` }
   }
 
   if (root === 'settings')
-    return {
-      icon: Settings2,
-      title: 'Setting not found',
-      subtitle: "You've wandered into an unmapped section of the control room.",
-      hint: 'Navigate from the sidebar instead',
-    }
-
+    return { icon: Settings2,  titleKey: 'notFound.settings.title',   subtitleKey: 'notFound.settings.subtitle',  hint: 'Navigate from the sidebar instead' }
   if (root === 'timeline')
-    return {
-      icon: Clock,
-      title: 'Lost in time',
-      subtitle: "This timeline doesn't exist in any known dimension.",
-    }
-
+    return { icon: Clock,      titleKey: 'notFound.lostInTime.title',  subtitleKey: 'notFound.lostInTime.subtitle' }
   if (root === 'reports')
-    return {
-      icon: BarChart2,
-      title: 'No data found',
-      subtitle: 'The metrics went missing. Even the error rate is 0.',
-    }
-
+    return { icon: BarChart2,  titleKey: 'notFound.noData.title',      subtitleKey: 'notFound.noData.subtitle' }
   if (root === 'calendar')
-    return {
-      icon: Calendar,
-      title: 'Date not found',
-      subtitle: "Mark this one in your calendar: this page doesn't exist.",
-    }
-
+    return { icon: Calendar,   titleKey: 'notFound.calendar.title',    subtitleKey: 'notFound.calendar.subtitle' }
   if (root === 'inbox')
-    return {
-      icon: Mail,
-      title: 'Empty inbox',
-      subtitle: "No messages here — because this page doesn't exist.",
-    }
-
+    return { icon: Mail,       titleKey: 'notFound.inbox.title',       subtitleKey: 'notFound.inbox.subtitle' }
   if (root === 'my-issues')
-    return {
-      icon: CircleUser,
-      title: 'No issues found',
-      subtitle: "Turns out you have no issues. Well — this page doesn't exist at least.",
-    }
+    return { icon: CircleUser, titleKey: 'notFound.myIssues.title',    subtitleKey: 'notFound.myIssues.subtitle' }
 
-  // Deep nested paths — probably someone hand-editing the URL
   if (segments.length >= 4)
-    return {
-      icon: Compass,
-      title: 'Deep space',
-      subtitle: "No signal. You've gone further than the maps reach.",
-      hint: pathname,
-    }
+    return { icon: Compass,    titleKey: 'notFound.deepSpace.title',   subtitleKey: 'notFound.deepSpace.subtitle',  hint: pathname }
 
-  // Generic fallback
-  return {
-    icon: Rocket,
-    title: 'Page not found',
-    subtitle: "Whatever you were looking for isn't here. Maybe it never was.",
-  }
+  return { icon: Rocket,       titleKey: 'notFound.generic.title',     subtitleKey: 'notFound.generic.subtitle' }
 }
 
 export default function NotFoundPage() {
   const location = useLocation()
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const egg = getEasterEgg(location.pathname)
   const Icon = egg.icon
 
@@ -189,8 +114,8 @@ export default function NotFoundPage() {
           transition={{ duration: 0.4, delay: 0.1, ease: 'easeOut' }}
           className="flex flex-col items-center gap-1.5"
         >
-          <h1 className="text-2xl font-bold text-text-primary">{egg.title}</h1>
-          <p className="max-w-sm text-sm leading-relaxed text-text-secondary">{egg.subtitle}</p>
+          <h1 className="text-2xl font-bold text-text-primary">{t(egg.titleKey)}</h1>
+          <p className="max-w-sm text-sm leading-relaxed text-text-secondary">{t(egg.subtitleKey)}</p>
           {egg.hint && (
             <p className="mt-1 rounded-md bg-surface px-2.5 py-1 font-mono text-xs text-text-muted ring-1 ring-surface-border">
               {egg.hint}
@@ -207,11 +132,11 @@ export default function NotFoundPage() {
         >
           <Button variant="ghost" size="md" onClick={() => navigate(-1)}>
             <ArrowLeft className="h-4 w-4" />
-            Go back
+            {t('notFound.goBack')}
           </Button>
           <Button variant="primary" size="md" onClick={() => navigate('/')}>
             <Home className="h-4 w-4" />
-            Go home
+            {t('notFound.goHome')}
           </Button>
         </motion.div>
       </div>

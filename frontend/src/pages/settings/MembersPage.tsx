@@ -1,6 +1,7 @@
 import {useState} from 'react'
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query'
 import {toast} from 'sonner'
+import {useTranslation} from 'react-i18next'
 import {Check, ChevronDown, CheckCircle2, Link2, Loader2, Mail, Shield, Trash2, UserPlus, Users} from 'lucide-react'
 import {orgsApi} from '@/api/orgs'
 import {usersApi} from '@/api/users'
@@ -16,10 +17,11 @@ import type {UserProfile} from '@/types/board'
 
 type Tab = 'members' | 'invitations'
 
-const ROLE_LABELS: Record<string, string> = {
-  ORG_MEMBER: 'Member',
-  ORG_ADMIN:  'Admin',
-  ORG_OWNER:  'Owner',
+// Role label keys — translated at render time via t()
+const ROLE_LABEL_KEYS: Record<string, string> = {
+  ORG_MEMBER: 'settings.members.roles.ORG_MEMBER',
+  ORG_ADMIN:  'settings.members.roles.ORG_ADMIN',
+  ORG_OWNER:  'settings.members.roles.ORG_OWNER',
 }
 
 const ASSIGNABLE_ROLES = ['ORG_MEMBER', 'ORG_ADMIN'] as const
@@ -43,13 +45,14 @@ function RoleDropdown({
   pending: boolean
   onChange: (role: string) => void
 }) {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
 
   if (isOwner || !canEdit) {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full border border-surface-border px-2.5 py-0.5 text-xs font-medium text-text-secondary">
         {isOwner && <Shield className="h-3 w-3 text-primary" />}
-        {ROLE_LABELS[currentRole] ?? currentRole}
+        {t(ROLE_LABEL_KEYS[currentRole] ?? currentRole)}
       </span>
     )
   }
@@ -61,7 +64,7 @@ function RoleDropdown({
         disabled={pending}
         className="flex items-center gap-1.5 rounded-lg border border-surface-border bg-surface px-2.5 py-1 text-xs font-medium text-text-secondary transition-colors hover:border-primary/40 hover:text-text-primary disabled:opacity-50"
       >
-        {ROLE_LABELS[currentRole] ?? currentRole}
+        {t(ROLE_LABEL_KEYS[currentRole] ?? currentRole)}
         <ChevronDown className={cn('h-3 w-3 transition-transform', open && 'rotate-180')} />
       </button>
       {open && (
@@ -76,7 +79,7 @@ function RoleDropdown({
               )}
             >
               {currentRole === role && <Check className="h-3 w-3 shrink-0" />}
-              <span className={currentRole === role ? '' : 'ms-5'}>{ROLE_LABELS[role]}</span>
+              <span className={currentRole === role ? '' : 'ms-5'}>{t(ROLE_LABEL_KEYS[role] ?? role)}</span>
             </button>
           ))}
         </div>
@@ -176,6 +179,7 @@ function InvitationRow({
   onRevoke: () => void
   revoking: boolean
 }) {
+  const { t } = useTranslation()
   const isOpenLink = invitation.email === null
   return (
     <div className="flex items-center gap-3 px-4 py-3">
@@ -184,22 +188,22 @@ function InvitationRow({
       </div>
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium text-text-primary">
-          {isOpenLink ? 'Open invite link' : invitation.email}
+          {isOpenLink ? t('settings.members.openInviteLink') : invitation.email}
         </p>
         <p className="text-xs text-text-muted">
-          {ROLE_LABELS[invitation.orgRole] ?? invitation.orgRole}
+          {t(ROLE_LABEL_KEYS[invitation.orgRole] ?? invitation.orgRole)}
           {' · '}
-          expires {new Date(invitation.expiresAt).toLocaleDateString()}
+          {t('settings.members.expires', { date: new Date(invitation.expiresAt).toLocaleDateString() })}
         </p>
       </div>
       <span className="hidden rounded-full border border-surface-border px-2 py-0.5 text-xs text-text-muted sm:inline-flex">
-        {isOpenLink ? 'Link' : 'Email'}
+        {isOpenLink ? t('settings.members.linkType') : t('settings.members.emailType')}
       </span>
       <div className="flex items-center gap-1">
         {isOpenLink && (
           <button
             onClick={onCopyLink}
-            title="Copy invite link"
+            title={t('settings.members.copyLink')}
             className="rounded-lg p-1.5 text-text-muted transition-colors hover:bg-surface-raised hover:text-primary"
           >
             {copied ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <Link2 className="h-4 w-4" />}
@@ -208,7 +212,7 @@ function InvitationRow({
         <button
           onClick={onRevoke}
           disabled={revoking}
-          title="Revoke invitation"
+          title={t('settings.members.revokeInvite')}
           className="rounded-lg p-1.5 text-text-muted transition-colors hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-500/10 disabled:opacity-40"
         >
           <Trash2 className="h-4 w-4" />
@@ -221,6 +225,7 @@ function InvitationRow({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function MembersPage() {
+  const { t } = useTranslation()
   const { currentOrgId, orgName, orgRole, user } = useAuthStore()
   const queryClient = useQueryClient()
   const [tab, setTab] = useState<Tab>('members')
@@ -261,9 +266,9 @@ export default function MembersPage() {
     onMutate: ({ userId }) => setPendingRoleUserId(userId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.orgs.members(currentOrgId!) })
-      toast.success('Role updated')
+      toast.success(t('settings.members.roleUpdateSuccess'))
     },
-    onError: () => toast.error('Failed to update role'),
+    onError: () => toast.error(t('settings.members.roleUpdateFailed')),
     onSettled: () => setPendingRoleUserId(null),
   })
 
@@ -273,9 +278,9 @@ export default function MembersPage() {
     onMutate: (userId) => setPendingRemoveUserId(userId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.orgs.members(currentOrgId!) })
-      toast.success('Member removed')
+      toast.success(t('settings.members.removeSuccess'))
     },
-    onError: () => toast.error('Failed to remove member'),
+    onError: () => toast.error(t('settings.members.removeFailed')),
     onSettled: () => setPendingRemoveUserId(null),
   })
 
@@ -305,35 +310,35 @@ export default function MembersPage() {
             <Users className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <h1 className="text-lg font-semibold text-text-primary">Members</h1>
+            <h1 className="text-lg font-semibold text-text-primary">{t('settings.members.title')}</h1>
             <p className="text-sm text-text-muted">
-              Manage who has access to <span className="font-medium text-text-primary">{orgName ?? 'your workspace'}</span>.
+              {t('settings.members.description')}
             </p>
           </div>
         </div>
         {canEdit && (
           <Button size="sm" className="gap-2" onClick={() => setShowInviteModal(true)}>
             <UserPlus className="h-4 w-4" />
-            Invite people
+            {t('settings.members.inviteButton')}
           </Button>
         )}
       </div>
 
       {/* Tabs */}
       <div className="mb-5 flex gap-1 rounded-lg border border-surface-border bg-surface-muted p-1 w-fit">
-        {(['members', 'invitations'] as Tab[]).map((t) => (
+        {(['members', 'invitations'] as Tab[]).map((tabKey) => (
           <button
-            key={t}
-            onClick={() => setTab(t)}
+            key={tabKey}
+            onClick={() => setTab(tabKey)}
             className={cn(
               'flex items-center gap-2 rounded-md px-4 py-1.5 text-sm font-medium transition-colors',
-              tab === t
+              tab === tabKey
                 ? 'bg-surface text-text-primary shadow-sm'
                 : 'text-text-secondary hover:text-text-primary',
             )}
           >
-            {t === 'members' ? 'Members' : 'Invitations'}
-            {t === 'invitations' && pendingInvites.length > 0 && (
+            {tabKey === 'members' ? t('settings.members.membersTab') : t('settings.members.invitationsTab')}
+            {tabKey === 'invitations' && pendingInvites.length > 0 && (
               <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white">
                 {pendingInvites.length}
               </span>

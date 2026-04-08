@@ -5,6 +5,7 @@ import {z} from 'zod'
 import {Link} from 'react-router-dom'
 import {MailCheck, ArrowLeft} from 'lucide-react'
 import {motion, useReducedMotion} from 'framer-motion'
+import {useTranslation} from 'react-i18next'
 import {authApi} from '@/api/auth'
 import {Button} from '@/components/ui/Button'
 import {Input} from '@/components/ui/Input'
@@ -16,6 +17,7 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>
 
 export default function ForgotPasswordPage() {
+  const { t } = useTranslation()
   const [sent, setSent] = useState(false)
   const [submittedEmail, setSubmittedEmail] = useState('')
   const reduceMotion = useReducedMotion()
@@ -116,27 +118,24 @@ export default function ForgotPasswordPage() {
                 <MailCheck className="h-7 w-7 text-primary" />
               </div>
               <div className="flex flex-col gap-1.5">
-                <h1 className="text-[1.75rem] font-bold tracking-tight text-text-primary">Check your inbox</h1>
+                <h1 className="text-[1.75rem] font-bold tracking-tight text-text-primary">{t('auth.forgotPassword.sentTitle')}</h1>
                 <p className="text-sm text-text-secondary">
-                  If an account exists for{' '}
-                  <span className="font-medium text-text-primary">{submittedEmail}</span>,
-                  you'll receive a reset link within a few minutes.
+                  {t('auth.forgotPassword.sentDesc', { email: submittedEmail })}
                 </p>
-                <p className="mt-1 text-xs text-text-muted">Didn't get it? Check your spam folder.</p>
               </div>
             </div>
           ) : (
             <>
               <div className="mb-6 text-center">
-                <h1 className="text-[1.75rem] font-bold tracking-tight text-text-primary">Forgot password?</h1>
+                <h1 className="text-[1.75rem] font-bold tracking-tight text-text-primary">{t('auth.forgotPassword.title')}</h1>
                 <p className="mt-1.5 text-sm text-text-secondary">
-                  Enter your email and we'll send you a reset link.
+                  {t('auth.forgotPassword.subtitle')}
                 </p>
               </div>
 
               <form noValidate onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
                 <Input
-                  label="Email"
+                  label={t('auth.forgotPassword.email')}
                   type="email"
                   autoComplete="email"
                   autoFocus
@@ -145,7 +144,7 @@ export default function ForgotPasswordPage() {
                   {...register('email')}
                 />
                 <Button type="submit" size="lg" loading={isSubmitting} className="mt-1 w-full">
-                  Send reset link
+                  {t('auth.forgotPassword.sendLink')}
                 </Button>
               </form>
             </>
@@ -164,7 +163,7 @@ export default function ForgotPasswordPage() {
             className="inline-flex items-center gap-1.5 font-medium text-text-secondary transition-colors hover:text-text-primary"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
-            Back to sign in
+            {t('auth.forgotPassword.backToLogin')}
           </Link>
         </motion.p>
       </div>

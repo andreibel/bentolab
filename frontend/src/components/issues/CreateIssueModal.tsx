@@ -1,4 +1,5 @@
 import React, {useEffect, useRef, useState} from 'react'
+import {useTranslation} from 'react-i18next'
 import {createPortal} from 'react-dom'
 import {Controller, useForm} from 'react-hook-form'
 import type {Control} from 'react-hook-form'
@@ -37,17 +38,17 @@ import type {IssuePriority, IssueType} from '@/types/issue'
 // ── Config ────────────────────────────────────────────────────────────────────
 
 const TYPES = [
-  { value: 'STORY'   as IssueType, label: 'Story',   icon: <BookOpen    className="h-3.5 w-3.5" />, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-  { value: 'TASK'    as IssueType, label: 'Task',    icon: <CheckSquare className="h-3.5 w-3.5" />, color: 'text-blue-500',    bg: 'bg-blue-500/10'    },
-  { value: 'BUG'     as IssueType, label: 'Bug',     icon: <Bug         className="h-3.5 w-3.5" />, color: 'text-red-500',     bg: 'bg-red-500/10'     },
-  { value: 'SUBTASK' as IssueType, label: 'Sub',     icon: <Zap         className="h-3.5 w-3.5" />, color: 'text-yellow-500',  bg: 'bg-yellow-500/10'  },
+  { value: 'STORY'   as IssueType, labelKey: 'issues.types.STORY',    icon: <BookOpen    className="h-3.5 w-3.5" />, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+  { value: 'TASK'    as IssueType, labelKey: 'issues.types.TASK',     icon: <CheckSquare className="h-3.5 w-3.5" />, color: 'text-blue-500',    bg: 'bg-blue-500/10'    },
+  { value: 'BUG'     as IssueType, labelKey: 'issues.types.BUG',      icon: <Bug         className="h-3.5 w-3.5" />, color: 'text-red-500',     bg: 'bg-red-500/10'     },
+  { value: 'SUBTASK' as IssueType, labelKey: 'issues.types.SUBTASK',  icon: <Zap         className="h-3.5 w-3.5" />, color: 'text-yellow-500',  bg: 'bg-yellow-500/10'  },
 ]
 
 const PRIORITIES = [
-  { value: 'CRITICAL' as IssuePriority, label: 'Critical', icon: <ArrowUp   className="h-3 w-3" />, color: 'text-red-500'    },
-  { value: 'HIGH'     as IssuePriority, label: 'High',     icon: <ArrowUp   className="h-3 w-3" />, color: 'text-orange-500' },
-  { value: 'MEDIUM'   as IssuePriority, label: 'Medium',   icon: <Minus     className="h-3 w-3" />, color: 'text-yellow-500' },
-  { value: 'LOW'      as IssuePriority, label: 'Low',      icon: <ArrowDown className="h-3 w-3" />, color: 'text-blue-400'   },
+  { value: 'CRITICAL' as IssuePriority, labelKey: 'issues.priorities.CRITICAL', icon: <ArrowUp   className="h-3 w-3" />, color: 'text-red-500'    },
+  { value: 'HIGH'     as IssuePriority, labelKey: 'issues.priorities.HIGH',     icon: <ArrowUp   className="h-3 w-3" />, color: 'text-orange-500' },
+  { value: 'MEDIUM'   as IssuePriority, labelKey: 'issues.priorities.MEDIUM',   icon: <Minus     className="h-3 w-3" />, color: 'text-yellow-500' },
+  { value: 'LOW'      as IssuePriority, labelKey: 'issues.priorities.LOW',      icon: <ArrowDown className="h-3 w-3" />, color: 'text-blue-400'   },
 ]
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -142,6 +143,7 @@ export function CreateIssueModal({
   columnId:  propColumnId,
   sprintId:  propSprintId,
 }: CreateIssueModalProps) {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
   const [fullScreen, setFullScreen] = useState(false)
   const drag = useDraggable()
@@ -204,7 +206,7 @@ export function CreateIssueModal({
     let resolvedBoardKey = propBoardKey
     if (!resolvedBoardKey) {
       const picked = allBoards?.find((b) => b.id === values.boardId)
-      if (!picked) { toast.error('Please select a board'); return }
+      if (!picked) { toast.error(t('issues.selectBoardError')); return }
       resolvedBoardKey = picked.boardKey
     }
 
@@ -227,10 +229,10 @@ export function CreateIssueModal({
       })
 
       void queryClient.invalidateQueries({ queryKey: ['issues', effectiveBoardId], exact: false })
-      toast.success('Issue created')
+      toast.success(t('issues.created'))
       onClose()
     } catch {
-      toast.error('Failed to create issue')
+      toast.error(t('issues.failedToCreate'))
     }
   }
 
@@ -267,12 +269,12 @@ export function CreateIssueModal({
       {!fullScreen && (
         <GripHorizontal className="h-4 w-4 shrink-0 text-text-muted" />
       )}
-      <span className="flex-1 text-sm font-semibold text-text-primary">Create issue</span>
+      <span className="flex-1 text-sm font-semibold text-text-primary">{t('issues.createTitle')}</span>
       <button
         type="button"
         onClick={() => setFullScreen((f) => !f)}
         className="rounded p-1 text-text-muted hover:bg-surface-muted hover:text-text-primary"
-        title={fullScreen ? 'Compact view' : 'Full screen'}
+        title={fullScreen ? t('issues.compactView') : t('issues.fullScreen')}
       >
         {fullScreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
       </button>
@@ -290,9 +292,9 @@ export function CreateIssueModal({
   const footer = (
     <div className="flex shrink-0 items-center justify-between border-t border-surface-border px-5 py-3">
       <div className="flex items-center gap-1.5 text-xs text-text-muted">
-        <span className={cn('font-medium', typeInfo.color)}>{typeInfo.label}</span>
+        <span className={cn('font-medium', typeInfo.color)}>{t(typeInfo.labelKey)}</span>
         <span>·</span>
-        <span className={priorityInfo.color}>{priorityInfo.label}</span>
+        <span className={priorityInfo.color}>{t(priorityInfo.labelKey)}</span>
         {propBoardName && (
           <>
             <span>·</span>
@@ -301,8 +303,8 @@ export function CreateIssueModal({
         )}
       </div>
       <div className="flex gap-2">
-        <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
-        <Button type="submit" loading={isSubmitting}>Create issue</Button>
+        <Button type="button" variant="secondary" onClick={onClose}>{t('actions.cancel')}</Button>
+        <Button type="submit" loading={isSubmitting}>{t('issues.createTitle')}</Button>
       </div>
     </div>
   )
@@ -321,8 +323,8 @@ export function CreateIssueModal({
                 <TypePicker control={control} />
                 <div>
                   <textarea
-                    {...register('title', { required: 'Title is required' })}
-                    placeholder="Issue title"
+                    {...register('title', { required: t('issues.titleRequired') })}
+                    placeholder={t('issues.issueTitle')}
                     rows={2}
                     autoFocus
                     className={cn(
@@ -341,7 +343,7 @@ export function CreateIssueModal({
                     <RichTextInput
                       value={field.value}
                       onChange={field.onChange}
-                      placeholder="Add a description… (optional)"
+                      placeholder={t('issues.addDescription')}
                     />
                   )}
                 />
@@ -349,39 +351,39 @@ export function CreateIssueModal({
 
               {/* Right — metadata */}
               <div className="flex w-60 shrink-0 flex-col gap-4 overflow-y-auto border-s border-surface-border p-5">
-                <Field label="Priority"><PriorityPicker control={control} /></Field>
+                <Field label={t('issues.fields.priority')}><PriorityPicker control={control} /></Field>
 
                 {isGlobalMode && (
-                  <Field label="Board">
+                  <Field label={t('issues.fields.board')}>
                     <NativeSelect {...register('boardId', { required: true })}>
-                      <option value="">Select board…</option>
+                      <option value="">{t('issues.selectBoardPlaceholder')}</option>
                       {allBoards?.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
                     </NativeSelect>
                   </Field>
                 )}
                 {!isGlobalMode && propBoardName && (
-                  <Field label="Board"><p className="text-sm text-text-secondary">{propBoardName}</p></Field>
+                  <Field label={t('issues.fields.board')}><p className="text-sm text-text-secondary">{propBoardName}</p></Field>
                 )}
                 {columns.length > 0 && (
-                  <Field label="Column">
+                  <Field label={t('issues.fields.column')}>
                     <NativeSelect {...register('columnId')}>
-                      <option value="">Backlog (no column)</option>
+                      <option value="">{t('issues.backlogNoColumn')}</option>
                       {columns.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                     </NativeSelect>
                   </Field>
                 )}
                 {!isKanban && epicsData.length > 0 && (
-                  <Field label="Epic">
+                  <Field label={t('issues.fields.epic')}>
                     <NativeSelect {...register('epicId')}>
-                      <option value="">None</option>
+                      <option value="">{t('issues.noneOption')}</option>
                       {epicsData.map((e) => <option key={e.id} value={e.id}>{e.title}</option>)}
                     </NativeSelect>
                   </Field>
                 )}
                 {!isKanban && sprintsData.filter((s) => s.status !== 'COMPLETED').length > 0 && (
-                  <Field label="Sprint">
+                  <Field label={t('issues.fields.sprint')}>
                     <NativeSelect {...register('sprintId')}>
-                      <option value="">Backlog</option>
+                      <option value="">{t('issues.backlog')}</option>
                       {sprintsData.filter((s) => s.status !== 'COMPLETED').map((s) => (
                         <option key={s.id} value={s.id}>{s.name}</option>
                       ))}
@@ -389,15 +391,15 @@ export function CreateIssueModal({
                   </Field>
                 )}
                 {allIssues.length > 0 && (
-                  <Field label="Parent issue">
+                  <Field label={t('issues.fields.parent')}>
                     <NativeSelect {...register('parentIssueId')}>
-                      <option value="">None</option>
+                      <option value="">{t('issues.noneOption')}</option>
                       {allIssues.map((i) => <option key={i.id} value={i.id}>{i.issueKey} · {i.title}</option>)}
                     </NativeSelect>
                   </Field>
                 )}
                 {!isKanban && (
-                  <Field label="Story points">
+                  <Field label={t('issues.fields.storyPoints')}>
                     <input
                       {...register('storyPoints')}
                       type="number" min={0} placeholder="—"
@@ -405,7 +407,7 @@ export function CreateIssueModal({
                     />
                   </Field>
                 )}
-                <Field label="Start date">
+                <Field label={t('issues.fields.startDate')}>
                   <Controller
                     name="startDate"
                     control={control}
@@ -413,14 +415,14 @@ export function CreateIssueModal({
                       <DatePicker
                         value={field.value ? toDatePart(field.value) : ''}
                         onChange={(v) => field.onChange(v)}
-                        placeholder="No start date"
+                        placeholder={t('issues.noStartDate')}
                         minDate={sprintMin}
                         maxDate={startMax}
                       />
                     )}
                   />
                 </Field>
-                <Field label="Due date">
+                <Field label={t('issues.fields.dueDate')}>
                   <Controller
                     name="dueDate"
                     control={control}
@@ -428,7 +430,7 @@ export function CreateIssueModal({
                       <DatePicker
                         value={field.value ? toDatePart(field.value) : ''}
                         onChange={(v) => field.onChange(v)}
-                        placeholder="No due date"
+                        placeholder={t('issues.noDueDate')}
                         minDate={dueMin}
                         maxDate={sprintMax}
                       />
@@ -436,7 +438,7 @@ export function CreateIssueModal({
                   />
                 </Field>
                 {allLabels.length > 0 && (
-                  <Field label="Labels">
+                  <Field label={t('issues.fields.labels')}>
                     <Controller
                       name="labelIds"
                       control={control}
@@ -474,15 +476,15 @@ export function CreateIssueModal({
             placeholder="Issue title"
             autoFocus
             error={errors.title?.message}
-            {...register('title', { required: 'Title is required' })}
+            {...register('title', { required: t('issues.titleRequired') })}
           />
-          <Field label="Priority">
+          <Field label={t('issues.fields.priority')}>
             <PriorityPicker control={control} />
           </Field>
           {isGlobalMode && (
-            <Field label="Board">
+            <Field label={t('issues.fields.board')}>
               <NativeSelect {...register('boardId', { required: true })}>
-                <option value="">Select board…</option>
+                <option value="">{t('issues.selectBoardPlaceholder')}</option>
                 {allBoards?.map((b) => (
                   <option key={b.id} value={b.id}>{b.name}</option>
                 ))}
@@ -574,27 +576,28 @@ function LabelMultiPickerField({
 }
 
 function TypePicker({ control }: { control: Control<FormValues> }) {
+  const { t } = useTranslation()
   return (
     <Controller
       name="type"
       control={control}
       render={({ field }) => (
         <div className="flex gap-1">
-          {TYPES.map((t) => (
+          {TYPES.map((type) => (
             <button
-              key={t.value}
+              key={type.value}
               type="button"
-              onClick={() => field.onChange(t.value)}
-              title={t.label}
+              onClick={() => field.onChange(type.value)}
+              title={t(type.labelKey)}
               className={cn(
                 'flex h-8 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition-colors',
-                field.value === t.value
-                  ? `${t.color} ${t.bg}`
+                field.value === type.value
+                  ? `${type.color} ${type.bg}`
                   : 'text-text-muted hover:bg-surface-muted hover:text-text-primary',
               )}
             >
-              {t.icon}
-              {t.label}
+              {type.icon}
+              {t(type.labelKey)}
             </button>
           ))}
         </div>
@@ -604,6 +607,7 @@ function TypePicker({ control }: { control: Control<FormValues> }) {
 }
 
 function PriorityPicker({ control }: { control: Control<FormValues> }) {
+  const { t } = useTranslation()
   return (
     <Controller
       name="priority"
@@ -623,7 +627,7 @@ function PriorityPicker({ control }: { control: Control<FormValues> }) {
               )}
             >
               <span className={field.value === p.value ? p.color : ''}>{p.icon}</span>
-              {p.label}
+              {t(p.labelKey)}
             </button>
           ))}
         </div>

@@ -1,5 +1,6 @@
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import {useParams} from 'react-router-dom'
+import {useTranslation} from 'react-i18next'
 import {ChevronDown, ChevronRight, Loader2, Pencil, Play, Plus, X,} from 'lucide-react'
 import {EpicTag, IssueTypeIcon, PriorityIcon} from '@/components/ui/Badge'
 import {Avatar} from '@/components/ui/Avatar'
@@ -24,13 +25,15 @@ const EPIC_COLORS = ['#EF4444', '#F97316', '#EAB308', '#22C55E', '#06B6D4', '#3B
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function fmtDateRange(start: string | null, end: string | null): string | null {
+type TFunc = (key: string, opts?: Record<string, unknown>) => string
+
+function fmtDateRange(start: string | null, end: string | null, t: TFunc): string | null {
   if (!start && !end) return null
   const fmt = (d: string) =>
     new Date(d).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
   if (start && end) return `${fmt(start)} – ${fmt(end)}`
-  if (start) return `from ${fmt(start)}`
-  return `until ${fmt(end!)}`
+  if (start) return t('backlog.dateFrom', { date: fmt(start) })
+  return t('backlog.dateUntil', { date: fmt(end!) })
 }
 
 // ── Sprint move dropdown ───────────────────────────────────────────────────────
@@ -44,6 +47,7 @@ function SprintMoveMenu({
   sprints: Sprint[]
   onMove: (sprintId: string | null) => void
 }) {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -64,7 +68,7 @@ function SprintMoveMenu({
         onClick={(e) => { e.stopPropagation(); setOpen((v) => !v) }}
         className="flex items-center gap-1 rounded px-2 py-0.5 text-[11px] text-text-muted transition-colors hover:bg-surface-border hover:text-text-primary"
       >
-        {issue.sprintId ? 'Move' : '+ Sprint'}
+        {issue.sprintId ? t('backlog.sprint.moveToSprint') : t('backlog.sprint.addToSprint')}
       </button>
       {open && (
         <div className="absolute start-0 top-full z-50 mt-1 min-w-[180px] rounded-lg border border-surface-border bg-surface shadow-xl">
@@ -73,7 +77,7 @@ function SprintMoveMenu({
               onClick={(e) => { e.stopPropagation(); onMove(null); setOpen(false) }}
               className="flex w-full items-center gap-2 px-3 py-2 text-xs text-text-muted hover:bg-surface-muted"
             >
-              → Backlog
+              {t('backlog.sprint.toBacklog')}
             </button>
           )}
           {eligible.map((s) => (
@@ -92,7 +96,7 @@ function SprintMoveMenu({
             </button>
           ))}
           {eligible.length === 0 && !issue.sprintId && (
-            <div className="px-3 py-2 text-xs text-text-muted">No active sprints</div>
+            <div className="px-3 py-2 text-xs text-text-muted">{t('backlog.sprint.noActiveSprints')}</div>
           )}
         </div>
       )}
@@ -115,6 +119,7 @@ function IssueRow({
   onOpen: (id: string) => void
   onMove: (issueId: string, sprintId: string | null) => void
 }) {
+  const { t } = useTranslation()
   const epic = issue.epicId ? epicsMap.get(issue.epicId) : undefined
 
   return (
@@ -130,7 +135,7 @@ function IssueRow({
 
       {issue.closed && (
         <span className="shrink-0 rounded-full bg-surface-muted px-1.5 py-0.5 text-[10px] font-semibold text-text-muted">
-          Closed
+          {t('backlog.closedBadge')}
         </span>
       )}
 
@@ -181,6 +186,7 @@ function SprintSection({
   onAddIssue: (sprintId: string) => void
   onEdit: (sprintId: string) => void
 }) {
+  const { t } = useTranslation()
   const [collapsed, setCollapsed] = useState(false)
   // Progress/counts always from ALL sprint issues regardless of open/closed tab filter
   const totalPts  = allSprintIssues.reduce((s, i) => s + (i.storyPoints ?? 0), 0)
@@ -188,7 +194,7 @@ function SprintSection({
   const progress  = allSprintIssues.length > 0
     ? Math.round((doneCount / allSprintIssues.length) * 100)
     : 0
-  const dateRange = fmtDateRange(sprint.startDate, sprint.endDate)
+  const dateRange = fmtDateRange(sprint.startDate, sprint.endDate, t as TFunc)
 
   return (
     <div className="mb-3">
@@ -211,12 +217,12 @@ function SprintSection({
 
         {sprint.status === 'ACTIVE' && (
           <span className="shrink-0 rounded-full bg-green-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-green-600">
-            Active
+            {t('backlog.sprint.active')}
           </span>
         )}
         {sprint.status === 'PLANNED' && (
           <span className="shrink-0 rounded-full bg-surface-muted px-1.5 py-0.5 text-[10px] font-semibold text-text-muted">
-            Planned
+            {t('backlog.sprint.planned')}
           </span>
         )}
 
@@ -226,9 +232,9 @@ function SprintSection({
 
         <span className="shrink-0 text-xs text-text-muted">
           {doneCount > 0
-            ? `${doneCount}/${allSprintIssues.length} done`
-            : `${allSprintIssues.length} issue${allSprintIssues.length !== 1 ? 's' : ''}`}
-          {totalPts > 0 && ` · ${totalPts} pts`}
+            ? t('backlog.sprint.doneFraction', { done: doneCount, total: allSprintIssues.length })
+            : t('backlog.sprint.issueCount', { count: allSprintIssues.length })}
+          {totalPts > 0 && ` · ${totalPts} ${t('backlog.sprint.pts')}`}
         </span>
 
         {sprint.status === 'ACTIVE' && allSprintIssues.length > 0 && (
@@ -247,7 +253,7 @@ function SprintSection({
           <button
             onClick={(e) => { e.stopPropagation(); onEdit(sprint.id) }}
             className="rounded p-1 text-text-muted opacity-0 transition-all hover:bg-surface-muted hover:text-text-primary group-hover:opacity-100"
-            aria-label="Edit sprint"
+            aria-label={t('backlog.sprint.editSprint')}
           >
             <Pencil className="h-3.5 w-3.5" />
           </button>
@@ -256,7 +262,7 @@ function SprintSection({
               onClick={(e) => { e.stopPropagation(); onStart(sprint.id) }}
               className="rounded-md border border-surface-border px-2.5 py-1 text-xs font-medium text-text-secondary transition-colors hover:border-primary/30 hover:text-primary"
             >
-              Start Sprint
+              {t('backlog.sprint.startSprint')}
             </button>
           )}
           {sprint.status === 'ACTIVE' && (
@@ -264,7 +270,7 @@ function SprintSection({
               onClick={(e) => { e.stopPropagation(); onComplete(sprint.id) }}
               className="rounded-md border border-surface-border px-2.5 py-1 text-xs font-medium text-text-secondary transition-colors hover:border-green-500/30 hover:text-green-600"
             >
-              Complete
+              {t('backlog.sprint.complete')}
             </button>
           )}
         </div>
@@ -287,7 +293,7 @@ function SprintSection({
             className="flex items-center gap-2 px-3 py-2 text-xs text-text-muted transition-colors hover:text-primary"
           >
             <Plus className="h-3.5 w-3.5" />
-            Add issue
+            {t('backlog.sprint.addIssue')}
           </button>
         </div>
       )}
@@ -316,6 +322,7 @@ function BacklogSection({
   onAddIssue: () => void
   onCreateSprint: () => void
 }) {
+  const { t } = useTranslation()
   const [collapsed, setCollapsed] = useState(false)
 
   return (
@@ -327,21 +334,21 @@ function BacklogSection({
         >
           {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
         </button>
-        <span className="flex-1 text-sm font-semibold text-text-primary">Backlog</span>
-        <span className="text-xs text-text-muted">{totalCount} issue{totalCount !== 1 ? 's' : ''}</span>
+        <span className="flex-1 text-sm font-semibold text-text-primary">{t('backlog.backlogSection.title')}</span>
+        <span className="text-xs text-text-muted">{t('backlog.sprint.issueCount', { count: totalCount })}</span>
         <button
           onClick={onCreateSprint}
           className="flex items-center gap-1 rounded-md border border-surface-border px-2 py-1 text-xs text-text-muted transition-colors hover:border-primary/30 hover:text-primary"
         >
           <Plus className="h-3 w-3" />
-          Sprint
+          {t('backlog.backlogSection.newSprint')}
         </button>
       </div>
 
       {!collapsed && (
         <div className="ms-4 border-s border-surface-border/50 ps-3">
           {issues.length === 0 && (
-            <p className="py-6 text-center text-xs text-text-muted">No issues in backlog</p>
+            <p className="py-6 text-center text-xs text-text-muted">{t('backlog.backlogSection.noIssues')}</p>
           )}
           {issues.map((issue) => (
             <IssueRow
@@ -358,7 +365,7 @@ function BacklogSection({
             className="flex items-center gap-2 px-3 py-2 text-xs text-text-muted transition-colors hover:text-primary"
           >
             <Plus className="h-3.5 w-3.5" />
-            Add issue
+            {t('backlog.sprint.addIssue')}
           </button>
         </div>
       )}
@@ -375,6 +382,7 @@ function PullToBoardMenu({
   columns: BoardColumn[]
   onPull: (columnId: string) => void
 }) {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -393,7 +401,7 @@ function PullToBoardMenu({
         onClick={(e) => { e.stopPropagation(); setOpen((v) => !v) }}
         className="flex items-center gap-1 rounded px-2 py-0.5 text-[11px] text-text-muted transition-colors hover:bg-surface-border hover:text-text-primary"
       >
-        Pull to board
+        {t('backlog.kanban.pullToBoard')}
       </button>
       {open && (
         <div className="absolute start-0 top-full z-50 mt-1 min-w-[160px] rounded-lg border border-surface-border bg-surface shadow-xl">
@@ -411,7 +419,7 @@ function PullToBoardMenu({
             </button>
           ))}
           {columns.length === 0 && (
-            <div className="px-3 py-2 text-xs text-text-muted">No columns on board</div>
+            <div className="px-3 py-2 text-xs text-text-muted">{t('backlog.kanban.noColumns')}</div>
           )}
         </div>
       )}
@@ -436,6 +444,7 @@ function KanbanBacklogSection({
   onPull: (issueId: string, columnId: string) => void
   onAddIssue: () => void
 }) {
+  const { t } = useTranslation()
   const [collapsed, setCollapsed] = useState(false)
 
   return (
@@ -447,14 +456,14 @@ function KanbanBacklogSection({
         >
           {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
         </button>
-        <span className="flex-1 text-sm font-semibold text-text-primary">Backlog</span>
-        <span className="text-xs text-text-muted">{issues.length} issue{issues.length !== 1 ? 's' : ''}</span>
+        <span className="flex-1 text-sm font-semibold text-text-primary">{t('backlog.backlogSection.title')}</span>
+        <span className="text-xs text-text-muted">{t('backlog.sprint.issueCount', { count: issues.length })}</span>
       </div>
 
       {!collapsed && (
         <div className="ms-4 border-s border-surface-border/50 ps-3">
           {issues.length === 0 && (
-            <p className="py-6 text-center text-xs text-text-muted">No issues in backlog</p>
+            <p className="py-6 text-center text-xs text-text-muted">{t('backlog.backlogSection.noIssues')}</p>
           )}
           {issues.map((issue) => {
             const epic = issue.epicId ? epicsMap.get(issue.epicId) : undefined
@@ -470,7 +479,7 @@ function KanbanBacklogSection({
                 {epic && <EpicTag title={epic.title} color={epic.color} />}
                 {issue.closed && (
                   <span className="shrink-0 rounded-full bg-surface-muted px-1.5 py-0.5 text-[10px] font-semibold text-text-muted">
-                    Closed
+                    {t('backlog.closedBadge')}
                   </span>
                 )}
                 <div className="shrink-0"><PriorityIcon priority={issue.priority} /></div>
@@ -489,7 +498,7 @@ function KanbanBacklogSection({
             className="flex items-center gap-2 px-3 py-2 text-xs text-text-muted transition-colors hover:text-primary"
           >
             <Plus className="h-3.5 w-3.5" />
-            Add issue
+            {t('backlog.sprint.addIssue')}
           </button>
         </div>
       )}
@@ -500,6 +509,7 @@ function KanbanBacklogSection({
 // ── Create Epic Modal ─────────────────────────────────────────────────────────
 
 function CreateEpicModal({ boardId, onClose }: { boardId: string; onClose: () => void }) {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
   const [title, setTitle]       = useState('')
   const [color, setColor]       = useState(EPIC_COLORS[5])
@@ -512,10 +522,10 @@ function CreateEpicModal({ boardId, onClose }: { boardId: string; onClose: () =>
     try {
       await epicsApi.create({ boardId, title: title.trim(), color })
       queryClient.invalidateQueries({ queryKey: queryKeys.epics.list(boardId) })
-      toast.success('Epic created')
+      toast.success(t('backlog.epics.created'))
       onClose()
     } catch {
-      toast.error('Failed to create epic')
+      toast.error(t('backlog.epics.failedToCreate'))
     } finally {
       setSubmitting(false)
     }
@@ -526,24 +536,24 @@ function CreateEpicModal({ boardId, onClose }: { boardId: string; onClose: () =>
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
       <div className="relative z-50 w-[400px] rounded-2xl border border-surface-border bg-surface shadow-2xl">
         <div className="flex items-center justify-between border-b border-surface-border px-5 py-4">
-          <h2 className="text-base font-semibold text-text-primary">Create Epic</h2>
+          <h2 className="text-base font-semibold text-text-primary">{t('backlog.epics.createTitle')}</h2>
           <button onClick={onClose} className="rounded p-1 text-text-muted hover:bg-surface-muted">
             <X className="h-4 w-4" />
           </button>
         </div>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 p-5">
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-text-muted">Name *</label>
+            <label className="mb-1.5 block text-xs font-medium text-text-muted">{t('backlog.epics.nameLabel')}</label>
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. Authentication, Dashboard redesign…"
+              placeholder={t('backlog.epics.namePlaceholder')}
               required autoFocus
               className="w-full rounded-lg border border-surface-border bg-surface-muted px-3 py-2 text-sm text-text-primary outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary/20"
             />
           </div>
           <div>
-            <label className="mb-2 block text-xs font-medium text-text-muted">Color</label>
+            <label className="mb-2 block text-xs font-medium text-text-muted">{t('backlog.epics.colorLabel')}</label>
             <div className="flex gap-2">
               {EPIC_COLORS.map((c) => (
                 <button
@@ -561,7 +571,7 @@ function CreateEpicModal({ boardId, onClose }: { boardId: string; onClose: () =>
           </div>
           <div className="flex justify-end gap-2 pt-1">
             <button type="button" onClick={onClose} className="rounded-md px-4 py-2 text-sm text-text-muted hover:text-text-primary">
-              Cancel
+              {t('backlog.epics.cancel')}
             </button>
             <button
               type="submit"
@@ -569,7 +579,7 @@ function CreateEpicModal({ boardId, onClose }: { boardId: string; onClose: () =>
               className="rounded-md px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
               style={{ backgroundColor: color }}
             >
-              {submitting ? 'Creating…' : 'Create Epic'}
+              {submitting ? t('backlog.epics.creating') : t('backlog.epics.create')}
             </button>
           </div>
         </form>
@@ -581,6 +591,7 @@ function CreateEpicModal({ boardId, onClose }: { boardId: string; onClose: () =>
 // ── Edit Epic Modal ────────────────────────────────────────────────────────────
 
 function EditEpicModal({ epic, boardId, onClose }: { epic: Epic; boardId: string; onClose: () => void }) {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
   const [title,     setTitle]     = useState(epic.title)
   const [color,     setColor]     = useState(epic.color)
@@ -593,10 +604,10 @@ function EditEpicModal({ epic, boardId, onClose }: { epic: Epic; boardId: string
     try {
       await epicsApi.update(epic.id, { title: title.trim(), color })
       queryClient.invalidateQueries({ queryKey: queryKeys.epics.list(boardId) })
-      toast.success('Epic updated')
+      toast.success(t('backlog.epics.updated'))
       onClose()
     } catch {
-      toast.error('Failed to update epic')
+      toast.error(t('backlog.epics.failedToUpdate'))
     } finally {
       setSubmitting(false)
     }
@@ -607,14 +618,14 @@ function EditEpicModal({ epic, boardId, onClose }: { epic: Epic; boardId: string
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
       <div className="relative z-50 w-[400px] rounded-2xl border border-surface-border bg-surface shadow-2xl">
         <div className="flex items-center justify-between border-b border-surface-border px-5 py-4">
-          <h2 className="text-base font-semibold text-text-primary">Edit Epic</h2>
+          <h2 className="text-base font-semibold text-text-primary">{t('backlog.epics.editTitle')}</h2>
           <button onClick={onClose} className="rounded p-1 text-text-muted hover:bg-surface-muted">
             <X className="h-4 w-4" />
           </button>
         </div>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 p-5">
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-text-muted">Name *</label>
+            <label className="mb-1.5 block text-xs font-medium text-text-muted">{t('backlog.epics.nameLabel')}</label>
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -623,7 +634,7 @@ function EditEpicModal({ epic, boardId, onClose }: { epic: Epic; boardId: string
             />
           </div>
           <div>
-            <label className="mb-2 block text-xs font-medium text-text-muted">Color</label>
+            <label className="mb-2 block text-xs font-medium text-text-muted">{t('backlog.epics.colorLabel')}</label>
             <div className="flex gap-2">
               {EPIC_COLORS.map((c) => (
                 <button
@@ -641,7 +652,7 @@ function EditEpicModal({ epic, boardId, onClose }: { epic: Epic; boardId: string
           </div>
           <div className="flex justify-end gap-2 pt-1">
             <button type="button" onClick={onClose} className="rounded-md px-4 py-2 text-sm text-text-muted hover:text-text-primary">
-              Cancel
+              {t('backlog.epics.cancel')}
             </button>
             <button
               type="submit"
@@ -649,7 +660,7 @@ function EditEpicModal({ epic, boardId, onClose }: { epic: Epic; boardId: string
               className="rounded-md px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
               style={{ backgroundColor: color }}
             >
-              {submitting ? 'Saving…' : 'Save'}
+              {submitting ? t('backlog.epics.saving') : t('backlog.epics.save')}
             </button>
           </div>
         </form>
@@ -661,6 +672,7 @@ function EditEpicModal({ epic, boardId, onClose }: { epic: Epic; boardId: string
 // ── Edit Sprint Modal ──────────────────────────────────────────────────────────
 
 function EditSprintModal({ sprint, boardId, onClose }: { sprint: Sprint; boardId: string; onClose: () => void }) {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
   const [name,       setName]       = useState(sprint.name)
   const [goal,       setGoal]       = useState(sprint.goal ?? '')
@@ -680,10 +692,10 @@ function EditSprintModal({ sprint, boardId, onClose }: { sprint: Sprint; boardId
         endDate:   endDate   || undefined,
       })
       queryClient.invalidateQueries({ queryKey: queryKeys.sprints.all(boardId) })
-      toast.success('Sprint updated')
+      toast.success(t('backlog.sprintModals.updated'))
       onClose()
     } catch {
-      toast.error('Failed to update sprint')
+      toast.error(t('backlog.sprintModals.failedToUpdate'))
     } finally {
       setSubmitting(false)
     }
@@ -694,14 +706,14 @@ function EditSprintModal({ sprint, boardId, onClose }: { sprint: Sprint; boardId
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
       <div className="relative z-50 w-[440px] rounded-2xl border border-surface-border bg-surface shadow-2xl">
         <div className="flex items-center justify-between border-b border-surface-border px-5 py-4">
-          <h2 className="text-base font-semibold text-text-primary">Edit Sprint</h2>
+          <h2 className="text-base font-semibold text-text-primary">{t('backlog.sprintModals.editTitle')}</h2>
           <button onClick={onClose} className="rounded p-1 text-text-muted hover:bg-surface-muted">
             <X className="h-4 w-4" />
           </button>
         </div>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 p-5">
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-text-muted">Name *</label>
+            <label className="mb-1.5 block text-xs font-medium text-text-muted">{t('backlog.sprintModals.nameLabel')}</label>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -710,18 +722,18 @@ function EditSprintModal({ sprint, boardId, onClose }: { sprint: Sprint; boardId
             />
           </div>
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-text-muted">Goal</label>
+            <label className="mb-1.5 block text-xs font-medium text-text-muted">{t('backlog.sprintModals.goalLabel')}</label>
             <textarea
               value={goal}
               onChange={(e) => setGoal(e.target.value)}
               rows={2}
-              placeholder="Sprint goal…"
+              placeholder={t('backlog.sprintModals.goalPlaceholder')}
               className="w-full resize-none rounded-lg border border-surface-border bg-surface-muted px-3 py-2 text-sm text-text-primary outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
             />
           </div>
           <div className="flex gap-3">
             <div className="flex-1">
-              <label className="mb-1.5 block text-xs font-medium text-text-muted">Start date</label>
+              <label className="mb-1.5 block text-xs font-medium text-text-muted">{t('backlog.sprintModals.startDate')}</label>
               <input
                 type="date"
                 value={startDate}
@@ -730,7 +742,7 @@ function EditSprintModal({ sprint, boardId, onClose }: { sprint: Sprint; boardId
               />
             </div>
             <div className="flex-1">
-              <label className="mb-1.5 block text-xs font-medium text-text-muted">End date</label>
+              <label className="mb-1.5 block text-xs font-medium text-text-muted">{t('backlog.sprintModals.endDate')}</label>
               <input
                 type="date"
                 value={endDate}
@@ -741,14 +753,14 @@ function EditSprintModal({ sprint, boardId, onClose }: { sprint: Sprint; boardId
           </div>
           <div className="flex justify-end gap-2 pt-1">
             <button type="button" onClick={onClose} className="rounded-md px-4 py-2 text-sm text-text-muted hover:text-text-primary">
-              Cancel
+              {t('backlog.sprintModals.cancel')}
             </button>
             <button
               type="submit"
               disabled={submitting || !name.trim()}
               className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-light disabled:opacity-40"
             >
-              {submitting ? 'Saving…' : 'Save'}
+              {submitting ? t('backlog.sprintModals.saving') : t('backlog.sprintModals.save')}
             </button>
           </div>
         </form>
@@ -770,6 +782,7 @@ function CompleteSprintModal({
   onConfirm: (moveToSprintId: string | null) => void
   onClose: () => void
 }) {
+  const { t } = useTranslation()
   const [moveToId, setMoveToId] = useState('')
   const eligible = otherSprints.filter((s) => s.status !== 'COMPLETED')
 
@@ -777,29 +790,29 @@ function CompleteSprintModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
       <div className="relative z-50 w-[420px] rounded-2xl border border-surface-border bg-surface p-6 shadow-2xl">
-        <h2 className="mb-1 text-base font-semibold text-text-primary">Complete "{sprint.name}"</h2>
+        <h2 className="mb-1 text-base font-semibold text-text-primary">{t('backlog.completeModal.title', { name: sprint.name })}</h2>
         <p className="mb-4 text-sm text-text-secondary">
-          Where should incomplete issues go after this sprint ends?
+          {t('backlog.completeModal.description')}
         </p>
         <select
           value={moveToId}
           onChange={(e) => setMoveToId(e.target.value)}
           className="mb-5 w-full rounded-lg border border-surface-border bg-surface-muted px-3 py-2 text-sm text-text-primary outline-none focus:border-primary"
         >
-          <option value="">Move to Backlog</option>
+          <option value="">{t('backlog.completeModal.moveToBacklog')}</option>
           {eligible.map((s) => (
             <option key={s.id} value={s.id}>{s.name}</option>
           ))}
         </select>
         <div className="flex justify-end gap-2">
           <button onClick={onClose} className="rounded-md px-4 py-2 text-sm text-text-muted hover:text-text-primary">
-            Cancel
+            {t('backlog.completeModal.cancel')}
           </button>
           <button
             onClick={() => onConfirm(moveToId || null)}
             className="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
           >
-            Complete Sprint
+            {t('backlog.completeModal.complete')}
           </button>
         </div>
       </div>
@@ -811,6 +824,7 @@ function CompleteSprintModal({
 
 export default function BacklogPage() {
   const { boardId } = useParams<{ boardId: string }>()
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
 
   const { data: board }                           = useBoard(boardId!)
@@ -914,9 +928,9 @@ export default function BacklogPage() {
     try {
       await issuesApi.update(issueId, { sprintId } as Partial<Issue>)
       queryClient.invalidateQueries({ queryKey: queryKeys.issues.list(boardId!) })
-      toast.success(sprintId ? 'Added to sprint' : 'Moved to backlog')
+      toast.success(sprintId ? t('backlog.toasts.addedToSprint') : t('backlog.toasts.movedToBacklog'))
     } catch {
-      toast.error('Failed to move issue')
+      toast.error(t('backlog.toasts.failedToMove'))
     }
   }
 
@@ -924,9 +938,9 @@ export default function BacklogPage() {
     try {
       await issuesApi.update(issueId, { columnId } as Partial<Issue>)
       queryClient.invalidateQueries({ queryKey: queryKeys.issues.list(boardId!) })
-      toast.success('Pulled to board')
+      toast.success(t('backlog.toasts.pulledToBoard'))
     } catch {
-      toast.error('Failed to pull to board')
+      toast.error(t('backlog.toasts.failedToPull'))
     }
   }
 
@@ -935,9 +949,9 @@ export default function BacklogPage() {
       await sprintsApi.start(sprintId)
       queryClient.invalidateQueries({ queryKey: queryKeys.sprints.all(boardId!) })
       queryClient.invalidateQueries({ queryKey: queryKeys.issues.list(boardId!) })
-      toast.success('Sprint started')
+      toast.success(t('backlog.toasts.sprintStarted'))
     } catch {
-      toast.error('Failed to start sprint — make sure no other sprint is active')
+      toast.error(t('backlog.toasts.failedToStart'))
     }
   }
 
@@ -947,9 +961,9 @@ export default function BacklogPage() {
       queryClient.invalidateQueries({ queryKey: queryKeys.sprints.all(boardId!) })
       queryClient.invalidateQueries({ queryKey: queryKeys.issues.list(boardId!) })
       setCompleteId(null)
-      toast.success('Sprint completed')
+      toast.success(t('backlog.toasts.sprintCompleted'))
     } catch {
-      toast.error('Failed to complete sprint')
+      toast.error(t('backlog.toasts.failedToComplete'))
     }
   }
 
@@ -964,7 +978,7 @@ export default function BacklogPage() {
       {/* Header */}
       <div className="flex shrink-0 items-center justify-between border-b border-surface-border bg-surface px-5 py-3">
         <div className="flex items-center gap-3">
-          <h1 className="text-sm font-semibold text-text-primary">Backlog</h1>
+          <h1 className="text-sm font-semibold text-text-primary">{t('backlog.title')}</h1>
           <div className="flex items-center rounded-lg bg-surface-muted p-0.5 text-xs">
             {(['open', 'closed', 'all'] as const).map((tab) => {
               const count = tab === 'open'
@@ -977,13 +991,13 @@ export default function BacklogPage() {
                   key={tab}
                   onClick={() => setClosedTab(tab)}
                   className={cn(
-                    'rounded-md px-2.5 py-1 font-medium capitalize transition-colors',
+                    'rounded-md px-2.5 py-1 font-medium transition-colors',
                     closedTab === tab
                       ? 'bg-surface text-text-primary shadow-sm'
                       : 'text-text-muted hover:text-text-primary',
                   )}
                 >
-                  {tab} <span className="ms-1 text-[10px] opacity-70">{count}</span>
+                  {t(`backlog.tabs.${tab}`)} <span className="ms-1 text-[10px] opacity-70">{count}</span>
                 </button>
               )
             })}
@@ -1003,7 +1017,7 @@ export default function BacklogPage() {
             className="flex items-center gap-1.5 rounded-lg border border-surface-border px-3 py-1.5 text-xs text-text-muted transition-colors hover:border-primary/30 hover:text-primary"
           >
             <Plus className="h-3.5 w-3.5" />
-            Epic
+            {t('backlog.buttons.epic')}
           </button>
           {!isKanban && (
             <button
@@ -1011,7 +1025,7 @@ export default function BacklogPage() {
               className="flex items-center gap-1.5 rounded-lg border border-surface-border px-3 py-1.5 text-xs text-text-muted transition-colors hover:border-primary/30 hover:text-primary"
             >
               <Plus className="h-3.5 w-3.5" />
-              Sprint
+              {t('backlog.buttons.sprint')}
             </button>
           )}
           <button
@@ -1019,7 +1033,7 @@ export default function BacklogPage() {
             className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-primary-light"
           >
             <Plus className="h-3.5 w-3.5" />
-            Issue
+            {t('backlog.buttons.issue')}
           </button>
         </div>
       </div>

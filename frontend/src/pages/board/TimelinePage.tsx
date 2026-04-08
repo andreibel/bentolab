@@ -1,5 +1,6 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   ChevronRight, ChevronDown, Plus, Flag, X, Trash2,
   CalendarDays, Layers,
@@ -324,6 +325,7 @@ interface MilestoneModalProps {
 }
 
 function MilestoneModal({ boardId, milestone, onClose }: MilestoneModalProps) {
+  const { t } = useTranslation()
   const isEdit = milestone !== null
   const [title, setTitle]   = useState(milestone?.title ?? '')
   const [date,  setDate]    = useState(milestone ? format(parseISO(milestone.date), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'))
@@ -336,24 +338,24 @@ function MilestoneModal({ boardId, milestone, onClose }: MilestoneModalProps) {
   const deleteMutation = useDeleteMilestone(boardId)
 
   const handleSave = async () => {
-    if (!title.trim()) { toast.error('Title is required'); return }
+    if (!title.trim()) { toast.error(t('timeline.milestone.titleRequired')); return }
     try {
       if (isEdit) {
         await updateMutation.mutateAsync({
           id: milestone!.id,
           data: { title: title.trim(), description: desc || undefined, date: new Date(date).toISOString(), color, status: status as Milestone['status'] },
         })
-        toast.success('Milestone updated')
+        toast.success(t('timeline.milestone.updated'))
       } else {
         await createMutation.mutateAsync({
           boardId, title: title.trim(), description: desc || undefined,
           date: new Date(date).toISOString(), color,
         })
-        toast.success('Milestone created')
+        toast.success(t('timeline.milestone.created'))
       }
       onClose()
     } catch {
-      toast.error('Failed to save milestone')
+      toast.error(t('timeline.milestone.failedToSave'))
     }
   }
 
@@ -361,10 +363,10 @@ function MilestoneModal({ boardId, milestone, onClose }: MilestoneModalProps) {
     if (!milestone) return
     try {
       await deleteMutation.mutateAsync(milestone.id)
-      toast.success('Milestone deleted')
+      toast.success(t('timeline.milestone.deleted'))
       onClose()
     } catch {
-      toast.error('Failed to delete milestone')
+      toast.error(t('timeline.milestone.failedToDelete'))
     }
   }
 
@@ -383,7 +385,7 @@ function MilestoneModal({ boardId, milestone, onClose }: MilestoneModalProps) {
               <Flag className="h-3.5 w-3.5 text-white" />
             </span>
             <h2 className="text-base font-semibold text-text-primary">
-              {isEdit ? 'Edit Milestone' : 'New Milestone'}
+              {isEdit ? t('timeline.milestone.editTitle') : t('timeline.milestone.newTitle')}
             </h2>
           </div>
           <button onClick={onClose} className="rounded p-1 text-text-muted hover:bg-surface-muted hover:text-text-primary">
@@ -394,20 +396,20 @@ function MilestoneModal({ boardId, milestone, onClose }: MilestoneModalProps) {
         <div className="space-y-4">
           {/* Title */}
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-text-secondary">Title</label>
+            <label className="mb-1.5 block text-xs font-medium text-text-secondary">{t('timeline.milestone.titleLabel')}</label>
             <input
               autoFocus
               value={title}
               onChange={e => setTitle(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleSave()}
-              placeholder="e.g. Beta Launch, Feature Freeze…"
+              placeholder={t('timeline.milestone.datePlaceholder')}
               className="w-full rounded-lg border border-surface-border bg-surface-muted px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
 
           {/* Date */}
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-text-secondary">Date</label>
+            <label className="mb-1.5 block text-xs font-medium text-text-secondary">{t('timeline.milestone.dateLabel')}</label>
             <input
               type="date"
               value={date}
@@ -418,33 +420,33 @@ function MilestoneModal({ boardId, milestone, onClose }: MilestoneModalProps) {
 
           {/* Color */}
           <div>
-            <ColorPicker value={color} onChange={setColor} colors={MILESTONE_PALETTE} label="Color" />
+            <ColorPicker value={color} onChange={setColor} colors={MILESTONE_PALETTE} label={t('timeline.milestone.colorLabel')} />
           </div>
 
           {/* Status (edit only) */}
           {isEdit && (
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-text-secondary">Status</label>
+              <label className="mb-1.5 block text-xs font-medium text-text-secondary">{t('timeline.milestone.statusLabel')}</label>
               <select
                 value={status}
                 onChange={e => setStatus(e.target.value as Milestone['status'])}
                 className="w-full rounded-lg border border-surface-border bg-surface-muted px-3 py-2 text-sm text-text-primary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
               >
-                <option value="PLANNED">Planned</option>
-                <option value="REACHED">Reached</option>
-                <option value="MISSED">Missed</option>
+                <option value="PLANNED">{t('timeline.milestone.status.PLANNED')}</option>
+                <option value="REACHED">{t('timeline.milestone.status.REACHED')}</option>
+                <option value="MISSED">{t('timeline.milestone.status.MISSED')}</option>
               </select>
             </div>
           )}
 
           {/* Description */}
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-text-secondary">Description <span className="text-text-muted">(optional)</span></label>
+            <label className="mb-1.5 block text-xs font-medium text-text-secondary">{t('timeline.milestone.descLabel')} <span className="text-text-muted">{t('timeline.milestone.descOptional')}</span></label>
             <textarea
               value={desc}
               onChange={e => setDesc(e.target.value)}
               rows={2}
-              placeholder="Optional notes…"
+              placeholder={t('timeline.milestone.descPlaceholder')}
               className="w-full resize-none rounded-lg border border-surface-border bg-surface-muted px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
@@ -460,7 +462,7 @@ function MilestoneModal({ boardId, milestone, onClose }: MilestoneModalProps) {
                 className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30"
               >
                 <Trash2 className="h-3.5 w-3.5" />
-                Delete
+                {t('timeline.milestone.delete')}
               </button>
             )}
           </div>
@@ -469,14 +471,14 @@ function MilestoneModal({ boardId, milestone, onClose }: MilestoneModalProps) {
               onClick={onClose}
               className="rounded-lg border border-surface-border px-4 py-2 text-sm font-medium text-text-secondary hover:bg-surface-muted"
             >
-              Cancel
+              {t('timeline.milestone.cancel')}
             </button>
             <button
               onClick={handleSave}
               disabled={isPending}
               className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-dark disabled:opacity-60"
             >
-              {isPending ? 'Saving…' : isEdit ? 'Save' : 'Create'}
+              {isPending ? t('timeline.milestone.saving') : isEdit ? t('timeline.milestone.save') : t('timeline.milestone.create')}
             </button>
           </div>
         </div>
@@ -496,6 +498,7 @@ function milestoneStatusClass(status: Milestone['status']) {
 // ── Main page ──────────────────────────────────────────────────────────────────
 
 export default function TimelinePage() {
+  const { t } = useTranslation()
   const { boardId = '' } = useParams<{ boardId: string }>()
 
   const { data: board }      = useBoard(boardId)
@@ -711,7 +714,7 @@ export default function TimelinePage() {
       return (
         <div className="flex w-full items-center gap-1.5 px-3">
           <Layers className="h-3 w-3 shrink-0 text-text-muted" />
-          <span className="text-xs font-semibold text-text-muted">Sprints</span>
+          <span className="text-xs font-semibold text-text-muted">{t('timeline.show.sprints')}</span>
           <span className="ms-1 text-[10px] text-text-muted opacity-60">{row.sprints.length}</span>
         </div>
       )
@@ -741,7 +744,9 @@ export default function TimelinePage() {
           {row.collapsed
             ? <ChevronRight className="h-3.5 w-3.5 shrink-0 text-text-muted" />
             : <ChevronDown  className="h-3.5 w-3.5 shrink-0 text-text-muted" />}
-          <span className="text-xs font-medium text-text-muted">{row.label}</span>
+          <span className="text-xs font-medium text-text-muted">
+            {row.id === '__no_epic__' ? t('timeline.noEpic') : row.id === '__backlog__' ? t('timeline.backlog') : row.label}
+          </span>
         </button>
       )
     }
@@ -889,7 +894,7 @@ export default function TimelinePage() {
                 groupBy === g ? 'bg-primary-subtle text-primary' : 'text-text-secondary hover:bg-surface-muted',
               )}
             >
-              {g === 'none' ? 'Flat' : g === 'epic' ? 'By Epic' : 'By Sprint'}
+              {t(`timeline.groupBy.${g}`)}
             </button>
           ))}
         </div>
@@ -906,7 +911,7 @@ export default function TimelinePage() {
                 zoom === z ? 'bg-primary-subtle text-primary' : 'text-text-secondary hover:bg-surface-muted',
               )}
             >
-              {z.charAt(0).toUpperCase() + z.slice(1)}
+              {t(`timeline.zoom.${z}`)}
             </button>
           ))}
         </div>
@@ -924,7 +929,7 @@ export default function TimelinePage() {
                   : 'text-text-muted hover:bg-surface-muted',
               )}
             >
-              {key}
+              {t(`timeline.show.${key}`)}
             </button>
           ))}
         </div>
@@ -936,7 +941,7 @@ export default function TimelinePage() {
             className="flex items-center gap-1.5 rounded-lg border border-surface-border px-3 py-1.5 text-xs font-medium text-text-secondary hover:bg-surface-muted"
           >
             <CalendarDays className="h-3.5 w-3.5" />
-            Today
+            {t('timeline.today')}
           </button>
 
           {/* Add milestone */}
@@ -945,7 +950,7 @@ export default function TimelinePage() {
             className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-dark"
           >
             <Plus className="h-3.5 w-3.5" />
-            Milestone
+            {t('timeline.addMilestone')}
           </button>
         </div>
       </div>
@@ -962,7 +967,7 @@ export default function TimelinePage() {
             className="sticky left-0 z-30 flex shrink-0 items-end border-e border-b border-surface-border bg-surface px-3 pb-1.5"
             style={{ width: LEFT_W }}
           >
-            <span className="text-[10px] font-semibold uppercase tracking-widest text-text-muted">Name</span>
+            <span className="text-[10px] font-semibold uppercase tracking-widest text-text-muted">{t('timeline.name')}</span>
           </div>
 
           {/* Date area */}

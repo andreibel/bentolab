@@ -2,40 +2,42 @@ import {NavLink, useParams} from 'react-router-dom'
 import {useBoard} from '@/api/boards'
 import {cn} from '@/utils/cn'
 import {Loader2} from 'lucide-react'
+import {useTranslation} from 'react-i18next'
 import type {BoardType} from '@/types/board'
 
 interface LabTab {
-  label: string
+  id:   string
   path: string
 }
 
 const ALL_TABS: LabTab[] = [
-  { label: 'Board',    path: ''          },
-  { label: 'Summary',  path: '/summary'  },
-  { label: 'Backlog',  path: '/backlog'  },
-  { label: 'Sprints',  path: '/sprints'  },
-  { label: 'Triage',   path: '/triage'   },
-  { label: 'Timeline', path: '/timeline' },
-  { label: 'Reports',  path: '/reports'  },
+  { id: 'board',    path: ''          },
+  { id: 'summary',  path: '/summary'  },
+  { id: 'backlog',  path: '/backlog'  },
+  { id: 'sprints',  path: '/sprints'  },
+  { id: 'triage',   path: '/triage'   },
+  { id: 'timeline', path: '/timeline' },
+  { id: 'reports',  path: '/reports'  },
 ]
 
 function getTabsForBoardType(boardType: BoardType | undefined): LabTab[] {
   switch (boardType) {
     case 'KANBAN':
-      return ALL_TABS.filter((t) => !['Sprints', 'Triage'].includes(t.label))
+      return ALL_TABS.filter((t) => !['sprints', 'triage'].includes(t.id))
     case 'BUG_TRACKING':
-      return ALL_TABS.filter((t) => !['Backlog', 'Sprints'].includes(t.label))
+      return ALL_TABS.filter((t) => !['backlog', 'sprints'].includes(t.id))
     case 'SCRUM':
-      return ALL_TABS.filter((t) => t.label !== 'Triage')
+      return ALL_TABS.filter((t) => t.id !== 'triage')
     case 'CUSTOM':
     default:
-      return ALL_TABS.filter((t) => t.label !== 'Triage')
+      return ALL_TABS.filter((t) => t.id !== 'triage')
   }
 }
 
 export function LabTopNav() {
   const { boardId } = useParams<{ boardId: string }>()
   const { data: board, isLoading } = useBoard(boardId!)
+  const { t } = useTranslation()
 
   if (!boardId) return null
 
@@ -62,11 +64,11 @@ export function LabTopNav() {
 
       {/* Tabs */}
       <nav className="flex items-center">
-        {tabs.map(({ label, path }) => {
+        {tabs.map(({ id, path }) => {
           const to = `/boards/${boardId}${path}`
           return (
             <NavLink
-              key={label}
+              key={id}
               to={to}
               end={path === ''}
               className={({ isActive }) =>
@@ -80,7 +82,7 @@ export function LabTopNav() {
                 )
               }
             >
-              {label}
+              {t(`labTopNav.${id}`)}
             </NavLink>
           )
         })}

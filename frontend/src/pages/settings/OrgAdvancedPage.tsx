@@ -2,6 +2,7 @@ import {useState} from 'react'
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query'
 import {AlertCircle, Database, Loader2, SlidersHorizontal, ToggleLeft, ToggleRight} from 'lucide-react'
 import {toast} from 'sonner'
+import {useTranslation} from 'react-i18next'
 import {orgsApi} from '@/api/orgs'
 import {queryKeys} from '@/api/queryKeys'
 import {useAuthStore} from '@/stores/authStore'
@@ -81,6 +82,7 @@ function NumberRow({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function OrgAdvancedPage() {
+  const { t } = useTranslation()
   const { currentOrgId, orgRole } = useAuthStore()
   const queryClient = useQueryClient()
   const isOwner = orgRole === 'ORG_OWNER'
@@ -120,9 +122,9 @@ export default function OrgAdvancedPage() {
       orgsApi.updateSettings(currentOrgId!, patch),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.orgs.detail(currentOrgId!) })
-      toast.success('Settings saved')
+      toast.success(t('settings.advanced.saved'))
     },
-    onError: () => toast.error('Failed to save settings'),
+    onError: () => toast.error(t('settings.advanced.failedToSave')),
   })
 
   function save(patch: Parameters<typeof orgsApi.updateSettings>[1]) {
@@ -139,8 +141,8 @@ export default function OrgAdvancedPage() {
           <SlidersHorizontal className="h-5 w-5 text-primary" />
         </div>
         <div>
-          <h1 className="text-lg font-semibold text-text-primary">Advanced Settings</h1>
-          <p className="text-sm text-text-muted">Feature flags and resource limits for this organization.</p>
+          <h1 className="text-lg font-semibold text-text-primary">{t('settings.advanced.title')}</h1>
+          <p className="text-sm text-text-muted">{t('settings.advanced.description')}</p>
         </div>
       </div>
 
@@ -148,7 +150,7 @@ export default function OrgAdvancedPage() {
         <div className="mb-6 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-900/40 dark:bg-amber-900/20">
           <AlertCircle className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
           <p className="text-sm text-amber-700 dark:text-amber-300">
-            Only the organization owner can change these settings.
+            {t('settings.advanced.ownerOnly')}
           </p>
         </div>
       )}
@@ -164,35 +166,35 @@ export default function OrgAdvancedPage() {
             <div className="border-b border-surface-border px-6 py-4">
               <div className="flex items-center gap-2">
                 <ToggleRight className="h-4 w-4 text-text-muted" />
-                <h2 className="text-sm font-semibold text-text-primary">Features</h2>
+                <h2 className="text-sm font-semibold text-text-primary">{t('settings.advanced.featuresTitle')}</h2>
                 {mutation.isPending && <Loader2 className="ms-auto h-3.5 w-3.5 animate-spin text-text-muted" />}
               </div>
             </div>
             <div className="divide-y divide-surface-border px-6">
               <ToggleRow
-                label="Discord notifications"
-                description="Allow connecting Discord webhooks for board event alerts."
+                label={t('settings.advanced.flags.discord')}
+                description={t('settings.advanced.flags.discordDesc')}
                 value={allowDiscord}
                 disabled={!isOwner || mutation.isPending}
                 onChange={(v) => { setAllowDiscord(v); save({ allowDiscord: v }) }}
               />
               <ToggleRow
-                label="Data export"
-                description="Allow members to export board data as CSV or JSON."
+                label={t('settings.advanced.flags.export')}
+                description={t('settings.advanced.flags.exportDesc')}
                 value={allowExport}
                 disabled={!isOwner || mutation.isPending}
                 onChange={(v) => { setAllowExport(v); save({ allowExport: v }) }}
               />
               <ToggleRow
-                label="Custom branding"
-                description="Replace Bento logos and colors with your own brand assets."
+                label={t('settings.advanced.flags.branding')}
+                description={t('settings.advanced.flags.brandingDesc')}
                 value={customBranding}
                 disabled={!isOwner || mutation.isPending}
                 onChange={(v) => { setCustomBranding(v); save({ customBranding: v }) }}
               />
               <ToggleRow
-                label="SSO / SAML"
-                description="Require members to authenticate via your identity provider."
+                label={t('settings.advanced.flags.sso')}
+                description={t('settings.advanced.flags.ssoDesc')}
                 value={ssoEnabled}
                 disabled={!isOwner || mutation.isPending}
                 onChange={(v) => { setSsoEnabled(v); save({ ssoEnabled: v }) }}
@@ -205,29 +207,29 @@ export default function OrgAdvancedPage() {
             <div className="border-b border-surface-border px-6 py-4">
               <div className="flex items-center gap-2">
                 <Database className="h-4 w-4 text-text-muted" />
-                <h2 className="text-sm font-semibold text-text-primary">Limits</h2>
+                <h2 className="text-sm font-semibold text-text-primary">{t('settings.advanced.limitsTitle')}</h2>
               </div>
             </div>
             <div className="divide-y divide-surface-border px-6">
               <NumberRow
-                label="Max members"
-                description="Maximum number of users allowed in this organization."
+                label={t('settings.advanced.limits.maxMembers')}
+                description={t('settings.advanced.limits.maxMembersDesc')}
                 value={maxUsers}
                 min={1}
                 disabled={!isOwner || mutation.isPending}
                 onChange={(v) => setMaxUsers(v)}
               />
               <NumberRow
-                label="Max boards"
-                description="Maximum number of boards that can be created."
+                label={t('settings.advanced.limits.maxBoards')}
+                description={t('settings.advanced.limits.maxBoardsDesc')}
                 value={maxBoards}
                 min={1}
                 disabled={!isOwner || mutation.isPending}
                 onChange={(v) => setMaxBoards(v)}
               />
               <NumberRow
-                label="Storage limit (GB)"
-                description="Maximum attachment storage for this organization."
+                label={t('settings.advanced.limits.maxStorage')}
+                description={t('settings.advanced.limits.maxStorageDesc')}
                 value={maxStorageGB}
                 min={0}
                 disabled={!isOwner || mutation.isPending}
@@ -247,7 +249,7 @@ export default function OrgAdvancedPage() {
                   )}
                 >
                   {mutation.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                  Save limits
+                  {t('settings.advanced.saveLimits')}
                 </button>
               </div>
             )}

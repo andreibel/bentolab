@@ -1,6 +1,7 @@
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import {useQuery} from '@tanstack/react-query'
 import Fuse from 'fuse.js'
+import {useTranslation} from 'react-i18next'
 import {
   ArrowDown,
   ArrowUp,
@@ -67,6 +68,7 @@ function BoardFilter({
   value: string | null
   onChange: (id: string | null) => void
 }) {
+  const { t } = useTranslation()
   const [open, setOpen]     = useState(false)
   const [query, setQuery]   = useState('')
   const ref                 = useRef<HTMLDivElement>(null)
@@ -104,7 +106,7 @@ function BoardFilter({
             <X className="h-3 w-3 opacity-60" onClick={(e) => { e.stopPropagation(); onChange(null) }} />
           </>
         ) : (
-          <>Board <ChevronDown className="h-3 w-3 opacity-60" /></>
+          <>{t('myIssues.filters.board')} <ChevronDown className="h-3 w-3 opacity-60" /></>
         )}
       </button>
 
@@ -117,7 +119,7 @@ function BoardFilter({
                 autoFocus
                 value={query}
                 onChange={e => setQuery(e.target.value)}
-                placeholder="Search boards…"
+                placeholder={t('myIssues.filters.searchBoards')}
                 className="flex-1 bg-transparent text-xs text-text-primary outline-none placeholder:text-text-muted"
               />
             </div>
@@ -138,7 +140,7 @@ function BoardFilter({
               </button>
             ))}
             {results.length === 0 && (
-              <p className="px-3 py-4 text-center text-xs text-text-muted">No boards found</p>
+              <p className="px-3 py-4 text-center text-xs text-text-muted">{t('myIssues.filters.noBoards')}</p>
             )}
           </div>
         </div>
@@ -221,8 +223,9 @@ function IssueRow({
   userId: string
   onClick: () => void
 }) {
-  const p = PRIORITY_META[issue.priority]
-  const t = TYPE_META[issue.type]
+  const { t } = useTranslation()
+  const priorityMeta = PRIORITY_META[issue.priority]
+  const typeMeta = TYPE_META[issue.type]
   const overdue = isOverdue(issue.dueDate)
 
   return (
@@ -231,10 +234,10 @@ function IssueRow({
       className="group flex cursor-pointer items-center gap-3 border-b border-surface-border/50 px-4 py-2.5 text-sm transition-colors hover:bg-surface-muted/50 last:border-b-0"
     >
       {/* Priority */}
-      <span className={cn('shrink-0', p.color)}>{p.icon}</span>
+      <span className={cn('shrink-0', priorityMeta.color)}>{priorityMeta.icon}</span>
 
       {/* Type */}
-      <span className={cn('shrink-0', t.color)}>{t.icon}</span>
+      <span className={cn('shrink-0', typeMeta.color)}>{typeMeta.icon}</span>
 
       {/* Key */}
       <span className="shrink-0 font-mono text-[11px] text-text-muted w-16">{issue.issueKey}</span>
@@ -244,11 +247,11 @@ function IssueRow({
 
       {/* Relation badge */}
       {issue.assigneeId === userId && issue.reporterId === userId ? (
-        <span className="shrink-0 rounded-full bg-purple-500/10 px-1.5 py-0.5 text-[10px] font-medium text-purple-500">Both</span>
+        <span className="shrink-0 rounded-full bg-purple-500/10 px-1.5 py-0.5 text-[10px] font-medium text-purple-500">{t('myIssues.relation_badge.both')}</span>
       ) : issue.assigneeId === userId ? (
-        <span className="shrink-0 rounded-full bg-blue-500/10 px-1.5 py-0.5 text-[10px] font-medium text-blue-500">Assigned</span>
+        <span className="shrink-0 rounded-full bg-blue-500/10 px-1.5 py-0.5 text-[10px] font-medium text-blue-500">{t('myIssues.relation_badge.assigned')}</span>
       ) : (
-        <span className="shrink-0 rounded-full bg-surface-muted px-1.5 py-0.5 text-[10px] font-medium text-text-muted">Created</span>
+        <span className="shrink-0 rounded-full bg-surface-muted px-1.5 py-0.5 text-[10px] font-medium text-text-muted">{t('myIssues.relation_badge.created')}</span>
       )}
 
       {/* Board */}
@@ -266,7 +269,7 @@ function IssueRow({
       {/* Closed badge */}
       {issue.closed && (
         <span className="shrink-0 rounded-full bg-surface-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-text-muted">
-          Closed
+          {t('myIssues.closedBadge')}
         </span>
       )}
     </div>
@@ -315,6 +318,7 @@ function IssueDetailPanelWrapper({
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function MyIssuesPage() {
+  const { t } = useTranslation()
   const { user } = useAuthStore()
 
   // Filters
@@ -443,7 +447,7 @@ export default function MyIssuesPage() {
                     : 'text-text-muted hover:text-text-primary',
                 )}
               >
-                {r === 'all' ? 'All' : r === 'assigned' ? 'Assigned to me' : 'Created by me'}
+                {t(`myIssues.relation.${r}`)}
               </button>
             ))}
           </div>
@@ -456,7 +460,7 @@ export default function MyIssuesPage() {
               <input
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                placeholder="Search by title or key…"
+                placeholder={t('myIssues.searchPlaceholder')}
                 className="w-44 bg-transparent text-text-primary outline-none placeholder:text-text-muted"
               />
               {search && (
@@ -467,25 +471,25 @@ export default function MyIssuesPage() {
             <BoardFilter boards={boards} value={boardFilter} onChange={setBoardFilter} />
 
             <PillFilter
-              label="Priority"
+              label={t('myIssues.filters.priority')}
               options={['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'] as IssuePriority[]}
               value={priorityFilter}
               onChange={setPriorityFilter}
               renderOption={(v) => (
                 <span className={cn('flex items-center gap-1.5', PRIORITY_META[v].color)}>
-                  {PRIORITY_META[v].icon} {PRIORITY_META[v].label}
+                  {PRIORITY_META[v].icon} {t(`issues.priorities.${v}`)}
                 </span>
               )}
             />
 
             <PillFilter
-              label="Type"
+              label={t('myIssues.filters.type')}
               options={['STORY', 'TASK', 'BUG', 'SUBTASK'] as IssueType[]}
               value={typeFilter}
               onChange={setTypeFilter}
               renderOption={(v) => (
                 <span className={cn('flex items-center gap-1.5', TYPE_META[v].color)}>
-                  {TYPE_META[v].icon} {TYPE_META[v].label}
+                  {TYPE_META[v].icon} {t(`issues.types.${v}`)}
                 </span>
               )}
             />
@@ -503,7 +507,7 @@ export default function MyIssuesPage() {
               )}
             >
               <Circle className="h-3 w-3" />
-              {closedFilter === false ? 'Open' : closedFilter === true ? 'Closed' : 'All status'}
+              {closedFilter === false ? t('myIssues.filters.open') : closedFilter === true ? t('myIssues.filters.closed') : t('myIssues.filters.status')}
             </button>
 
             {/* Sort */}
@@ -514,10 +518,10 @@ export default function MyIssuesPage() {
                 onChange={e => setSortBy(e.target.value as SortKey)}
                 className="h-8 rounded-lg border border-surface-border bg-surface px-2 text-xs text-text-primary outline-none focus:border-primary/50"
               >
-                <option value="priority">Priority</option>
-                <option value="dueDate">Due date</option>
-                <option value="createdAt">Created</option>
-                <option value="updatedAt">Updated</option>
+                <option value="priority">{t('myIssues.sort.priority')}</option>
+                <option value="dueDate">{t('myIssues.sort.dueDate')}</option>
+                <option value="createdAt">{t('myIssues.sort.createdAt')}</option>
+                <option value="updatedAt">{t('myIssues.sort.updatedAt')}</option>
               </select>
             </div>
 
@@ -526,7 +530,7 @@ export default function MyIssuesPage() {
                 onClick={clearFilters}
                 className="flex h-8 items-center gap-1 rounded-lg border border-surface-border px-2.5 text-xs text-text-muted hover:text-text-primary"
               >
-                <X className="h-3 w-3" /> Clear
+                <X className="h-3 w-3" /> {t('myIssues.filters.clear')}
               </button>
             )}
           </div>
@@ -540,9 +544,9 @@ export default function MyIssuesPage() {
             </div>
           ) : filtered.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center gap-2">
-              <p className="text-sm font-medium text-text-primary">No issues found</p>
+              <p className="text-sm font-medium text-text-primary">{t('myIssues.empty')}</p>
               <p className="text-xs text-text-muted">
-                {hasFilters ? 'Try adjusting your filters' : 'Issues assigned to or created by you will appear here'}
+                {hasFilters ? t('myIssues.emptyFilters') : t('myIssues.emptyHint')}
               </p>
             </div>
           ) : (
@@ -551,11 +555,11 @@ export default function MyIssuesPage() {
               <div className="mb-1 flex items-center gap-3 px-4 text-[10px] font-semibold uppercase tracking-wider text-text-muted">
                 <span className="w-3 shrink-0" />
                 <span className="w-3 shrink-0" />
-                <span className="w-16 shrink-0">Key</span>
-                <span className="flex-1">Title</span>
-                <span className="w-16 shrink-0 text-end">Relation</span>
-                <span className="w-24 shrink-0 text-end">Board</span>
-                <span className="w-16 shrink-0 text-end">Due</span>
+                <span className="w-16 shrink-0">{t('myIssues.columns.key')}</span>
+                <span className="flex-1">{t('myIssues.columns.title')}</span>
+                <span className="w-16 shrink-0 text-end">{t('myIssues.columns.relation')}</span>
+                <span className="w-24 shrink-0 text-end">{t('myIssues.columns.board')}</span>
+                <span className="w-16 shrink-0 text-end">{t('myIssues.columns.due')}</span>
               </div>
 
               {[...grouped.entries()].map(([boardId, issues]) => {
@@ -586,7 +590,7 @@ export default function MyIssuesPage() {
               })}
 
               <p className="px-4 pb-2 text-xs text-text-muted">
-                {filtered.length} issue{filtered.length !== 1 ? 's' : ''} total
+                {t('myIssues.total', { count: filtered.length })}
               </p>
             </div>
           )}

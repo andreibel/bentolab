@@ -1,5 +1,6 @@
 import {useState} from 'react'
 import {useParams} from 'react-router-dom'
+import {useTranslation} from 'react-i18next'
 import {Archive, CheckCircle, ChevronDown, ChevronRight, Clock, Loader2, Play, Plus, RefreshCw, Target,} from 'lucide-react'
 import {useQueryClient} from '@tanstack/react-query'
 import {toast} from 'sonner'
@@ -40,6 +41,7 @@ function CompleteSprintModal({
   onConfirm: (moveToSprintId: string | null) => void
   onClose: () => void
 }) {
+  const { t } = useTranslation()
   const eligible = otherSprints.filter((s) => s.status !== 'COMPLETED')
   const [dest,     setDest]     = useState<'backlog' | 'sprint'>('backlog')
   const [moveToId, setMoveToId] = useState(eligible[0]?.id ?? '')
@@ -51,11 +53,11 @@ function CompleteSprintModal({
 
         {/* Header */}
         <div className="border-b border-surface-border px-6 py-4">
-          <h2 className="text-sm font-semibold text-text-primary">Close "{sprint.name}"</h2>
+          <h2 className="text-sm font-semibold text-text-primary">{t('sprintsPage.modal.title', { name: sprint.name })}</h2>
           <p className="mt-0.5 text-xs text-text-muted">
             {incompleteCount === 0
-              ? 'All issues are complete — great work!'
-              : `${incompleteCount} incomplete issue${incompleteCount !== 1 ? 's' : ''} need${incompleteCount === 1 ? 's' : ''} to be moved.`}
+              ? t('sprintsPage.modal.allComplete')
+              : t('sprintsPage.modal.incomplete', { count: incompleteCount })}
           </p>
         </div>
 
@@ -77,10 +79,10 @@ function CompleteSprintModal({
             </div>
             <div>
               <p className={cn('text-sm font-medium', dest === 'backlog' ? 'text-primary' : 'text-text-primary')}>
-                Move to Backlog
+                {t('sprintsPage.modal.backlogOption')}
               </p>
               <p className="mt-0.5 text-xs text-text-muted">
-                Incomplete issues return to the backlog and can be planned into future sprints.
+                {t('sprintsPage.modal.backlogDesc')}
               </p>
             </div>
           </button>
@@ -103,12 +105,12 @@ function CompleteSprintModal({
             </div>
             <div className="flex-1 min-w-0">
               <p className={cn('text-sm font-medium', dest === 'sprint' ? 'text-primary' : 'text-text-primary')}>
-                Transfer to Sprint
+                {t('sprintsPage.modal.sprintOption')}
               </p>
               <p className="mt-0.5 text-xs text-text-muted">
                 {eligible.length === 0
-                  ? 'No other active or planned sprints available.'
-                  : 'Move incomplete issues directly into another sprint.'}
+                  ? t('sprintsPage.modal.noSprints')
+                  : t('sprintsPage.modal.sprintDesc')}
               </p>
               {dest === 'sprint' && eligible.length > 0 && (
                 <select
@@ -129,13 +131,13 @@ function CompleteSprintModal({
         {/* Footer */}
         <div className="flex justify-end gap-2 border-t border-surface-border px-5 py-3.5">
           <button onClick={onClose} className="rounded-lg px-4 py-2 text-sm text-text-muted transition-colors hover:text-text-primary">
-            Cancel
+            {t('sprintsPage.modal.cancel')}
           </button>
           <button
             onClick={() => onConfirm(dest === 'sprint' ? (moveToId || null) : null)}
             className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700"
           >
-            Close Sprint
+            {t('sprintsPage.modal.close')}
           </button>
         </div>
       </div>
@@ -156,6 +158,7 @@ function SprintCard({
   onStart: (id: string) => void
   onComplete: (id: string) => void
 }) {
+  const { t } = useTranslation()
   const [expanded, setExpanded] = useState(sprint.status === 'ACTIVE')
 
   // Derive live counts from actual issues (so they update immediately on close/reopen)
@@ -174,9 +177,9 @@ function SprintCard({
   const overdue = days !== null && days < 0
 
   const statusConfig = {
-    ACTIVE:    { label: 'Active',     ring: 'ring-green-500/30',  bg: 'bg-green-500/8',   dot: 'bg-green-500'  },
-    PLANNED:   { label: 'Planned',    ring: 'ring-surface-border', bg: 'bg-surface',       dot: 'bg-text-muted' },
-    COMPLETED: { label: 'Completed',  ring: 'ring-surface-border', bg: 'bg-surface-muted', dot: 'bg-text-muted' },
+    ACTIVE:    { ring: 'ring-green-500/30',  bg: 'bg-green-500/8',   dot: 'bg-green-500'  },
+    PLANNED:   { ring: 'ring-surface-border', bg: 'bg-surface',       dot: 'bg-text-muted' },
+    COMPLETED: { ring: 'ring-surface-border', bg: 'bg-surface-muted', dot: 'bg-text-muted' },
   }[sprint.status]
 
   return (
@@ -195,11 +198,11 @@ function SprintCard({
             <span className={cn('h-2 w-2 shrink-0 rounded-full', statusConfig.dot)} />
             <h3 className="font-semibold text-text-primary truncate">{sprint.name}</h3>
             <span className="shrink-0 rounded-full border border-surface-border px-1.5 py-0.5 text-[10px] font-medium text-text-muted">
-              {statusConfig.label}
+              {t(`sprintsPage.status.${sprint.status}`)}
             </span>
             {sprint.status === 'ACTIVE' && days !== null && (
               <span className={cn('shrink-0 text-xs font-medium', overdue ? 'text-red-500' : 'text-text-muted')}>
-                {overdue ? `${Math.abs(days)}d overdue` : `${days}d left`}
+                {overdue ? t('sprintsPage.overdue', { count: Math.abs(days) }) : t('sprintsPage.daysLeft', { count: days })}
               </span>
             )}
           </div>

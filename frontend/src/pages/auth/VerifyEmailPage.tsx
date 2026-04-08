@@ -2,6 +2,7 @@ import {useEffect, useRef, useState} from 'react'
 import {Link, useSearchParams} from 'react-router-dom'
 import {AlertCircle, ArrowLeft, CheckCircle2, Loader2} from 'lucide-react'
 import {motion, useReducedMotion} from 'framer-motion'
+import {useTranslation} from 'react-i18next'
 import {authApi} from '@/api/auth'
 import {Button} from '@/components/ui/Button'
 import {Input} from '@/components/ui/Input'
@@ -9,6 +10,7 @@ import {Input} from '@/components/ui/Input'
 type State = 'loading' | 'success' | 'error'
 
 export default function VerifyEmailPage() {
+  const { t } = useTranslation()
   const [searchParams] = useSearchParams()
   const token = searchParams.get('token')
   const [state, setState] = useState<State>(token ? 'loading' : 'error')
@@ -106,7 +108,7 @@ export default function VerifyEmailPage() {
           {state === 'loading' && (
             <div className="flex flex-col items-center gap-4 py-4 text-center">
               <Loader2 className="h-10 w-10 animate-spin text-primary" />
-              <p className="text-sm text-text-secondary">Verifying your email…</p>
+              <p className="text-sm text-text-secondary">{t('auth.verifyEmail.verifying')}</p>
             </div>
           )}
 
@@ -116,13 +118,13 @@ export default function VerifyEmailPage() {
                 <CheckCircle2 className="h-7 w-7 text-emerald-500" />
               </div>
               <div className="flex flex-col gap-1.5">
-                <h1 className="text-[1.75rem] font-bold tracking-tight text-text-primary">Email verified!</h1>
+                <h1 className="text-[1.75rem] font-bold tracking-tight text-text-primary">{t('auth.verifyEmail.successTitle')}</h1>
                 <p className="text-sm text-text-secondary">
-                  Your email address has been confirmed. You're all set.
+                  {t('auth.verifyEmail.successDesc')}
                 </p>
               </div>
               <Link to="/login" className="mt-1 w-full">
-                <Button size="lg" className="w-full">Sign in to Bento</Button>
+                <Button size="lg" className="w-full">{t('auth.verifyEmail.signIn')}</Button>
               </Link>
             </div>
           )}
@@ -134,12 +136,12 @@ export default function VerifyEmailPage() {
               </div>
               <div className="flex flex-col gap-1.5">
                 <h1 className="text-[1.75rem] font-bold tracking-tight text-text-primary">
-                  {token ? 'Link expired' : 'Invalid link'}
+                  {token ? t('auth.verifyEmail.linkExpired') : t('auth.verifyEmail.invalidLink')}
                 </h1>
                 <p className="text-sm text-text-secondary">
                   {token
-                    ? 'This verification link has expired or already been used. Request a new one below.'
-                    : 'No verification token was found in this link.'}
+                    ? t('auth.verifyEmail.expiredDesc')
+                    : t('auth.verifyEmail.invalidDesc')}
                 </p>
               </div>
 
@@ -149,7 +151,7 @@ export default function VerifyEmailPage() {
                     type="email"
                     value={resendEmail}
                     onChange={(e) => setResendEmail(e.target.value)}
-                    placeholder="Enter your email"
+                    placeholder={t('auth.verifyEmail.enterEmail')}
                   />
                   <Button
                     type="button"
@@ -159,12 +161,12 @@ export default function VerifyEmailPage() {
                     onClick={handleResend}
                     className="w-full"
                   >
-                    Resend verification email
+                    {t('auth.verifyEmail.resend')}
                   </Button>
                 </div>
               ) : (
                 <p className="mt-1 text-sm text-emerald-600">
-                  Sent! Check your inbox and spam folder.
+                  {t('auth.verifyEmail.sentCheckInbox')}
                 </p>
               )}
             </div>
@@ -182,7 +184,7 @@ export default function VerifyEmailPage() {
             className="inline-flex items-center gap-1.5 font-medium text-text-secondary transition-colors hover:text-text-primary"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
-            Back to sign in
+            {t('auth.verifyEmail.backToSignIn')}
           </Link>
         </motion.p>
       </div>

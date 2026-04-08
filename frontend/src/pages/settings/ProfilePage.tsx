@@ -3,6 +3,7 @@ import Cropper from 'react-easy-crop'
 import type {Area} from 'react-easy-crop'
 import {Camera, CheckCircle2, KeyRound, Loader2, MailCheck, Minus, Plus, User, X, ZoomIn} from 'lucide-react'
 import {toast} from 'sonner'
+import {useTranslation} from 'react-i18next'
 import {attachmentsApi} from '@/api/attachments'
 import {usersApi} from '@/api/users'
 import {authApi} from '@/api/auth'
@@ -173,6 +174,7 @@ function CropModal({ imageSrc, onApply, onCancel }: CropModalProps) {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function ProfilePage() {
+  const { t } = useTranslation()
   const { user, currentOrgId, updateUser } = useAuthStore()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -290,9 +292,9 @@ export default function ProfilePage() {
         lastName:  lastName.trim(),
       })
       updateUser({ firstName: updated.firstName, lastName: updated.lastName })
-      toast.success('Profile updated')
+      toast.success(t('settings.profile.saved'))
     } catch {
-      toast.error('Failed to update profile')
+      toast.error(t('settings.profile.failedToSave'))
     } finally {
       setSavingProfile(false)
     }
@@ -312,9 +314,9 @@ export default function ProfilePage() {
     try {
       await authApi.forgotPassword(user.email)
       setSentReset(true)
-      toast.success('Password reset email sent')
+      toast.success(t('settings.profile.resetEmailSent'))
     } catch {
-      toast.error('Failed to send reset email')
+      toast.error(t('settings.profile.failedToSend'))
     } finally {
       setSendingReset(false)
     }
@@ -331,9 +333,9 @@ export default function ProfilePage() {
     try {
       await authApi.resendVerification(user.email)
       setSentVerification(true)
-      toast.success('Verification email sent')
+      toast.success(t('settings.profile.resendSuccess'))
     } catch {
-      toast.error('Failed to send verification email')
+      toast.error(t('settings.profile.resendFailed'))
     } finally {
       setSendingVerification(false)
     }
@@ -357,8 +359,8 @@ export default function ProfilePage() {
             <User className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <h1 className="text-lg font-semibold text-text-primary">Profile</h1>
-            <p className="text-sm text-text-muted">Manage your personal information and avatar.</p>
+            <h1 className="text-lg font-semibold text-text-primary">{t('settings.profile.title')}</h1>
+            <p className="text-sm text-text-muted">{t('settings.profile.description')}</p>
           </div>
         </div>
 
@@ -433,7 +435,7 @@ export default function ProfilePage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="mb-1.5 block text-xs font-medium text-text-secondary">
-                  First name
+                  {t('settings.profile.firstName')}
                 </label>
                 <input
                   type="text"
@@ -445,7 +447,7 @@ export default function ProfilePage() {
               </div>
               <div>
                 <label className="mb-1.5 block text-xs font-medium text-text-secondary">
-                  Last name
+                  {t('settings.profile.lastName')}
                 </label>
                 <input
                   type="text"
@@ -459,7 +461,7 @@ export default function ProfilePage() {
 
             <div>
               <label className="mb-1.5 block text-xs font-medium text-text-secondary">
-                Email address
+                {t('settings.profile.email')}
               </label>
               <input
                 type="email"
@@ -467,7 +469,7 @@ export default function ProfilePage() {
                 readOnly
                 className="w-full cursor-default rounded-lg border border-surface-border bg-surface-muted px-3 py-2 text-sm text-text-muted outline-none"
               />
-              <p className="mt-1 text-xs text-text-muted">Email cannot be changed here.</p>
+              <p className="mt-1 text-xs text-text-muted">{t('settings.profile.emailNote')}</p>
             </div>
 
             <div className="flex justify-end pt-2">
@@ -481,7 +483,7 @@ export default function ProfilePage() {
                 )}
               >
                 {savingProfile && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                Save changes
+                {t('actions.save')}
               </button>
             </div>
           </form>
@@ -493,16 +495,15 @@ export default function ProfilePage() {
               <KeyRound className="h-4 w-4 text-text-muted" />
             </div>
             <div className="flex-1">
-              <h2 className="text-sm font-semibold text-text-primary">Password</h2>
+              <h2 className="text-sm font-semibold text-text-primary">{t('settings.profile.changePassword')}</h2>
               <p className="mt-0.5 text-xs text-text-muted">
-                We'll send a reset link to <span className="font-medium text-text-primary">{user?.email}</span>.
-                Follow the link to set a new password.
+                {t('settings.profile.changePasswordDesc')}
               </p>
               <div className="mt-4">
                 {sentReset ? (
                   <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
                     <CheckCircle2 className="h-4 w-4" />
-                    Reset email sent — check your inbox.
+                    {t('settings.profile.resetEmailSent')}
                   </div>
                 ) : (
                   <button
@@ -515,7 +516,7 @@ export default function ProfilePage() {
                     )}
                   >
                     {sendingReset && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                    Send password reset email
+                    {t('settings.profile.sendResetLink')}
                   </button>
                 )}
               </div>
@@ -531,15 +532,15 @@ export default function ProfilePage() {
                 <MailCheck className="h-4 w-4 text-amber-600 dark:text-amber-400" />
               </div>
               <div className="flex-1">
-                <h2 className="text-sm font-semibold text-amber-800 dark:text-amber-300">Email not verified</h2>
+                <h2 className="text-sm font-semibold text-amber-800 dark:text-amber-300">{t('settings.profile.emailNotVerified')}</h2>
                 <p className="mt-0.5 text-xs text-amber-700 dark:text-amber-400">
-                  Verify your email address to unlock all features.
+                  {t('settings.profile.emailNotVerifiedDesc')}
                 </p>
                 <div className="mt-4">
                   {sentVerification ? (
                     <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
                       <CheckCircle2 className="h-4 w-4" />
-                      Verification email sent — check your inbox.
+                      {t('settings.profile.resendSuccess')}
                     </div>
                   ) : (
                     <button
@@ -548,7 +549,7 @@ export default function ProfilePage() {
                       className="flex h-8 items-center gap-2 rounded-lg border border-amber-300 bg-white px-4 text-sm font-medium text-amber-700 transition-colors hover:bg-amber-50 disabled:opacity-50 dark:border-amber-700 dark:bg-transparent dark:text-amber-300"
                     >
                       {sendingVerification && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                      Resend verification email
+                      {t('settings.profile.resendVerification')}
                     </button>
                   )}
                 </div>

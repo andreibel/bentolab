@@ -1,4 +1,5 @@
 import {useEffect, useRef, useState} from 'react'
+import {useTranslation} from 'react-i18next'
 import {useDroppable} from '@dnd-kit/core'
 import {SortableContext, verticalListSortingStrategy} from '@dnd-kit/sortable'
 import {GripVertical, Pencil, Plus} from 'lucide-react'
@@ -27,6 +28,7 @@ function EditColumnPopover({
   column: BoardColumnType
   onClose: () => void
 }) {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
   const ref = useRef<HTMLDivElement>(null)
 
@@ -55,10 +57,10 @@ function EditColumnPopover({
         wipLimit: wipLimit ? parseInt(wipLimit, 10) : null,
       })
       await queryClient.invalidateQueries({queryKey: queryKeys.boards.detail(column.boardId)})
-      toast.success('Column updated')
+      toast.success(t('column.updated'))
       onClose()
     } catch {
-      toast.error('Failed to update column')
+      toast.error(t('column.failedToUpdate'))
     } finally {
       setSaving(false)
     }
@@ -71,7 +73,7 @@ function EditColumnPopover({
     >
       <form onSubmit={handleSave} className="flex flex-col gap-3">
         <div>
-          <label className="mb-1 block text-[11px] font-medium text-text-muted">Name</label>
+          <label className="mb-1 block text-[11px] font-medium text-text-muted">{t('column.name')}</label>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -81,7 +83,7 @@ function EditColumnPopover({
         </div>
 
         <div>
-          <label className="mb-1.5 block text-[11px] font-medium text-text-muted">Color</label>
+          <label className="mb-1.5 block text-[11px] font-medium text-text-muted">{t('column.color')}</label>
           <div className="flex flex-wrap gap-1.5">
             {COL_COLORS.map((c) => (
               <button
@@ -99,13 +101,13 @@ function EditColumnPopover({
         </div>
 
         <div>
-          <label className="mb-1 block text-[11px] font-medium text-text-muted">WIP limit <span className="opacity-60">(optional)</span></label>
+          <label className="mb-1 block text-[11px] font-medium text-text-muted">{t('column.wipLimit')} <span className="opacity-60">{t('column.wipOptional')}</span></label>
           <input
             type="number"
             min="1"
             value={wipLimit}
             onChange={(e) => setWipLimit(e.target.value)}
-            placeholder="No limit"
+            placeholder={t('column.noLimit')}
             className="w-full rounded-lg border border-surface-border bg-surface-muted px-3 py-1.5 text-sm text-text-primary outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
           />
         </div>
@@ -116,14 +118,14 @@ function EditColumnPopover({
             onClick={onClose}
             className="rounded px-3 py-1 text-xs text-text-muted hover:text-text-primary"
           >
-            Cancel
+            {t('actions.cancel')}
           </button>
           <button
             type="submit"
             disabled={!name.trim() || saving}
             className="rounded-md bg-primary px-3 py-1 text-xs font-medium text-white hover:bg-primary-light disabled:opacity-40"
           >
-            {saving ? 'Saving…' : 'Save'}
+            {saving ? t('actions.saving') : t('actions.save')}
           </button>
         </div>
       </form>
@@ -143,6 +145,7 @@ interface BoardColumnProps {
 }
 
 export function BoardColumn({ column, issues, epicsMap, onIssueClick, onAddIssue, dragHandleProps }: BoardColumnProps) {
+  const { t } = useTranslation()
   const { setNodeRef, isOver } = useDroppable({
     id: column.id,
     data: { type: 'column', columnId: column.id },
@@ -160,7 +163,7 @@ export function BoardColumn({ column, issues, epicsMap, onIssueClick, onAddIssue
         <button
           {...dragHandleProps}
           className="cursor-grab touch-none rounded p-0.5 text-text-muted opacity-0 transition-all hover:bg-surface-muted hover:text-text-primary group-hover/header:opacity-100 active:cursor-grabbing"
-          aria-label="Drag to reorder column"
+          aria-label={t('column.dragToReorder')}
         >
           <GripVertical className="h-3.5 w-3.5" />
         </button>
@@ -192,7 +195,7 @@ export function BoardColumn({ column, issues, epicsMap, onIssueClick, onAddIssue
         <button
           onClick={() => setEditOpen((v) => !v)}
           className="rounded p-0.5 text-text-muted opacity-0 transition-all hover:bg-surface-muted hover:text-text-primary group-hover/header:opacity-100"
-          aria-label="Edit column"
+          aria-label={t('column.editColumn')}
         >
           <Pencil className="h-3 w-3" />
         </button>
@@ -201,7 +204,7 @@ export function BoardColumn({ column, issues, epicsMap, onIssueClick, onAddIssue
         <button
           onClick={() => onAddIssue?.(column.id)}
           className="rounded p-0.5 text-text-muted opacity-0 transition-all hover:bg-surface-muted hover:text-text-primary group-hover/header:opacity-100"
-          aria-label="Add issue"
+          aria-label={t('column.addIssue')}
         >
           <Plus className="h-3.5 w-3.5" />
         </button>
@@ -236,7 +239,7 @@ export function BoardColumn({ column, issues, epicsMap, onIssueClick, onAddIssue
 
           {issues.length === 0 && (
             <div className="flex flex-1 items-center justify-center py-6 text-xs text-text-muted">
-              Drop here
+              {t('column.dropHere')}
             </div>
           )}
         </div>

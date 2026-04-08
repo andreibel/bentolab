@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from 'react'
 import {NavLink, useLocation, useMatch, useNavigate} from 'react-router-dom'
 import {motion} from 'framer-motion'
+import {useTranslation} from 'react-i18next'
 import {authApi} from '@/api/auth'
 import {useBoards} from '@/api/boards'
 import type {Board} from '@/types/board'
@@ -71,25 +72,26 @@ function labColor(id: string): string {
 }
 
 // ─── Settings nav ─────────────────────────────────────────────────────────────
+// Labels are i18n keys resolved at render time inside SettingsSidebar
 
 const settingsGroups = [
   {
-    label: 'Organization',
+    labelKey: 'settingsNav.orgGroup',
     items: [
-      { label: 'General',     icon: SlidersHorizontal, to: '/settings/org'         },
-      { label: 'Members',     icon: Users,             to: '/settings/members'     },
-      { label: 'Labels',      icon: Tags,              to: '/settings/labels'      },
-      { label: 'Security',    icon: ShieldCheck,       to: '/settings/security'    },
-      { label: 'Advanced',    icon: Wrench,            to: '/settings/advanced'    },
-      { label: 'Automations',   icon: Zap,               to: '/settings/automations'  },
-      { label: 'Integrations',  icon: Cable,             to: '/settings/integrations' },
+      { labelKey: 'settingsNav.general',      icon: SlidersHorizontal, to: '/settings/org'          },
+      { labelKey: 'settingsNav.members',      icon: Users,             to: '/settings/members'      },
+      { labelKey: 'settingsNav.labels',       icon: Tags,              to: '/settings/labels'       },
+      { labelKey: 'settingsNav.security',     icon: ShieldCheck,       to: '/settings/security'     },
+      { labelKey: 'settingsNav.advanced',     icon: Wrench,            to: '/settings/advanced'     },
+      { labelKey: 'settingsNav.automations',  icon: Zap,               to: '/settings/automations'  },
+      { labelKey: 'settingsNav.integrations', icon: Cable,             to: '/settings/integrations' },
     ],
   },
   {
-    label: 'Personal',
+    labelKey: 'settingsNav.personalGroup',
     items: [
-      { label: 'Profile',     icon: User,    to: '/settings/profile'      },
-      { label: 'Preferences', icon: SunMoon, to: '/settings/preferences'  },
+      { labelKey: 'settingsNav.preferences', icon: SunMoon, to: '/settings/preferences' },
+      { labelKey: 'settingsNav.profile',     icon: User,    to: '/settings/profile'     },
     ],
   },
 ]
@@ -97,6 +99,7 @@ const settingsGroups = [
 // ─── Settings sidebar ─────────────────────────────────────────────────────────
 
 function SettingsSidebar() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { theme } = useUIStore()
   const logoSrc = theme === 'dark' ? '/logo-dark.svg' : '/logo.svg'
@@ -116,15 +119,15 @@ function SettingsSidebar() {
       <div className="px-4 py-4">
         <div className="flex items-center gap-2">
           <Settings className="h-4 w-4 text-text-muted" />
-          <span className="text-sm font-semibold text-text-primary">Settings</span>
+          <span className="text-sm font-semibold text-text-primary">{t('settingsNav.title')}</span>
         </div>
       </div>
 
       <nav className="flex-1 overflow-y-auto px-2 pb-4">
         {settingsGroups.map((group) => (
-          <div key={group.label} className="mb-4">
+          <div key={group.labelKey} className="mb-4">
             <p className="mb-1 px-2 text-[10px] font-semibold uppercase tracking-widest text-text-muted">
-              {group.label}
+              {t(group.labelKey)}
             </p>
             <div className="flex flex-col gap-0.5">
               {group.items.map((item) => (
@@ -151,7 +154,7 @@ function SettingsSidebar() {
                         />
                       )}
                       <item.icon className="relative z-10 h-4 w-4 shrink-0" />
-                      <span className="relative z-10">{item.label}</span>
+                      <span className="relative z-10">{t(item.labelKey)}</span>
                     </>
                   )}
                 </NavLink>
@@ -167,6 +170,7 @@ function SettingsSidebar() {
 // ─── Org switcher ─────────────────────────────────────────────────────────────
 
 function OrgDisplay({ collapsed }: { collapsed: boolean }) {
+  const { t } = useTranslation()
   const { orgName, orgSlug, orgRole } = useAuthStore()
   const navigate = useNavigate()
 
@@ -214,7 +218,7 @@ function OrgDisplay({ collapsed }: { collapsed: boolean }) {
           className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm text-text-secondary outline-none hover:bg-surface-muted hover:text-text-primary"
         >
           <Plus className="h-4 w-4" />
-          Create organization
+          {t('nav.createOrg')}
         </DropdownMenu.Item>
       </DropdownMenu.Content>
     </DropdownMenu.Portal>
@@ -293,6 +297,7 @@ function RecentBoardItem({ board, collapsed }: { board: Board; collapsed: boolea
 // ─── Boards nav item with dropdown ───────────────────────────────────────────
 
 function BoardsNavItem({ boards, collapsed }: { boards: Board[]; collapsed: boolean }) {
+  const { t } = useTranslation()
   const { pathname } = useLocation()
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
@@ -308,7 +313,7 @@ function BoardsNavItem({ boards, collapsed }: { boards: Board[]; collapsed: bool
       )}
     >
       <Kanban className="h-4 w-4 shrink-0" />
-      {!collapsed && <span>Boards</span>}
+      {!collapsed && <span>{t('nav.boards')}</span>}
     </NavLink>
   )
 
@@ -331,7 +336,7 @@ function BoardsNavItem({ boards, collapsed }: { boards: Board[]; collapsed: bool
               sideOffset={12}
               className="rounded-md border border-surface-border bg-surface px-2 py-1 text-xs text-text-primary shadow-lg"
             >
-              Boards
+              {t('nav.boards')}
               <Tooltip.Arrow className="fill-surface-border" />
             </Tooltip.Content>
           </Tooltip.Portal>
@@ -359,7 +364,7 @@ function BoardsNavItem({ boards, collapsed }: { boards: Board[]; collapsed: bool
           )}
         >
           <Kanban className="h-4 w-4 shrink-0" />
-          <span>Boards</span>
+          <span>{t('nav.boards')}</span>
         </NavLink>
         <button
           onClick={() => setOpen((v) => !v)}
@@ -396,7 +401,7 @@ function BoardsNavItem({ boards, collapsed }: { boards: Board[]; collapsed: bool
               onClick={() => { navigate('/boards'); setOpen(false) }}
               className="px-2 py-1 text-start text-xs text-text-muted hover:text-text-primary"
             >
-              View all ({boards.length})
+              {t('nav.viewAll', { count: boards.length })}
             </button>
           )}
           <button
@@ -404,7 +409,7 @@ function BoardsNavItem({ boards, collapsed }: { boards: Board[]; collapsed: bool
             className="flex items-center gap-2 rounded-md px-2 py-1 text-xs font-medium text-text-muted transition-colors hover:bg-surface-border hover:text-text-primary"
           >
             <Plus className="h-3 w-3" />
-            New board
+            {t('nav.newBoard')}
           </button>
         </div>
       )}
@@ -415,6 +420,7 @@ function BoardsNavItem({ boards, collapsed }: { boards: Board[]; collapsed: bool
 // ─── Recent section ──────────────────────────────────────────────────────────
 
 function RecentSection({ boards, recent, collapsed }: { boards: Board[]; recent: string[]; collapsed: boolean }) {
+  const { t } = useTranslation()
   const recentBoards = recent
     .map((id) => boards.find((b) => b.id === id))
     .filter(Boolean)
@@ -426,7 +432,7 @@ function RecentSection({ boards, recent, collapsed }: { boards: Board[]; recent:
     <div className="border-b border-surface-border px-2 pb-2 pt-2">
       {!collapsed && (
         <p className="mb-1 px-2 text-[9px] font-semibold uppercase tracking-widest text-text-muted">
-          Recent
+          {t('nav.recent')}
         </p>
       )}
       <div className="flex flex-col gap-0.5">
@@ -441,6 +447,7 @@ function RecentSection({ boards, recent, collapsed }: { boards: Board[]; recent:
 // ─── User panel ───────────────────────────────────────────────────────────────
 
 function UserPanel({ collapsed }: { collapsed: boolean }) {
+  const { t } = useTranslation()
   const { user, logout } = useAuthStore()
   const navigate = useNavigate()
 
@@ -501,7 +508,7 @@ function UserPanel({ collapsed }: { collapsed: boolean }) {
             className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm text-text-secondary outline-none hover:bg-surface-muted hover:text-text-primary"
           >
             <Building2 className="h-4 w-4" />
-            Profile
+            {t('nav.profile')}
           </DropdownMenu.Item>
           <DropdownMenu.Separator className="my-1 h-px bg-surface-border" />
           <DropdownMenu.Item
@@ -509,7 +516,7 @@ function UserPanel({ collapsed }: { collapsed: boolean }) {
             className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm text-red-500 outline-none hover:bg-red-50 dark:hover:bg-red-950/20"
           >
             <LogOut className="h-4 w-4" />
-            Sign out
+            {t('actions.signOut')}
           </DropdownMenu.Item>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
@@ -585,6 +592,7 @@ function GlobalNavItem({
 // ─── Main sidebar ─────────────────────────────────────────────────────────────
 
 export function Sidebar() {
+  const { t } = useTranslation()
   const { pathname } = useLocation()
   const { sidebarCollapsed, toggleSidebar, theme } = useUIStore()
   const collapsed = sidebarCollapsed
@@ -630,7 +638,7 @@ export function Sidebar() {
           <button
             onClick={toggleSidebar}
             className="rounded-md p-1.5 text-text-muted transition-colors hover:bg-surface-border hover:text-text-primary"
-            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            aria-label={collapsed ? t('nav.expandSidebar') : t('nav.collapseSidebar')}
           >
             {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
           </button>
@@ -648,14 +656,14 @@ export function Sidebar() {
         <div className="flex-1 overflow-y-auto px-2 py-2">
           {!collapsed && (
             <p className="mb-1 px-2 text-[9px] font-semibold uppercase tracking-widest text-text-muted">
-              Workspace
+              {t('nav.workspace')}
             </p>
           )}
           <div className="flex flex-col gap-0.5">
             <BoardsNavItem boards={activeBoards} collapsed={collapsed} />
-            <GlobalNavItem to="/summary"  icon={LayoutDashboard} label="Summary"  collapsed={collapsed} />
-            <GlobalNavItem to="/timeline" icon={GanttChart}      label="Timeline" collapsed={collapsed} />
-            <GlobalNavItem to="/reports"  icon={BarChart2}       label="Reports"  collapsed={collapsed} />
+            <GlobalNavItem to="/summary"  icon={LayoutDashboard} label={t('nav.summary')}  collapsed={collapsed} />
+            <GlobalNavItem to="/timeline" icon={GanttChart}      label={t('nav.timeline')} collapsed={collapsed} />
+            <GlobalNavItem to="/reports"  icon={BarChart2}       label={t('nav.reports')}  collapsed={collapsed} />
           </div>
         </div>
 
@@ -663,17 +671,17 @@ export function Sidebar() {
         <div className={cn('border-t border-surface-border px-2 py-2', collapsed && 'flex flex-col items-center gap-0.5')}>
           {!collapsed && (
             <p className="mb-1 px-2 text-[9px] font-semibold uppercase tracking-widest text-text-muted">
-              Personal
+              {t('nav.personal')}
             </p>
           )}
-          <GlobalNavItem to="/my-issues"   icon={CircleDot}    label="My Issues" collapsed={collapsed} />
-          <GlobalNavItem to="/inbox"       icon={Inbox}        label="Inbox"     collapsed={collapsed} />
-          <GlobalNavItem to="/calendar"    icon={CalendarDays} label="Calendar"  collapsed={collapsed} />
+          <GlobalNavItem to="/my-issues"   icon={CircleDot}    label={t('nav.myIssues')} collapsed={collapsed} />
+          <GlobalNavItem to="/inbox"       icon={Inbox}        label={t('nav.inbox')}    collapsed={collapsed} />
+          <GlobalNavItem to="/calendar"    icon={CalendarDays} label={t('nav.calendar')} collapsed={collapsed} />
         </div>
 
         {/* Bottom: settings + user */}
         <div className="border-t border-surface-border px-2 pb-3 pt-2">
-          <GlobalNavItem to="/settings/org" matchPrefix="/settings" icon={Settings} label="Settings" collapsed={collapsed} />
+          <GlobalNavItem to="/settings/org" matchPrefix="/settings" icon={Settings} label={t('nav.settings')} collapsed={collapsed} />
           <div className="mt-1">
             <UserPanel collapsed={collapsed} />
           </div>

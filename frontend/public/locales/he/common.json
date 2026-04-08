@@ -1,15 +1,835 @@
 {
   "actions": {
-    "save": "שמור",
-    "cancel": "ביטול",
-    "delete": "מחק",
-    "edit": "עריכה",
-    "create": "צור",
-    "confirm": "אישור"
+    "save":     "שמור",
+    "cancel":   "ביטול",
+    "delete":   "מחק",
+    "edit":     "ערוך",
+    "create":   "צור",
+    "confirm":  "אישור",
+    "close":    "סגור",
+    "add":      "הוסף",
+    "remove":   "הסר",
+    "restore":  "שחזר",
+    "archive":  "ארכב",
+    "saving":   "שומר…",
+    "signOut":  "התנתק"
   },
   "errors": {
-    "generic": "משהו השתבש",
-    "notFound": "לא נמצא",
+    "generic":   "משהו השתבש",
+    "notFound":  "לא נמצא",
     "forbidden": "גישה נדחתה"
+  },
+  "nav": {
+    "workspace":       "סביבת עבודה",
+    "personal":        "אישי",
+    "recent":          "אחרון",
+    "boards":          "לוחות",
+    "summary":         "סיכום",
+    "timeline":        "ציר זמן",
+    "reports":         "דוחות",
+    "myIssues":        "הבעיות שלי",
+    "inbox":           "תיבת דואר",
+    "calendar":        "לוח שנה",
+    "settings":        "הגדרות",
+    "newBoard":        "לוח חדש",
+    "viewAll":         "הצג הכל ({{count}})",
+    "createOrg":       "צור ארגון",
+    "profile":         "פרופיל",
+    "expandSidebar":   "הרחב סרגל צד",
+    "collapseSidebar": "כווץ סרגל צד"
+  },
+  "settingsNav": {
+    "title":        "הגדרות",
+    "orgGroup":     "ארגון",
+    "personalGroup":"אישי",
+    "general":      "כללי",
+    "members":      "חברים",
+    "labels":       "תוויות",
+    "security":     "אבטחה",
+    "advanced":     "מתקדם",
+    "automations":  "אוטומציות",
+    "integrations": "אינטגרציות",
+    "preferences":  "העדפות",
+    "backToBoards": "חזרה ללוחות"
+  },
+  "boards": {
+    "title":              "לוחות",
+    "activeCount_one":    "לוח פעיל אחד",
+    "activeCount_other":  "{{count}} לוחות פעילים",
+    "archived":           "בארכיון",
+    "newBoard":           "לוח חדש",
+    "archivedBoards":     "לוחות בארכיון ({{count}})",
+    "archiveBoard":       "העבר לארכיון",
+    "unarchive":          "שחזר מארכיון",
+    "noBoards":           "אין לוחות עדיין",
+    "noBoardsDesc":       "צור את הלוח הראשון שלך כדי להתחיל לנהל בעיות.",
+    "createBoard":        "צור לוח",
+    "failedToLoad":       "טעינת הלוחות נכשלה. בדוק שהשירות פועל.",
+    "issueCount_one":     "בעיה אחת",
+    "issueCount_other":   "{{count}} בעיות",
+    "types": {
+      "SCRUM":        "סקראם",
+      "KANBAN":       "קנבן",
+      "BUG_TRACKING": "מעקב באגים",
+      "CUSTOM":       "מותאם אישית"
+    }
+  },
+  "board": {
+    "addIssue":       "הוסף בעיה",
+    "addColumn":      "הוסף עמודה",
+    "noActiveSprint": "אין ספרינט פעיל — הלוח ריק.",
+    "goToBacklog":    "עבור לצבר כדי להתחיל ספרינט"
+  },
+  "column": {
+    "name":          "שם",
+    "color":         "צבע",
+    "wipLimit":      "מגבלת WIP",
+    "wipOptional":   "(אופציונלי)",
+    "noLimit":       "ללא מגבלה",
+    "dropHere":      "שחרר כאן",
+    "dragToReorder": "גרור לסדר מחדש",
+    "editColumn":    "ערוך עמודה",
+    "addIssue":      "הוסף בעיה",
+    "updated":       "העמודה עודכנה",
+    "failedToUpdate":"עדכון העמודה נכשל"
+  },
+  "issues": {
+    "createTitle":          "צור בעיה",
+    "issueTitle":           "כותרת הבעיה",
+    "titleRequired":        "כותרת נדרשת",
+    "addDescription":       "הוסף תיאור… (אופציונלי)",
+    "compactView":          "תצוגה קומפקטית",
+    "fullScreen":           "מסך מלא",
+    "created":              "הבעיה נוצרה",
+    "failedToCreate":       "יצירת הבעיה נכשלה",
+    "selectBoardError":     "נא לבחור לוח",
+    "selectBoardPlaceholder":"בחר לוח…",
+    "backlogNoColumn":      "צבר (ללא עמודה)",
+    "noneOption":           "ללא",
+    "backlog":              "צבר",
+    "noStartDate":          "ללא תאריך התחלה",
+    "noDueDate":            "ללא תאריך יעד",
+    "fields": {
+      "priority":    "עדיפות",
+      "board":       "לוח",
+      "column":      "עמודה",
+      "epic":        "אפיק",
+      "sprint":      "ספרינט",
+      "parent":      "בעיית הורה",
+      "storyPoints": "נקודות סיפור",
+      "startDate":   "תאריך התחלה",
+      "dueDate":     "תאריך יעד",
+      "labels":      "תוויות"
+    },
+    "types": {
+      "STORY":   "סיפור",
+      "TASK":    "משימה",
+      "BUG":     "באג",
+      "SUBTASK": "תת"
+    },
+    "priorities": {
+      "CRITICAL": "קריטי",
+      "HIGH":     "גבוה",
+      "MEDIUM":   "בינוני",
+      "LOW":      "נמוך"
+    }
+  },
+  "labTopNav": {
+    "board":    "לוח",
+    "summary":  "סיכום",
+    "backlog":  "צבר",
+    "sprints":  "ספרינטים",
+    "triage":   "טריאז׳",
+    "timeline": "ציר זמן",
+    "reports":  "דוחות"
+  },
+  "commandPalette": {
+    "categories": {
+      "all":      "הכל",
+      "issues":   "בעיות",
+      "boards":   "לוחות",
+      "new":      "חדש",
+      "navigate": "ניווט"
+    },
+    "placeholder": {
+      "default":  "חפש או הקלד / לפקודות סינון…",
+      "issues":   "חפש בעיות, תיאורים, תגובות… או / לסינון",
+      "boards":   "חפש לוחות או הקלד: new board KEY Name…",
+      "new":      "הקלד: new board KEY Name  או  create issue…",
+      "navigate": "קפוץ לדף…",
+      "command":  "הקלד שם פקודה או בחר מהרשימה…",
+      "value":    "הקלד שם או \"me\"…",
+      "date":     "בחר תאריך: today, tomorrow, this-week…"
+    },
+    "groups": {
+      "new":      "חדש",
+      "navigate": "ניווט",
+      "boards":   "לוחות",
+      "issues":   "בעיות",
+      "create":   "יצירה"
+    },
+    "commandsHeader": "פקודות",
+    "chooseValue":    "/{{id}} — בחר ערך",
+    "emptyState": {
+      "addSearchTerm": "הוסף מונח חיפוש כדי להשתמש במסננים",
+      "noResults":     "אין תוצאות עבור \"{{query}}\"",
+      "nothingYet":    "אין כאן עדיין כלום",
+      "filterHint":    "הקלד / לפקודות סינון"
+    },
+    "hint": {
+      "typeToSearch": "הקלד לחיפוש · / לפקודות סינון",
+      "navigate":     "ניווט",
+      "select":       "בחר",
+      "apply":        "החל",
+      "dismiss":      "סגור",
+      "template":     "תבנית",
+      "category":     "קטגוריה",
+      "close":        "סגור",
+      "filterBar":    "/ לסינון · ⌘K לפתיחה"
+    },
+    "loading": {
+      "searching": "מחפש…"
+    },
+    "counts": {
+      "issues_one":         "בעיה אחת",
+      "issues_other":       "{{count}} בעיות",
+      "boards_one":         "לוח אחד",
+      "boards_other":       "{{count}} לוחות",
+      "filtersActive_one":  "מסנן אחד פעיל",
+      "filtersActive_other":"{{count}} מסננים פעילים",
+      "ofTotal":            "מתוך {{total}}"
+    },
+    "createBoard": {
+      "template":  "תבנית:",
+      "creating":  "יוצר…",
+      "create":    "צור",
+      "typeHint":  "new board KEY Name"
+    },
+    "toasts": {
+      "boardCreated":     "הלוח \"{{name}}\" נוצר",
+      "boardCreateFailed":"יצירת הלוח נכשלה",
+      "boardKeyExists":   "המפתח \"{{key}}\" כבר קיים — בחר מפתח אחר"
+    }
+  },
+  "backlog": {
+    "title": "צבר",
+    "tabs": {
+      "open":   "פתוח",
+      "closed": "סגור",
+      "all":    "הכל"
+    },
+    "sprint": {
+      "active":         "פעיל",
+      "planned":        "מתוכנן",
+      "doneFraction":   "{{done}}/{{total}} הושלם",
+      "issueCount_one": "בעיה אחת",
+      "issueCount_other":"{{count}} בעיות",
+      "pts":            "נק׳",
+      "startSprint":    "התחל ספרינט",
+      "complete":       "השלם",
+      "editSprint":     "ערוך ספרינט",
+      "moveToSprint":   "העבר",
+      "addToSprint":    "+ ספרינט",
+      "toBacklog":      "→ צבר",
+      "noActiveSprints":"אין ספרינטים פעילים",
+      "addIssue":       "הוסף בעיה"
+    },
+    "backlogSection": {
+      "title":    "צבר",
+      "noIssues": "אין בעיות בצבר",
+      "addIssue": "הוסף בעיה",
+      "newSprint":"ספרינט"
+    },
+    "kanban": {
+      "pullToBoard": "משוך ללוח",
+      "noColumns":   "אין עמודות בלוח"
+    },
+    "buttons": {
+      "epic":   "אפיק",
+      "sprint": "ספרינט",
+      "issue":  "בעיה"
+    },
+    "closedBadge": "סגור",
+    "dateFrom":    "מ-{{date}}",
+    "dateUntil":   "עד {{date}}",
+    "epics": {
+      "createTitle":   "צור אפיק",
+      "editTitle":     "ערוך אפיק",
+      "nameLabel":     "שם *",
+      "namePlaceholder":"לדוגמה: אימות, עיצוב מחדש של דשבורד…",
+      "colorLabel":    "צבע",
+      "cancel":        "ביטול",
+      "create":        "צור אפיק",
+      "creating":      "יוצר…",
+      "save":          "שמור",
+      "saving":        "שומר…",
+      "created":       "האפיק נוצר",
+      "failedToCreate":"יצירת האפיק נכשלה",
+      "updated":       "האפיק עודכן",
+      "failedToUpdate":"עדכון האפיק נכשל"
+    },
+    "sprintModals": {
+      "editTitle":     "ערוך ספרינט",
+      "nameLabel":     "שם *",
+      "goalLabel":     "מטרה",
+      "goalPlaceholder":"מטרת הספרינט…",
+      "startDate":     "תאריך התחלה",
+      "endDate":       "תאריך סיום",
+      "cancel":        "ביטול",
+      "save":          "שמור",
+      "saving":        "שומר…",
+      "updated":       "הספרינט עודכן",
+      "failedToUpdate":"עדכון הספרינט נכשל"
+    },
+    "completeModal": {
+      "title":         "השלם \"{{name}}\"",
+      "description":   "לאן יועברו הבעיות הפתוחות לאחר סיום הספרינט?",
+      "moveToBacklog": "העבר לצבר",
+      "cancel":        "ביטול",
+      "complete":      "השלם ספרינט"
+    },
+    "toasts": {
+      "addedToSprint":       "נוסף לספרינט",
+      "movedToBacklog":      "הועבר לצבר",
+      "failedToMove":        "העברת הבעיה נכשלה",
+      "pulledToBoard":       "נמשך ללוח",
+      "failedToPull":        "המשיכה ללוח נכשלה",
+      "sprintStarted":       "הספרינט התחיל",
+      "failedToStart":       "הפעלת הספרינט נכשלה — בדוק שאין ספרינט פעיל אחר",
+      "sprintCompleted":     "הספרינט הושלם",
+      "failedToComplete":    "השלמת הספרינט נכשלה"
+    }
+  },
+  "issues": {
+    "types": {
+      "STORY":   "סיפור",
+      "TASK":    "משימה",
+      "BUG":     "באג",
+      "SUBTASK": "תת-משימה"
+    },
+    "priorities": {
+      "CRITICAL": "קריטי",
+      "HIGH":     "גבוה",
+      "MEDIUM":   "בינוני",
+      "LOW":      "נמוך"
+    }
+  },
+  "myIssues": {
+    "title":             "הבעיות שלי",
+    "searchPlaceholder": "חפש לפי כותרת או מפתח…",
+    "relation": {
+      "all":      "הכל",
+      "assigned": "מוקצה לי",
+      "created":  "נוצר על ידי"
+    },
+    "filters": {
+      "board":    "לוח",
+      "priority": "עדיפות",
+      "type":     "סוג",
+      "status":   "כל הסטטוסים",
+      "open":     "פתוח",
+      "closed":   "סגור",
+      "clear":    "נקה",
+      "searchBoards": "חפש לוחות…",
+      "noBoards":     "לא נמצאו לוחות"
+    },
+    "sort": {
+      "priority":  "עדיפות",
+      "dueDate":   "תאריך יעד",
+      "createdAt": "נוצר",
+      "updatedAt": "עודכן"
+    },
+    "columns": {
+      "key":      "מפתח",
+      "title":    "כותרת",
+      "relation": "קשר",
+      "board":    "לוח",
+      "due":      "יעד"
+    },
+    "relation_badge": {
+      "both":     "שניהם",
+      "assigned": "מוקצה",
+      "created":  "נוצר"
+    },
+    "closedBadge":  "סגור",
+    "total_one":    "בעיה {{count}} סה\"כ",
+    "total_other":  "{{count}} בעיות סה\"כ",
+    "empty":        "לא נמצאו בעיות",
+    "emptyFilters": "נסה לשנות את הפילטרים",
+    "emptyHint":    "בעיות שהוקצו לך או שיצרת יופיעו כאן"
+  },
+  "auth": {
+    "login": {
+      "welcomeBack":          "ברוך שובך",
+      "continueWorkspace":    "התחבר כדי להמשיך לסביבת העבודה שלך",
+      "email":                "דוא\"ל",
+      "password":             "סיסמה",
+      "forgotPassword":       "שכחת סיסמה?",
+      "signIn":               "התחבר",
+      "bySigningIn":          "בהתחברות אתה מסכים ל",
+      "termsOfService":       "תנאי השירות",
+      "and":                  "ו",
+      "privacyPolicy":        "מדיניות הפרטיות",
+      "signInToBento":        "התחבר ל-Bento",
+      "enterWorkspaceUrl":    "הכנס את כתובת סביבת העבודה שלך להמשך",
+      "workspaceUrl":         "כתובת סביבת עבודה",
+      "continue":             "המשך",
+      "noWorkspace":          "אין לך סביבת עבודה?",
+      "createForFree":        "צור אחת בחינם",
+      "alreadyHaveWorkspace": "כבר יש לך סביבת עבודה?",
+      "signInWithUrl":        "התחבר עם URL",
+      "invalidCredentials":   "דוא\"ל או סיסמה שגויים"
+    },
+    "register": {
+      "title":             "צור את החשבון שלך",
+      "subtitle":          "התחל לנהל את הפרויקטים שלך היום",
+      "firstName":         "שם פרטי",
+      "lastName":          "שם משפחה",
+      "email":             "דוא\"ל",
+      "password":          "סיסמה",
+      "createAccount":     "צור חשבון",
+      "alreadyHaveAccount":"כבר יש לך חשבון?",
+      "signIn":            "התחבר",
+      "verifyEmailTitle":  "בדוק את תיבת הדואר שלך",
+      "verifyEmailDesc":   "שלחנו קישור אימות לכתובת {{email}}. פתח אותו כדי להפעיל את החשבון.",
+      "couldNotCreate":    "לא ניתן היה ליצור חשבון"
+    },
+    "forgotPassword": {
+      "title":       "שכחת סיסמה?",
+      "subtitle":    "הכנס את הדוא\"ל שלך ונשלח לך קישור לאיפוס.",
+      "email":       "דוא\"ל",
+      "sendLink":    "שלח קישור לאיפוס",
+      "backToLogin": "חזרה להתחברות",
+      "sentTitle":   "בדוק את תיבת הדואר שלך",
+      "sentDesc":    "אם {{email}} רשום, תקבל בקרוב קישור לאיפוס הסיסמה."
+    },
+    "resetPassword": {
+      "title":                       "אפס את הסיסמה שלך",
+      "subtitle":                    "הכנס סיסמה חדשה לחשבון שלך.",
+      "newPassword":                 "סיסמה חדשה",
+      "newPasswordPlaceholder":      "לפחות 8 תווים",
+      "confirmPassword":             "אימות סיסמה",
+      "confirmPasswordPlaceholder":  "חזור על הסיסמה",
+      "save":                        "הגדר סיסמה חדשה",
+      "updateButton":                "עדכן סיסמה",
+      "saving":                      "שומר…",
+      "invalidToken":                "קישור האיפוס אינו תקף או שפג תוקפו.",
+      "noTokenTitle":                "קישור איפוס לא תקין",
+      "noTokenDesc":                 "קישור זה חסר אסימון איפוס. אנא בקש קישור חדש.",
+      "requestNew":                  "בקש קישור חדש",
+      "successTitle":                "הסיסמה עודכנה",
+      "successDesc":                 "הסיסמה שלך שונתה. כעת ניתן להתחבר.",
+      "successToast":                "הסיסמה עודכנה — אנא התחבר",
+      "expiredToast":                "קישור האיפוס לא תקין או שפג תוקפו",
+      "signIn":                      "התחבר",
+      "backToLogin":                 "חזרה להתחברות"
+    },
+    "verifyEmail": {
+      "verifying":       "מאמת את הדוא\"ל שלך…",
+      "successTitle":    "הדוא\"ל אומת!",
+      "successDesc":     "כתובת הדוא\"ל שלך אושרה. הכל מוכן.",
+      "signIn":          "התחבר ל-Bento",
+      "linkExpired":     "הקישור פג תוקף",
+      "invalidLink":     "קישור לא תקף",
+      "expiredDesc":     "קישור האימות פג תוקף או כבר נוצל. בקש קישור חדש למטה.",
+      "invalidDesc":     "לא נמצא טוקן אימות בקישור זה.",
+      "enterEmail":      "הכנס את הדוא\"ל שלך",
+      "resend":          "שלח שוב דוא\"ל אימות",
+      "sentCheckInbox":  "נשלח! בדוק את תיבת הדואר ותיקיית הספאם.",
+      "backToSignIn":    "חזרה להתחברות"
+    },
+    "invite": {
+      "loading":             "טוען הזמנה…",
+      "unavailableTitle":    "ההזמנה אינה זמינה",
+      "invalidTitle":        "הזמנה לא תקפה",
+      "invalidDesc":         "קישור ההזמנה אינו תקף או שפג תוקפו.",
+      "missingToken":        "חסר אסימון הזמנה.",
+      "notFound":            "ההזמנה לא נמצאה או שפג תוקפה.",
+      "goToBento":           "עבור ל-Bento",
+      "invitedToJoin":       "הוזמנת להצטרף ל",
+      "joinTitle":           "הוזמנת",
+      "joinDesc":            "הצטרף ל-{{org}} בתור {{role}}",
+      "emailProtected":      "הזמנה זו מוגבלת לכתובת דוא\"ל ספציפית.",
+      "emailProtectedNote":  "הזמנה זו מיועדת לכתובת דוא\"ל ספציפית. התחבר עם אותו דוא\"ל כדי לאשר.",
+      "loginToAccept":       "התחבר כדי לאשר",
+      "password":            "סיסמה",
+      "email":               "דוא\"ל",
+      "signIn":              "התחבר ואשר",
+      "accept":              "אשר הזמנה",
+      "joining":             "מצטרף…",
+      "accepting":           "מאשר…",
+      "tryAgain":            "נסה שוב",
+      "accepted":            "ההזמנה אושרה! מעביר…",
+      "successTitle":        "!נכנסת",
+      "redirecting":         "מעביר אותך ל-{{org}}…",
+      "failed":              "אישור ההזמנה נכשל",
+      "wrongEmail":          "פרטים שגויים. וודא שאתה מתחבר עם הדוא\"ל שאליו נשלחה ההזמנה.",
+      "invalidCredentials":  "דוא\"ל או סיסמה שגויים.",
+      "signInDifferent":     "התחבר עם חשבון אחר",
+      "noAccount":           "אין חשבון?",
+      "createAccount":       "צור אחד בחינם",
+      "backToLogin":         "חזרה להתחברות"
+    }
+  },
+  "notFound": {
+    "goBack": "חזרה",
+    "goHome": "לדף הבית",
+    "sprint": {
+      "title":    "ספרינט לא נמצא",
+      "subtitle": "הספרינט הזה סיים את המרוץ ולא השאיר עקבות."
+    },
+    "timeline": {
+      "title":    "מחוץ לציר הזמן",
+      "subtitle": "חלק זה של ציר הזמן מעולם לא תוכנן — או נמחק בשקט."
+    },
+    "backlog": {
+      "title":    "הצבר אבד",
+      "subtitle": "הצבר נסוג כל כך אחורה עד שנפל מקצה הלוח."
+    },
+    "reports": {
+      "title":    "אין מדדים כאן",
+      "subtitle": "הנתונים של הלאב הזה נעלמו. אפילו שיעור השגיאות הוא 0."
+    },
+    "milestones": {
+      "title":    "אבן דרך אבדה",
+      "subtitle": "אבן דרך זו לא הושגה מעולם או לא הוגדרה."
+    },
+    "members": {
+      "title":    "אין כאן אף אחד",
+      "subtitle": "דף החברים של הלאב הזה לא קיים — או שהלאב עצמו לא קיים."
+    },
+    "lab": {
+      "title":    "לאב לא נמצא",
+      "subtitle": "הלאב הזה לא קיים, או שלא ניתנה לך גישה."
+    },
+    "settings": {
+      "title":    "הגדרה לא נמצאה",
+      "subtitle": "סטית לאזור לא ממופה בלוח הבקרה."
+    },
+    "lostInTime": {
+      "title":    "אבוד בזמן",
+      "subtitle": "ציר הזמן הזה לא קיים באף ממד ידוע."
+    },
+    "noData": {
+      "title":    "לא נמצאו נתונים",
+      "subtitle": "המדדים נעלמו. אפילו שיעור השגיאות הוא 0."
+    },
+    "calendar": {
+      "title":    "תאריך לא נמצא",
+      "subtitle": "סמן את זה ביומן שלך: הדף הזה לא קיים."
+    },
+    "inbox": {
+      "title":    "תיבת דואר ריקה",
+      "subtitle": "אין הודעות כאן — כי הדף הזה לא קיים."
+    },
+    "myIssues": {
+      "title":    "לא נמצאו בעיות",
+      "subtitle": "מסתבר שאין לך בעיות. ובכן — הדף הזה לא קיים לפחות."
+    },
+    "deepSpace": {
+      "title":    "חלל עמוק",
+      "subtitle": "אין אות. הלכת רחוק מגבולות המפה."
+    },
+    "generic": {
+      "title":    "הדף לא נמצא",
+      "subtitle": "מה שחיפשת אינו כאן. אולי מעולם לא היה."
+    }
+  },
+  "settings": {
+    "profile": {
+      "title":            "פרופיל",
+      "description":      "הפרטים האישיים וההעדפות שלך.",
+      "firstName":        "שם פרטי",
+      "lastName":         "שם משפחה",
+      "email":            "כתובת דוא\"ל",
+      "emailNote":        "לא ניתן לשנות את הדוא\"ל לאחר ההרשמה.",
+      "avatarUrl":        "כתובת אווטאר",
+      "avatarPlaceholder":"https://…",
+      "saved":            "הפרופיל עודכן",
+      "failedToSave":     "עדכון הפרופיל נכשל",
+      "changePassword":   "שנה סיסמה",
+      "changePasswordDesc":"נשלח קישור לאיפוס סיסמה לכתובת הדוא\"ל שלך.",
+      "sendResetLink":    "שלח קישור לאיפוס",
+      "resetEmailSent":   "בדוק את תיבת הדואר שלך לקישור האיפוס.",
+      "failedToSend":     "שליחת הדוא\"ל נכשלה",
+      "emailNotVerified": "הדוא\"ל לא אומת",
+      "emailNotVerifiedDesc":"בדוק את תיבת הדואר שלך ולחץ על קישור האימות.",
+      "resendVerification":"שלח שוב דוא\"ל אימות",
+      "resendSuccess":    "דוא\"ל אימות נשלח",
+      "resendFailed":     "שליחת דוא\"ל האימות נכשלה"
+    },
+    "members": {
+      "title":             "חברים",
+      "description":       "נהל מי יש לו גישה לארגון זה.",
+      "membersTab":        "חברים",
+      "invitationsTab":    "הזמנות",
+      "inviteButton":      "הזמן",
+      "youSuffix":         "(אתה)",
+      "roles": {
+        "ORG_OWNER":  "בעלים",
+        "ORG_ADMIN":  "מנהל",
+        "ORG_MEMBER": "חבר"
+      },
+      "removeSuccess":     "החבר הוסר",
+      "removeFailed":      "הסרת החבר נכשלה",
+      "roleUpdateSuccess": "התפקיד עודכן",
+      "roleUpdateFailed":  "עדכון התפקיד נכשל",
+      "loadingProfile":    "טוען…",
+      "openInviteLink":    "קישור הזמנה פתוח",
+      "expires":           "פג תוקף {{date}}",
+      "linkType":          "קישור",
+      "emailType":         "אימייל",
+      "copyLink":          "העתק קישור הזמנה",
+      "revokeInvite":      "בטל הזמנה"
+    },
+    "org": {
+      "title":         "ארגון",
+      "description":   "הגדרות כלליות של הארגון.",
+      "nameLabel":     "שם",
+      "slugLabel":     "כתובת URL",
+      "saved":         "הארגון עודכן",
+      "failedToSave":  "עדכון הארגון נכשל"
+    },
+    "labels": {
+      "title":      "תוויות",
+      "description":"נהל תוויות לבעיות בארגון זה."
+    },
+    "security": {
+      "title":      "אבטחה",
+      "description":"נהל הפעלות פעילות וטוקני גישה."
+    },
+    "automations": {
+      "title":      "אוטומציות",
+      "description":"אוטומציה של תהליכי עבודה חוזרים."
+    },
+    "integrations": {
+      "title":      "אינטגרציות",
+      "description":"חבר כלים של צד שלישי לסביבת העבודה שלך."
+    },
+    "advanced": {
+      "title":        "הגדרות מתקדמות",
+      "description":  "דגלי תכונות ומגבלות משאבים לארגון זה.",
+      "featuresTitle":"תכונות",
+      "limitsTitle":  "מגבלות",
+      "ownerOnly":    "רק בעל הארגון יכול לשנות הגדרות אלו.",
+      "saveLimits":   "שמור מגבלות",
+      "saved":        "ההגדרות נשמרו",
+      "failedToSave": "שמירת ההגדרות נכשלה",
+      "flags": {
+        "discord":     "התראות Discord",
+        "discordDesc": "אפשר חיבור Webhooks של Discord לעדכוני לוח.",
+        "export":      "ייצוא נתונים",
+        "exportDesc":  "אפשר לחברים לייצא נתוני לוח כ-CSV או JSON.",
+        "branding":    "מיתוג מותאם",
+        "brandingDesc":"החלף את הלוגו והצבעים של Bento בנכסי המותג שלך.",
+        "sso":         "SSO / SAML",
+        "ssoDesc":     "דרוש מחברים להתחבר דרך ספק הזהות שלך."
+      },
+      "limits": {
+        "maxMembers":    "מקסימום חברים",
+        "maxMembersDesc":"מספר המשתמשים המרבי המותר בארגון זה.",
+        "maxBoards":     "מקסימום לוחות",
+        "maxBoardsDesc": "מספר הלוחות המרבי שניתן ליצור.",
+        "maxStorage":    "מגבלת אחסון (GB)",
+        "maxStorageDesc":"אחסון מרבי לקבצים מצורפים בארגון זה."
+      }
+    },
+    "preferences": {
+      "title":            "העדפות",
+      "description":      "העדפות שפה, תאריך, שעה ותצוגה.",
+      "languageTitle":    "שפה",
+      "dateTimeTitle":    "תאריך ושעה",
+      "displayTitle":     "תצוגה",
+      "timezone":         "אזור זמן",
+      "weekStart":        "השבוע מתחיל ב",
+      "workingDays":      "ימי עבודה",
+      "dateFormat":       "פורמט תאריך",
+      "timeFormat":       "פורמט שעה",
+      "days": {
+        "0": "ראש׳", "1": "שני", "2": "שלי׳", "3": "רבי׳",
+        "4": "חמי׳", "5": "שישי", "6": "שבת"
+      }
+    }
+  },
+  "common": {
+    "boardNotFound":    "הלוח לא נמצא או שהטעינה נכשלה.",
+    "backToBoards":     "חזרה ללוחות",
+    "loading":          "טוען…",
+    "noActiveSprint":   "אין ספרינט פעיל — הלוח ריק.",
+    "startSprint":      "עבור לצבר כדי להתחיל ספרינט"
+  },
+  "sprintsPage": {
+    "title":           "ספרינטים",
+    "active":          "פעיל",
+    "planned_one":     "מתוכנן {{count}}",
+    "planned_other":   "{{count}} מתוכננים",
+    "completed_one":   "הושלם {{count}}",
+    "completed_other": "{{count}} הושלמו",
+    "createSprint":    "צור ספרינט",
+    "status": {
+      "ACTIVE":    "פעיל",
+      "PLANNED":   "מתוכנן",
+      "COMPLETED": "הושלם"
+    },
+    "overdue":         "{{count}} ימים באיחור",
+    "daysLeft":        "{{count}} ימים נותרו",
+    "startSprint":     "התחל ספרינט",
+    "completeSprint":  "השלם ספרינט",
+    "details": {
+      "start":         "התחלה",
+      "end":           "סיום",
+      "issues":        "בעיות",
+      "points":        "נקודות",
+      "issueProgress": "התקדמות בעיות",
+      "storyPoints":   "נקודות סיפור"
+    },
+    "toasts": {
+      "started":          "הספרינט התחיל",
+      "failedToStart":    "הפעלת הספרינט נכשלה — בדוק שאין ספרינט פעיל אחר",
+      "completed":        "הספרינט הושלם",
+      "failedToComplete": "השלמת הספרינט נכשלה"
+    },
+    "empty": {
+      "title":       "אין ספרינטים עדיין",
+      "desc":        "צור ספרינט כדי להתחיל לתכנן את העבודה שלך.",
+      "createFirst": "צור ספרינט ראשון"
+    },
+    "modal": {
+      "title":          "סגור \"{{name}}\"",
+      "allComplete":    "כל הבעיות הושלמו — עבודה מצוינת!",
+      "incomplete_one": "בעיה {{count}} לא הושלמה וצריכה להיות מועברת.",
+      "incomplete_other":"{{count}} בעיות לא הושלמו וצריכות להיות מועברות.",
+      "backlogOption":  "העבר לצבר",
+      "backlogDesc":    "בעיות לא גמורות חוזרות לצבר וניתן לתכנן אותן לספרינטים עתידיים.",
+      "sprintOption":   "העבר לספרינט",
+      "noSprints":      "אין ספרינטים פעילים או מתוכננים אחרים.",
+      "sprintDesc":     "העבר בעיות לא גמורות ישירות לספרינט אחר.",
+      "cancel":         "ביטול",
+      "close":          "סגור ספרינט"
+    }
+  },
+  "labelsPage": {
+    "title":          "תוויות",
+    "description":    "נהל תוויות לסיווג בעיות בכל הלוחות בארגון.",
+    "count_one":      "תווית {{count}}",
+    "count_other":    "{{count}} תוויות",
+    "newLabel":       "תווית חדשה",
+    "form": {
+      "namePlaceholder": "שם תווית",
+      "descPlaceholder": "תיאור (אופציונלי)",
+      "cancel":          "ביטול",
+      "save":            "שמור",
+      "create":          "צור"
+    },
+    "row": {
+      "edit":   "ערוך תווית",
+      "delete": "מחק תווית"
+    },
+    "empty":          "אין תוויות עדיין. צור אחת כדי להתחיל.",
+    "created":        "התווית נוצרה",
+    "updated":        "התווית עודכנה",
+    "deleted":        "התווית נמחקה",
+    "failedToCreate": "יצירת התווית נכשלה",
+    "failedToUpdate": "עדכון התווית נכשל",
+    "failedToDelete": "מחיקת התווית נכשלה"
+  },
+  "timeline": {
+    "today":             "היום",
+    "name":              "שם",
+    "noEpic":            "ללא אפיק",
+    "backlog":           "צבר",
+    "groupBy": {
+      "epic":   "לפי אפיק",
+      "sprint": "לפי ספרינט",
+      "none":   "שטוח"
+    },
+    "zoom": {
+      "week":    "שבוע",
+      "month":   "חודש",
+      "quarter": "רבעון",
+      "year":    "שנה"
+    },
+    "show": {
+      "epics":      "אפיקים",
+      "sprints":    "ספרינטים",
+      "issues":     "בעיות",
+      "milestones": "אבני דרך"
+    },
+    "addMilestone": "אבן דרך",
+    "milestone": {
+      "editTitle":     "עריכת אבן דרך",
+      "newTitle":      "אבן דרך חדשה",
+      "titleLabel":    "כותרת",
+      "titleRequired": "כותרת נדרשת",
+      "datePlaceholder":"לדוג׳ השקה לבטא, הקפאת פיצ׳רים…",
+      "dateLabel":     "תאריך",
+      "colorLabel":    "צבע",
+      "statusLabel":   "סטטוס",
+      "descLabel":     "תיאור",
+      "descOptional":  "(אופציונלי)",
+      "descPlaceholder":"הערות אופציונליות…",
+      "status": {
+        "PLANNED": "מתוכנן",
+        "REACHED": "הושג",
+        "MISSED":  "פוספס"
+      },
+      "delete":        "מחק",
+      "cancel":        "ביטול",
+      "saving":        "שומר…",
+      "save":          "שמור",
+      "create":        "צור",
+      "updated":       "אבן הדרך עודכנה",
+      "created":       "אבן דרך נוצרה",
+      "deleted":       "אבן הדרך נמחקה",
+      "failedToSave":  "שמירת אבן הדרך נכשלה",
+      "failedToDelete":"מחיקת אבן הדרך נכשלה"
+    }
+  },
+  "globalTimeline": {
+    "noBoards":      "לא נמצאו לוחות. צור לוח כדי לראותו בציר הזמן.",
+    "openBoard":     "פתח לוח",
+    "today":         "היום",
+    "todayButton":   "היום",
+    "boardCount_one":   "לוח {{count}}",
+    "boardCount_other": "{{count}} לוחות",
+    "boardTypes": {
+      "SCRUM":        "סקראם",
+      "KANBAN":       "קנבן",
+      "BUG_TRACKING": "באגים",
+      "CUSTOM":       "מותאם"
+    }
+  },
+  "summary": {
+    "title":           "סיכום",
+    "widgetCount_one": "ווידג׳ט {{count}}",
+    "widgetCount_other":"{{count}} ווידג׳טים",
+    "addWidget":       "הוסף ווידג׳ט",
+    "reset":           "איפוס",
+    "done":            "סיום",
+    "customize":       "התאמה אישית",
+    "editBanner":      "גרור לסידור מחדש · שנה גודל מהפינה · לחץ × להסרה · לחץ סיום כשסיימת",
+    "panel": {
+      "title":        "הוסף ווידג׳ט",
+      "available":    "{{count}} ווידג׳טים זמינים",
+      "searchPlaceholder":"חפש ווידג׳טים…",
+      "addedBadge":   "נוסף"
+    },
+    "widgets": {
+      "SPRINT_HEALTH":      { "label": "בריאות ספרינט",    "desc": "התקדמות ספרינט נוכחי וגרף שריפה" },
+      "ISSUE_BREAKDOWN":    { "label": "פירוט בעיות",      "desc": "בעיות לפי סוג (סיפור, משימה, באג, תת-משימה)" },
+      "WORKLOAD":           { "label": "עומס צוות",        "desc": "בעיות פתוחות לפי חבר צוות" },
+      "EPIC_PROGRESS":      { "label": "התקדמות אפיקים",   "desc": "אחוז השלמה לכל אפיק" },
+      "RECENT_ACTIVITY":    { "label": "פעילות אחרונה",    "desc": "אירועי בעיות ותגובות אחרונים" },
+      "OVERDUE":            { "label": "בעיות באיחור",     "desc": "בעיות שעברו את תאריך היעד" },
+      "OPEN_CLOSED":        { "label": "פתוחות מול סגורות","desc": "מגמת בעיות ב-30 הימים האחרונים" },
+      "UNASSIGNED":         { "label": "בעיות ללא שיוך",   "desc": "בעיות ללא מוקצה" },
+      "VELOCITY":           { "label": "מהירות",           "desc": "נקודות סיפור שהושלמו בספרינט" },
+      "CYCLE_TIME":         { "label": "זמן מחזור",        "desc": "זמן ממוצע שבעיות מבלות בכל עמודה" },
+      "WIP":                { "label": "סטטוס WIP",        "desc": "מגבלות עבודה בתהליך לפי עמודה" },
+      "PRIORITY_BREAKDOWN": { "label": "פירוט עדיפויות",   "desc": "בעיות לפי רמת עדיפות" },
+      "STALE_ISSUES":       { "label": "בעיות קפואות",     "desc": "בעיות ללא עדכונים ב-7+ ימים" },
+      "BUG_RATE":           { "label": "קצב באגים",        "desc": "מגמת ספירת באגים ושיעור פתרון" },
+      "TEAM_ACTIVITY":      { "label": "פעילות צוות",      "desc": "תרומות לפי חבר צוות השבוע" }
+    }
   }
 }

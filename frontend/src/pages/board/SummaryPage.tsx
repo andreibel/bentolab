@@ -3,6 +3,7 @@ import {useParams} from 'react-router-dom'
 import GridLayout, {type Layout, type LayoutItem} from 'react-grid-layout'
 import {useResizeObserver} from '@/hooks/useResizeObserver'
 import {GripHorizontal, LayoutGrid, Plus, RefreshCw, Settings2, X,} from 'lucide-react'
+import {useTranslation} from 'react-i18next'
 import {cn} from '@/utils/cn'
 import {useBoard} from '@/api/boards'
 import 'react-grid-layout/css/styles.css'
@@ -165,6 +166,7 @@ function WidgetShell({
   onRemove: (id: string) => void
   children: React.ReactNode
 }) {
+  const { t } = useTranslation()
   const meta = WIDGET_REGISTRY[widget.type]
   return (
     <div className={cn(
@@ -179,7 +181,7 @@ function WidgetShell({
         editMode && 'cursor-grab active:cursor-grabbing',
       )}>
         <span className="text-base leading-none">{meta.icon}</span>
-        <span className="flex-1 truncate text-sm font-semibold text-text-primary">{meta.label}</span>
+        <span className="flex-1 truncate text-sm font-semibold text-text-primary">{t(`summary.widgets.${widget.type}.label`, meta.label)}</span>
         {editMode && (
           <>
             <GripHorizontal className="h-4 w-4 shrink-0 text-text-muted" />
@@ -214,11 +216,16 @@ function AddWidgetPanel({
   onAdd:        (type: WidgetType) => void
   onClose:      () => void
 }) {
+  const { t } = useTranslation()
   const [search, setSearch] = useState('')
   const entries = (Object.entries(WIDGET_REGISTRY) as [WidgetType, WidgetMeta][])
     .filter(([type]) => !(isKanban && SCRUM_ONLY_WIDGETS.has(type)))
-    .filter(([, m]) => m.label.toLowerCase().includes(search.toLowerCase()) ||
-                       m.description.toLowerCase().includes(search.toLowerCase()))
+    .filter(([type, m]) => {
+      const label = t(`summary.widgets.${type}.label`, m.label).toLowerCase()
+      const desc  = t(`summary.widgets.${type}.desc`, m.description).toLowerCase()
+      const q = search.toLowerCase()
+      return label.includes(q) || desc.includes(q)
+    })
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -227,8 +234,8 @@ function AddWidgetPanel({
         {/* Header */}
         <div className="flex shrink-0 items-center justify-between border-b border-surface-border px-5 py-4">
           <div>
-            <h2 className="text-base font-semibold text-text-primary">Add widget</h2>
-            <p className="text-xs text-text-muted">{Object.keys(WIDGET_REGISTRY).length} widgets available</p>
+            <h2 className="text-base font-semibold text-text-primary">{t('summary.panel.title')}</h2>
+            <p className="text-xs text-text-muted">{t('summary.panel.available', { count: Object.keys(WIDGET_REGISTRY).length })}</p>
           </div>
           <button onClick={onClose} className="rounded-lg p-1.5 text-text-muted hover:bg-surface-muted">
             <X className="h-4 w-4" />
@@ -241,7 +248,7 @@ function AddWidgetPanel({
             autoFocus
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search widgets…"
+            placeholder={t('summary.panel.searchPlaceholder')}
             className="w-full rounded-lg border border-surface-border bg-surface-muted px-3 py-2 text-sm text-text-primary placeholder:text-text-muted outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
           />
         </div>
@@ -266,14 +273,14 @@ function AddWidgetPanel({
                   <span className="mt-0.5 text-2xl leading-none">{meta.icon}</span>
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="truncate text-sm font-semibold text-text-primary">{meta.label}</p>
+                      <p className="truncate text-sm font-semibold text-text-primary">{t(`summary.widgets.${type}.label`, meta.label)}</p>
                       {added && (
                         <span className="shrink-0 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
-                          Added
+                          {t('summary.panel.addedBadge')}
                         </span>
                       )}
                     </div>
-                    <p className="mt-0.5 text-xs leading-snug text-text-muted">{meta.description}</p>
+                    <p className="mt-0.5 text-xs leading-snug text-text-muted">{t(`summary.widgets.${type}.desc`, meta.description)}</p>
                   </div>
                 </button>
               )
@@ -288,6 +295,7 @@ function AddWidgetPanel({
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function SummaryPage() {
+  const { t } = useTranslation()
   const { boardId } = useParams<{ boardId: string }>()
   const bid = boardId!
 
@@ -365,9 +373,9 @@ export default function SummaryPage() {
       <div className="flex shrink-0 items-center justify-between border-b border-surface-border bg-surface px-5 py-3">
         <div className="flex items-center gap-2">
           <LayoutGrid className="h-4 w-4 text-text-muted" />
-          <h1 className="text-sm font-semibold text-text-primary">Summary</h1>
+          <h1 className="text-sm font-semibold text-text-primary">{t('summary.title')}</h1>
           <span className="rounded-full bg-surface-muted px-2 py-0.5 text-xs text-text-muted">
-            {widgets.length} widget{widgets.length !== 1 ? 's' : ''}
+            {t('summary.widgetCount', { count: widgets.length })}
           </span>
         </div>
 
@@ -379,14 +387,14 @@ export default function SummaryPage() {
                 className="flex items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/5 px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
               >
                 <Plus className="h-3.5 w-3.5" />
-                Add widget
+                {t('summary.addWidget')}
               </button>
               <button
                 onClick={resetLayout}
                 className="flex items-center gap-1.5 rounded-lg border border-surface-border px-3 py-1.5 text-xs text-text-muted transition-colors hover:text-text-primary"
               >
                 <RefreshCw className="h-3.5 w-3.5" />
-                Reset
+                {t('summary.reset')}
               </button>
             </>
           )}
@@ -400,7 +408,7 @@ export default function SummaryPage() {
             )}
           >
             <Settings2 className="h-3.5 w-3.5" />
-            {editMode ? 'Done' : 'Customize'}
+            {editMode ? t('summary.done') : t('summary.customize')}
           </button>
         </div>
       </div>
@@ -408,7 +416,7 @@ export default function SummaryPage() {
       {/* Edit mode banner */}
       {editMode && (
         <div className="shrink-0 border-b border-primary/20 bg-primary/5 px-5 py-2 text-xs text-primary">
-          Drag to reorder · Resize from the corner · Click × to remove · Click <strong>Done</strong> when finished
+          {t('summary.editBanner')}
         </div>
       )}
 

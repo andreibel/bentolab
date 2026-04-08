@@ -1,15 +1,835 @@
 {
   "actions": {
-    "save": "Save",
-    "cancel": "Cancel",
-    "delete": "Delete",
-    "edit": "Edit",
-    "create": "Create",
-    "confirm": "Confirm"
+    "save":     "Save",
+    "cancel":   "Cancel",
+    "delete":   "Delete",
+    "edit":     "Edit",
+    "create":   "Create",
+    "confirm":  "Confirm",
+    "close":    "Close",
+    "add":      "Add",
+    "remove":   "Remove",
+    "restore":  "Restore",
+    "archive":  "Archive",
+    "saving":   "Saving…",
+    "signOut":  "Sign out"
   },
   "errors": {
-    "generic": "Something went wrong",
-    "notFound": "Not found",
+    "generic":   "Something went wrong",
+    "notFound":  "Not found",
     "forbidden": "Access denied"
+  },
+  "nav": {
+    "workspace":       "Workspace",
+    "personal":        "Personal",
+    "recent":          "Recent",
+    "boards":          "Boards",
+    "summary":         "Summary",
+    "timeline":        "Timeline",
+    "reports":         "Reports",
+    "myIssues":        "My Issues",
+    "inbox":           "Inbox",
+    "calendar":        "Calendar",
+    "settings":        "Settings",
+    "newBoard":        "New board",
+    "viewAll":         "View all ({{count}})",
+    "createOrg":       "Create organization",
+    "profile":         "Profile",
+    "expandSidebar":   "Expand sidebar",
+    "collapseSidebar": "Collapse sidebar"
+  },
+  "settingsNav": {
+    "title":        "Settings",
+    "orgGroup":     "Organization",
+    "personalGroup":"Personal",
+    "general":      "General",
+    "members":      "Members",
+    "labels":       "Labels",
+    "security":     "Security",
+    "advanced":     "Advanced",
+    "automations":  "Automations",
+    "integrations": "Integrations",
+    "preferences":  "Preferences",
+    "backToBoards": "Back to boards"
+  },
+  "boards": {
+    "title":              "Boards",
+    "activeCount_one":    "{{count}} active board",
+    "activeCount_other":  "{{count}} active boards",
+    "archived":           "archived",
+    "newBoard":           "New board",
+    "archivedBoards":     "Archived boards ({{count}})",
+    "archiveBoard":       "Archive board",
+    "unarchive":          "Unarchive",
+    "noBoards":           "No boards yet",
+    "noBoardsDesc":       "Create your first board to start tracking issues.",
+    "createBoard":        "Create board",
+    "failedToLoad":       "Failed to load boards. Check that the board service is running.",
+    "issueCount_one":     "{{count}} issue",
+    "issueCount_other":   "{{count}} issues",
+    "types": {
+      "SCRUM":        "Scrum",
+      "KANBAN":       "Kanban",
+      "BUG_TRACKING": "Bug Tracking",
+      "CUSTOM":       "Custom"
+    }
+  },
+  "board": {
+    "addIssue":       "Add issue",
+    "addColumn":      "Add column",
+    "noActiveSprint": "No active sprint — the board is empty.",
+    "goToBacklog":    "Go to Backlog to start a sprint"
+  },
+  "column": {
+    "name":          "Name",
+    "color":         "Color",
+    "wipLimit":      "WIP limit",
+    "wipOptional":   "(optional)",
+    "noLimit":       "No limit",
+    "dropHere":      "Drop here",
+    "dragToReorder": "Drag to reorder column",
+    "editColumn":    "Edit column",
+    "addIssue":      "Add issue",
+    "updated":       "Column updated",
+    "failedToUpdate":"Failed to update column"
+  },
+  "issues": {
+    "createTitle":          "Create issue",
+    "issueTitle":           "Issue title",
+    "titleRequired":        "Title is required",
+    "addDescription":       "Add a description… (optional)",
+    "compactView":          "Compact view",
+    "fullScreen":           "Full screen",
+    "created":              "Issue created",
+    "failedToCreate":       "Failed to create issue",
+    "selectBoardError":     "Please select a board",
+    "selectBoardPlaceholder": "Select board…",
+    "backlogNoColumn":      "Backlog (no column)",
+    "noneOption":           "None",
+    "backlog":              "Backlog",
+    "noStartDate":          "No start date",
+    "noDueDate":            "No due date",
+    "fields": {
+      "priority":    "Priority",
+      "board":       "Board",
+      "column":      "Column",
+      "epic":        "Epic",
+      "sprint":      "Sprint",
+      "parent":      "Parent issue",
+      "storyPoints": "Story points",
+      "startDate":   "Start date",
+      "dueDate":     "Due date",
+      "labels":      "Labels"
+    },
+    "types": {
+      "STORY":   "Story",
+      "TASK":    "Task",
+      "BUG":     "Bug",
+      "SUBTASK": "Sub"
+    },
+    "priorities": {
+      "CRITICAL": "Critical",
+      "HIGH":     "High",
+      "MEDIUM":   "Medium",
+      "LOW":      "Low"
+    }
+  },
+  "labTopNav": {
+    "board":    "Board",
+    "summary":  "Summary",
+    "backlog":  "Backlog",
+    "sprints":  "Sprints",
+    "triage":   "Triage",
+    "timeline": "Timeline",
+    "reports":  "Reports"
+  },
+  "commandPalette": {
+    "categories": {
+      "all":      "All",
+      "issues":   "Issues",
+      "boards":   "Boards",
+      "new":      "New",
+      "navigate": "Navigate"
+    },
+    "placeholder": {
+      "default":  "Search or type / for filter commands…",
+      "issues":   "Search issues, descriptions, comments… or use / for filters",
+      "boards":   "Search boards or type: new board KEY Name…",
+      "new":      "Type: new board KEY Name  or  create issue…",
+      "navigate": "Jump to a page…",
+      "command":  "Type a command name or pick from the list…",
+      "value":    "Type a name or \"me\"…",
+      "date":     "Pick a date: today, tomorrow, this-week…"
+    },
+    "groups": {
+      "new":      "New",
+      "navigate": "Navigate",
+      "boards":   "Boards",
+      "issues":   "Issues",
+      "create":   "Create"
+    },
+    "commandsHeader": "Commands",
+    "chooseValue":    "/{{id}} — choose a value",
+    "emptyState": {
+      "addSearchTerm": "Add a search term to use filters",
+      "noResults":     "No results for \"{{query}}\"",
+      "nothingYet":    "Nothing here yet",
+      "filterHint":    "Type / for filter commands"
+    },
+    "hint": {
+      "typeToSearch": "Type to search · / for filter commands",
+      "navigate":     "navigate",
+      "select":       "select",
+      "apply":        "apply",
+      "dismiss":      "dismiss",
+      "template":     "template",
+      "category":     "category",
+      "close":        "close",
+      "filterBar":    "/ for filters · ⌘K to open"
+    },
+    "loading": {
+      "searching": "searching…"
+    },
+    "counts": {
+      "issues_one":        "{{count}} issue",
+      "issues_other":      "{{count}} issues",
+      "boards_one":        "{{count}} board",
+      "boards_other":      "{{count}} boards",
+      "filtersActive_one": "{{count}} filter active",
+      "filtersActive_other":"{{count}} filters active",
+      "ofTotal":           "of {{total}}"
+    },
+    "createBoard": {
+      "template":  "Template:",
+      "creating":  "Creating…",
+      "create":    "create",
+      "typeHint":  "new board KEY Name"
+    },
+    "toasts": {
+      "boardCreated":     "Board \"{{name}}\" created",
+      "boardCreateFailed":"Failed to create board",
+      "boardKeyExists":   "Key \"{{key}}\" already exists — pick a different key"
+    }
+  },
+  "backlog": {
+    "title": "Backlog",
+    "tabs": {
+      "open":   "Open",
+      "closed": "Closed",
+      "all":    "All"
+    },
+    "sprint": {
+      "active":         "Active",
+      "planned":        "Planned",
+      "doneFraction":   "{{done}}/{{total}} done",
+      "issueCount_one": "{{count}} issue",
+      "issueCount_other":"{{count}} issues",
+      "pts":            "pts",
+      "startSprint":    "Start Sprint",
+      "complete":       "Complete",
+      "editSprint":     "Edit sprint",
+      "moveToSprint":   "Move",
+      "addToSprint":    "+ Sprint",
+      "toBacklog":      "→ Backlog",
+      "noActiveSprints":"No active sprints",
+      "addIssue":       "Add issue"
+    },
+    "backlogSection": {
+      "title":    "Backlog",
+      "noIssues": "No issues in backlog",
+      "addIssue": "Add issue",
+      "newSprint":"Sprint"
+    },
+    "kanban": {
+      "pullToBoard": "Pull to board",
+      "noColumns":   "No columns on board"
+    },
+    "buttons": {
+      "epic":   "Epic",
+      "sprint": "Sprint",
+      "issue":  "Issue"
+    },
+    "closedBadge": "Closed",
+    "dateFrom":    "from {{date}}",
+    "dateUntil":   "until {{date}}",
+    "epics": {
+      "createTitle":   "Create Epic",
+      "editTitle":     "Edit Epic",
+      "nameLabel":     "Name *",
+      "namePlaceholder":"e.g. Authentication, Dashboard redesign…",
+      "colorLabel":    "Color",
+      "cancel":        "Cancel",
+      "create":        "Create Epic",
+      "creating":      "Creating…",
+      "save":          "Save",
+      "saving":        "Saving…",
+      "created":       "Epic created",
+      "failedToCreate":"Failed to create epic",
+      "updated":       "Epic updated",
+      "failedToUpdate":"Failed to update epic"
+    },
+    "sprintModals": {
+      "editTitle":     "Edit Sprint",
+      "nameLabel":     "Name *",
+      "goalLabel":     "Goal",
+      "goalPlaceholder":"Sprint goal…",
+      "startDate":     "Start date",
+      "endDate":       "End date",
+      "cancel":        "Cancel",
+      "save":          "Save",
+      "saving":        "Saving…",
+      "updated":       "Sprint updated",
+      "failedToUpdate":"Failed to update sprint"
+    },
+    "completeModal": {
+      "title":         "Complete \"{{name}}\"",
+      "description":   "Where should incomplete issues go after this sprint ends?",
+      "moveToBacklog": "Move to Backlog",
+      "cancel":        "Cancel",
+      "complete":      "Complete Sprint"
+    },
+    "toasts": {
+      "addedToSprint":       "Added to sprint",
+      "movedToBacklog":      "Moved to backlog",
+      "failedToMove":        "Failed to move issue",
+      "pulledToBoard":       "Pulled to board",
+      "failedToPull":        "Failed to pull to board",
+      "sprintStarted":       "Sprint started",
+      "failedToStart":       "Failed to start sprint — make sure no other sprint is active",
+      "sprintCompleted":     "Sprint completed",
+      "failedToComplete":    "Failed to complete sprint"
+    }
+  },
+  "issues": {
+    "types": {
+      "STORY":   "Story",
+      "TASK":    "Task",
+      "BUG":     "Bug",
+      "SUBTASK": "Sub"
+    },
+    "priorities": {
+      "CRITICAL": "Critical",
+      "HIGH":     "High",
+      "MEDIUM":   "Medium",
+      "LOW":      "Low"
+    }
+  },
+  "myIssues": {
+    "title":             "My Issues",
+    "searchPlaceholder": "Search by title or key…",
+    "relation": {
+      "all":      "All",
+      "assigned": "Assigned to me",
+      "created":  "Created by me"
+    },
+    "filters": {
+      "board":    "Board",
+      "priority": "Priority",
+      "type":     "Type",
+      "status":   "All status",
+      "open":     "Open",
+      "closed":   "Closed",
+      "clear":    "Clear",
+      "searchBoards": "Search boards…",
+      "noBoards":     "No boards found"
+    },
+    "sort": {
+      "priority":  "Priority",
+      "dueDate":   "Due date",
+      "createdAt": "Created",
+      "updatedAt": "Updated"
+    },
+    "columns": {
+      "key":      "Key",
+      "title":    "Title",
+      "relation": "Relation",
+      "board":    "Board",
+      "due":      "Due"
+    },
+    "relation_badge": {
+      "both":     "Both",
+      "assigned": "Assigned",
+      "created":  "Created"
+    },
+    "closedBadge":  "Closed",
+    "total_one":    "{{count}} issue total",
+    "total_other":  "{{count}} issues total",
+    "empty":        "No issues found",
+    "emptyFilters": "Try adjusting your filters",
+    "emptyHint":    "Issues assigned to or created by you will appear here"
+  },
+  "auth": {
+    "login": {
+      "welcomeBack":          "Welcome back",
+      "continueWorkspace":    "Sign in to continue to your workspace",
+      "email":                "Email",
+      "password":             "Password",
+      "forgotPassword":       "Forgot password?",
+      "signIn":               "Sign in",
+      "bySigningIn":          "By signing in you agree to our",
+      "termsOfService":       "Terms of Service",
+      "and":                  "and",
+      "privacyPolicy":        "Privacy Policy",
+      "signInToBento":        "Sign in to Bento",
+      "enterWorkspaceUrl":    "Enter your workspace URL to continue",
+      "workspaceUrl":         "Workspace URL",
+      "continue":             "Continue",
+      "noWorkspace":          "No workspace?",
+      "createForFree":        "Create one for free",
+      "alreadyHaveWorkspace": "Already have a workspace?",
+      "signInWithUrl":        "Sign in with URL",
+      "invalidCredentials":   "Invalid email or password"
+    },
+    "register": {
+      "title":             "Create your account",
+      "subtitle":          "Start managing your projects today",
+      "firstName":         "First name",
+      "lastName":          "Last name",
+      "email":             "Email",
+      "password":          "Password",
+      "createAccount":     "Create account",
+      "alreadyHaveAccount":"Already have an account?",
+      "signIn":            "Sign in",
+      "verifyEmailTitle":  "Check your inbox",
+      "verifyEmailDesc":   "We sent a verification link to {{email}}. Open it to activate your account.",
+      "couldNotCreate":    "Could not create account"
+    },
+    "forgotPassword": {
+      "title":       "Forgot your password?",
+      "subtitle":    "Enter your email and we'll send you a reset link.",
+      "email":       "Email",
+      "sendLink":    "Send reset link",
+      "backToLogin": "Back to sign in",
+      "sentTitle":   "Check your inbox",
+      "sentDesc":    "If {{email}} is registered, you'll receive a password reset link shortly."
+    },
+    "resetPassword": {
+      "title":                       "Reset your password",
+      "subtitle":                    "Enter a new password for your account.",
+      "newPassword":                 "New password",
+      "newPasswordPlaceholder":      "At least 8 characters",
+      "confirmPassword":             "Confirm password",
+      "confirmPasswordPlaceholder":  "Repeat your password",
+      "save":                        "Set new password",
+      "updateButton":                "Update password",
+      "saving":                      "Saving…",
+      "invalidToken":                "This reset link is invalid or has expired.",
+      "noTokenTitle":                "Invalid reset link",
+      "noTokenDesc":                 "This link is missing a reset token. Please request a new one.",
+      "requestNew":                  "Request new link",
+      "successTitle":                "Password updated",
+      "successDesc":                 "Your password has been changed. You can now sign in.",
+      "successToast":                "Password updated — please sign in",
+      "expiredToast":                "Reset link is invalid or has expired",
+      "signIn":                      "Sign in",
+      "backToLogin":                 "Back to sign in"
+    },
+    "verifyEmail": {
+      "verifying":       "Verifying your email…",
+      "successTitle":    "Email verified!",
+      "successDesc":     "Your email address has been confirmed. You're all set.",
+      "signIn":          "Sign in to Bento",
+      "linkExpired":     "Link expired",
+      "invalidLink":     "Invalid link",
+      "expiredDesc":     "This verification link has expired or already been used. Request a new one below.",
+      "invalidDesc":     "No verification token was found in this link.",
+      "enterEmail":      "Enter your email",
+      "resend":          "Resend verification email",
+      "sentCheckInbox":  "Sent! Check your inbox and spam folder.",
+      "backToSignIn":    "Back to sign in"
+    },
+    "invite": {
+      "loading":             "Loading invitation…",
+      "unavailableTitle":    "Invitation unavailable",
+      "invalidTitle":        "Invalid invitation",
+      "invalidDesc":         "This invitation link is invalid or has expired.",
+      "missingToken":        "Missing invitation token.",
+      "notFound":            "Invitation not found or has expired.",
+      "goToBento":           "Go to Bento",
+      "invitedToJoin":       "You've been invited to join",
+      "joinTitle":           "You've been invited",
+      "joinDesc":            "Join {{org}} as {{role}}",
+      "emailProtected":      "This invite is restricted to a specific email address.",
+      "emailProtectedNote":  "This invite is for a specific email address. Sign in with that email to accept.",
+      "loginToAccept":       "Sign in to accept",
+      "password":            "Password",
+      "email":               "Email",
+      "signIn":              "Sign in & accept",
+      "accept":              "Accept invitation",
+      "joining":             "Joining…",
+      "accepting":           "Accepting…",
+      "tryAgain":            "Try again",
+      "accepted":            "Invitation accepted! Redirecting…",
+      "successTitle":        "You're in!",
+      "redirecting":         "Taking you to {{org}}…",
+      "failed":              "Failed to accept invitation",
+      "wrongEmail":          "Invalid credentials. Make sure you're signing in with the email this invite was sent to.",
+      "invalidCredentials":  "Invalid email or password.",
+      "signInDifferent":     "Sign in with a different account",
+      "noAccount":           "No account?",
+      "createAccount":       "Create one for free",
+      "backToLogin":         "Back to sign in"
+    }
+  },
+  "notFound": {
+    "goBack": "Go back",
+    "goHome": "Go home",
+    "sprint": {
+      "title":    "Sprint not found",
+      "subtitle": "This sprint finished the race and left no trace behind."
+    },
+    "timeline": {
+      "title":    "Off the timeline",
+      "subtitle": "This part of the timeline was never plotted — or was quietly erased."
+    },
+    "backlog": {
+      "title":    "Backlog lost",
+      "subtitle": "The backlog went so far back it fell off the edge of the board."
+    },
+    "reports": {
+      "title":    "No metrics here",
+      "subtitle": "The data for this lab went dark. Even the error rate is 0."
+    },
+    "milestones": {
+      "title":    "Milestone missed",
+      "subtitle": "This milestone was either never reached or never set."
+    },
+    "members": {
+      "title":    "No one here",
+      "subtitle": "This lab's members page doesn't exist — or the lab itself doesn't."
+    },
+    "lab": {
+      "title":    "Lab not found",
+      "subtitle": "This lab doesn't exist, or you haven't been given access."
+    },
+    "settings": {
+      "title":    "Setting not found",
+      "subtitle": "You've wandered into an unmapped section of the control room."
+    },
+    "lostInTime": {
+      "title":    "Lost in time",
+      "subtitle": "This timeline doesn't exist in any known dimension."
+    },
+    "noData": {
+      "title":    "No data found",
+      "subtitle": "The metrics went missing. Even the error rate is 0."
+    },
+    "calendar": {
+      "title":    "Date not found",
+      "subtitle": "Mark this one in your calendar: this page doesn't exist."
+    },
+    "inbox": {
+      "title":    "Empty inbox",
+      "subtitle": "No messages here — because this page doesn't exist."
+    },
+    "myIssues": {
+      "title":    "No issues found",
+      "subtitle": "Turns out you have no issues. Well — this page doesn't exist at least."
+    },
+    "deepSpace": {
+      "title":    "Deep space",
+      "subtitle": "No signal. You've gone further than the maps reach."
+    },
+    "generic": {
+      "title":    "Page not found",
+      "subtitle": "Whatever you were looking for isn't here. Maybe it never was."
+    }
+  },
+  "settings": {
+    "profile": {
+      "title":            "Profile",
+      "description":      "Your personal details and preferences.",
+      "firstName":        "First name",
+      "lastName":         "Last name",
+      "email":            "Email address",
+      "emailNote":        "Email cannot be changed after registration.",
+      "avatarUrl":        "Avatar URL",
+      "avatarPlaceholder":"https://…",
+      "saved":            "Profile updated",
+      "failedToSave":     "Failed to update profile",
+      "changePassword":   "Change password",
+      "changePasswordDesc":"We'll send a password-reset link to your email address.",
+      "sendResetLink":    "Send reset link",
+      "resetEmailSent":   "Check your inbox for the reset link.",
+      "failedToSend":     "Failed to send reset email",
+      "emailNotVerified": "Email not verified",
+      "emailNotVerifiedDesc":"Please check your inbox and click the verification link.",
+      "resendVerification":"Resend verification email",
+      "resendSuccess":    "Verification email sent",
+      "resendFailed":     "Failed to send verification email"
+    },
+    "members": {
+      "title":             "Members",
+      "description":       "Manage who has access to this organization.",
+      "membersTab":        "Members",
+      "invitationsTab":    "Invitations",
+      "inviteButton":      "Invite",
+      "youSuffix":         "(you)",
+      "roles": {
+        "ORG_OWNER":  "Owner",
+        "ORG_ADMIN":  "Admin",
+        "ORG_MEMBER": "Member"
+      },
+      "removeSuccess":     "Member removed",
+      "removeFailed":      "Failed to remove member",
+      "roleUpdateSuccess": "Role updated",
+      "roleUpdateFailed":  "Failed to update role",
+      "loadingProfile":    "Loading…",
+      "openInviteLink":    "Open invite link",
+      "expires":           "expires {{date}}",
+      "linkType":          "Link",
+      "emailType":         "Email",
+      "copyLink":          "Copy invite link",
+      "revokeInvite":      "Revoke invitation"
+    },
+    "org": {
+      "title":         "Organization",
+      "description":   "General organization settings.",
+      "nameLabel":     "Name",
+      "slugLabel":     "Slug",
+      "saved":         "Organization updated",
+      "failedToSave":  "Failed to update organization"
+    },
+    "labels": {
+      "title":      "Labels",
+      "description":"Manage labels for issues in this organization."
+    },
+    "security": {
+      "title":      "Security",
+      "description":"Manage active sessions and access tokens."
+    },
+    "automations": {
+      "title":      "Automations",
+      "description":"Automate repetitive workflows."
+    },
+    "integrations": {
+      "title":      "Integrations",
+      "description":"Connect third-party tools to your workspace."
+    },
+    "advanced": {
+      "title":        "Advanced Settings",
+      "description":  "Feature flags and resource limits for this organization.",
+      "featuresTitle":"Features",
+      "limitsTitle":  "Limits",
+      "ownerOnly":    "Only the organization owner can change these settings.",
+      "saveLimits":   "Save limits",
+      "saved":        "Settings saved",
+      "failedToSave": "Failed to save settings",
+      "flags": {
+        "discord":     "Discord notifications",
+        "discordDesc": "Allow connecting Discord webhooks for board event alerts.",
+        "export":      "Data export",
+        "exportDesc":  "Allow members to export board data as CSV or JSON.",
+        "branding":    "Custom branding",
+        "brandingDesc":"Replace Bento logos and colors with your own brand assets.",
+        "sso":         "SSO / SAML",
+        "ssoDesc":     "Require members to authenticate via your identity provider."
+      },
+      "limits": {
+        "maxMembers":    "Max members",
+        "maxMembersDesc":"Maximum number of users allowed in this organization.",
+        "maxBoards":     "Max boards",
+        "maxBoardsDesc": "Maximum number of boards that can be created.",
+        "maxStorage":    "Storage limit (GB)",
+        "maxStorageDesc":"Maximum attachment storage for this organization."
+      }
+    },
+    "preferences": {
+      "title":            "Preferences",
+      "description":      "Language, date, time, and display preferences.",
+      "languageTitle":    "Language",
+      "dateTimeTitle":    "Date & Time",
+      "displayTitle":     "Display",
+      "timezone":         "Timezone",
+      "weekStart":        "Week starts on",
+      "workingDays":      "Working days",
+      "dateFormat":       "Date format",
+      "timeFormat":       "Time format",
+      "days": {
+        "0": "Sun", "1": "Mon", "2": "Tue", "3": "Wed",
+        "4": "Thu", "5": "Fri", "6": "Sat"
+      }
+    }
+  },
+  "common": {
+    "boardNotFound":    "Board not found or failed to load.",
+    "backToBoards":     "Back to boards",
+    "loading":          "Loading…",
+    "noActiveSprint":   "No active sprint — the board is empty.",
+    "startSprint":      "Go to Backlog to start a sprint"
+  },
+  "sprintsPage": {
+    "title":           "Sprints",
+    "active":          "active",
+    "planned_one":     "{{count}} planned",
+    "planned_other":   "{{count}} planned",
+    "completed_one":   "{{count}} completed",
+    "completed_other": "{{count}} completed",
+    "createSprint":    "Create Sprint",
+    "status": {
+      "ACTIVE":    "Active",
+      "PLANNED":   "Planned",
+      "COMPLETED": "Completed"
+    },
+    "overdue":         "{{count}}d overdue",
+    "daysLeft":        "{{count}}d left",
+    "startSprint":     "Start Sprint",
+    "completeSprint":  "Complete Sprint",
+    "details": {
+      "start":         "Start",
+      "end":           "End",
+      "issues":        "Issues",
+      "points":        "Points",
+      "issueProgress": "Issue progress",
+      "storyPoints":   "Story points"
+    },
+    "toasts": {
+      "started":          "Sprint started",
+      "failedToStart":    "Failed to start sprint — make sure no other sprint is active",
+      "completed":        "Sprint completed",
+      "failedToComplete": "Failed to complete sprint"
+    },
+    "empty": {
+      "title":       "No sprints yet",
+      "desc":        "Create a sprint to start planning your work.",
+      "createFirst": "Create first sprint"
+    },
+    "modal": {
+      "title":          "Close \"{{name}}\"",
+      "allComplete":    "All issues are complete — great work!",
+      "incomplete_one": "{{count}} incomplete issue needs to be moved.",
+      "incomplete_other":"{{count}} incomplete issues need to be moved.",
+      "backlogOption":  "Move to Backlog",
+      "backlogDesc":    "Incomplete issues return to the backlog and can be planned into future sprints.",
+      "sprintOption":   "Transfer to Sprint",
+      "noSprints":      "No other active or planned sprints available.",
+      "sprintDesc":     "Move incomplete issues directly into another sprint.",
+      "cancel":         "Cancel",
+      "close":          "Close Sprint"
+    }
+  },
+  "labelsPage": {
+    "title":          "Labels",
+    "description":    "Manage labels used to categorize issues across all boards in this organization.",
+    "count_one":      "{{count}} label",
+    "count_other":    "{{count}} labels",
+    "newLabel":       "New label",
+    "form": {
+      "namePlaceholder": "Label name",
+      "descPlaceholder": "Description (optional)",
+      "cancel":          "Cancel",
+      "save":            "Save",
+      "create":          "Create"
+    },
+    "row": {
+      "edit":   "Edit label",
+      "delete": "Delete label"
+    },
+    "empty":          "No labels yet. Create one to get started.",
+    "created":        "Label created",
+    "updated":        "Label updated",
+    "deleted":        "Label deleted",
+    "failedToCreate": "Failed to create label",
+    "failedToUpdate": "Failed to update label",
+    "failedToDelete": "Failed to delete label"
+  },
+  "timeline": {
+    "today":             "Today",
+    "name":              "Name",
+    "noEpic":            "No Epic",
+    "backlog":           "Backlog",
+    "groupBy": {
+      "epic":   "By Epic",
+      "sprint": "By Sprint",
+      "none":   "Flat"
+    },
+    "zoom": {
+      "week":    "Week",
+      "month":   "Month",
+      "quarter": "Quarter",
+      "year":    "Year"
+    },
+    "show": {
+      "epics":      "Epics",
+      "sprints":    "Sprints",
+      "issues":     "Issues",
+      "milestones": "Milestones"
+    },
+    "addMilestone": "Milestone",
+    "milestone": {
+      "editTitle":     "Edit Milestone",
+      "newTitle":      "New Milestone",
+      "titleLabel":    "Title",
+      "titleRequired": "Title is required",
+      "datePlaceholder":"e.g. Beta Launch, Feature Freeze…",
+      "dateLabel":     "Date",
+      "colorLabel":    "Color",
+      "statusLabel":   "Status",
+      "descLabel":     "Description",
+      "descOptional":  "(optional)",
+      "descPlaceholder":"Optional notes…",
+      "status": {
+        "PLANNED": "Planned",
+        "REACHED": "Reached",
+        "MISSED":  "Missed"
+      },
+      "delete":        "Delete",
+      "cancel":        "Cancel",
+      "saving":        "Saving…",
+      "save":          "Save",
+      "create":        "Create",
+      "updated":       "Milestone updated",
+      "created":       "Milestone created",
+      "deleted":       "Milestone deleted",
+      "failedToSave":  "Failed to save milestone",
+      "failedToDelete":"Failed to delete milestone"
+    }
+  },
+  "globalTimeline": {
+    "noBoards":      "No boards found. Create a board to see it on the timeline.",
+    "openBoard":     "Open board",
+    "today":         "today",
+    "todayButton":   "Today",
+    "boardCount_one":   "{{count}} board",
+    "boardCount_other": "{{count}} boards",
+    "boardTypes": {
+      "SCRUM":        "Scrum",
+      "KANBAN":       "Kanban",
+      "BUG_TRACKING": "Bugs",
+      "CUSTOM":       "Custom"
+    }
+  },
+  "summary": {
+    "title":           "Summary",
+    "widgetCount_one": "{{count}} widget",
+    "widgetCount_other":"{{count}} widgets",
+    "addWidget":       "Add widget",
+    "reset":           "Reset",
+    "done":            "Done",
+    "customize":       "Customize",
+    "editBanner":      "Drag to reorder · Resize from the corner · Click × to remove · Click Done when finished",
+    "panel": {
+      "title":        "Add widget",
+      "available":    "{{count}} widgets available",
+      "searchPlaceholder":"Search widgets…",
+      "addedBadge":   "Added"
+    },
+    "widgets": {
+      "SPRINT_HEALTH":      { "label": "Sprint Health",       "desc": "Current sprint progress and burndown" },
+      "ISSUE_BREAKDOWN":    { "label": "Issue Breakdown",     "desc": "Issues by type (Story, Task, Bug, Subtask)" },
+      "WORKLOAD":           { "label": "Team Workload",       "desc": "Open issues per team member" },
+      "EPIC_PROGRESS":      { "label": "Epic Progress",       "desc": "Completion percentage for each epic" },
+      "RECENT_ACTIVITY":    { "label": "Recent Activity",     "desc": "Latest issue events and comments" },
+      "OVERDUE":            { "label": "Overdue Issues",      "desc": "Issues past their due date" },
+      "OPEN_CLOSED":        { "label": "Open vs Closed",      "desc": "Issue trend over the past 30 days" },
+      "UNASSIGNED":         { "label": "Unassigned Issues",   "desc": "Issues with no assignee" },
+      "VELOCITY":           { "label": "Velocity",            "desc": "Story points completed per sprint" },
+      "CYCLE_TIME":         { "label": "Cycle Time",          "desc": "Average time issues spend per column" },
+      "WIP":                { "label": "WIP Status",          "desc": "Work-in-progress limits per column" },
+      "PRIORITY_BREAKDOWN": { "label": "Priority Breakdown",  "desc": "Issues by priority level" },
+      "STALE_ISSUES":       { "label": "Stale Issues",        "desc": "Issues with no updates in 7+ days" },
+      "BUG_RATE":           { "label": "Bug Rate",            "desc": "Bug count trend and resolution rate" },
+      "TEAM_ACTIVITY":      { "label": "Team Activity",       "desc": "Contributions per team member this week" }
+    }
   }
 }

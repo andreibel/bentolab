@@ -6,6 +6,7 @@ import {Link, useNavigate} from 'react-router-dom'
 import {toast} from 'sonner'
 import {MailCheck} from 'lucide-react'
 import {motion, useReducedMotion} from 'framer-motion'
+import {useTranslation} from 'react-i18next'
 import {authApi} from '@/api/auth'
 import {useAuthStore} from '@/stores/authStore'
 import {Button} from '@/components/ui/Button'
@@ -22,6 +23,7 @@ type FormValues = z.infer<typeof schema>
 
 export default function RegisterPage() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const setAuth = useAuthStore((s) => s.setAuth)
   const [verifyEmail, setVerifyEmail] = useState<string | null>(null)
   const reduceMotion = useReducedMotion()
@@ -53,7 +55,7 @@ export default function RegisterPage() {
       navigate(data.user.currentOrgId ? '/boards' : '/org/new')
     } catch (err: unknown) {
       const msg =
-        err instanceof Error ? err.message : 'Could not create account'
+        err instanceof Error ? err.message : t('auth.register.couldNotCreate')
       toast.error(msg)
     }
   }
@@ -126,22 +128,20 @@ export default function RegisterPage() {
             <div className="mb-5 flex items-start gap-3 rounded-lg border border-primary/20 bg-primary-subtle px-4 py-3">
               <MailCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
               <p className="text-sm text-text-secondary">
-                We sent a verification email to{' '}
-                <span className="font-medium text-text-primary">{verifyEmail}</span>.
-                Please check your inbox.
+                {t('auth.register.verifyEmailDesc', { email: verifyEmail })}
               </p>
             </div>
           )}
 
           <div className="mb-6 text-center">
-            <h1 className="text-[1.75rem] font-bold tracking-tight text-text-primary">Create your account</h1>
-            <p className="mt-1.5 text-sm text-text-secondary">Get started with Bento for free</p>
+            <h1 className="text-[1.75rem] font-bold tracking-tight text-text-primary">{t('auth.register.title')}</h1>
+            <p className="mt-1.5 text-sm text-text-secondary">{t('auth.register.subtitle')}</p>
           </div>
 
           <form noValidate onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
             <div className="grid grid-cols-2 gap-3">
               <Input
-                label="First name"
+                label={t('auth.register.firstName')}
                 autoFocus
                 autoComplete="given-name"
                 placeholder="John"
@@ -149,7 +149,7 @@ export default function RegisterPage() {
                 {...register('firstName')}
               />
               <Input
-                label="Last name"
+                label={t('auth.register.lastName')}
                 autoComplete="family-name"
                 placeholder="Doe"
                 error={errors.lastName?.message}
@@ -157,7 +157,7 @@ export default function RegisterPage() {
               />
             </div>
             <Input
-              label="Email"
+              label={t('auth.register.email')}
               type="email"
               autoComplete="email"
               placeholder="you@company.com"
@@ -165,7 +165,7 @@ export default function RegisterPage() {
               {...register('email')}
             />
             <Input
-              label="Password"
+              label={t('auth.register.password')}
               type="password"
               autoComplete="new-password"
               placeholder="At least 8 characters"
@@ -174,15 +174,15 @@ export default function RegisterPage() {
             />
 
             <Button type="submit" size="lg" loading={isSubmitting} className="mt-1 w-full">
-              Create account
+              {t('auth.register.createAccount')}
             </Button>
           </form>
 
           <p className="mt-6 text-center text-xs text-text-muted">
-            By signing up you agree to our{' '}
-            <a href="#" className="underline hover:text-text-secondary">Terms of Service</a>
-            {' '}and{' '}
-            <a href="#" className="underline hover:text-text-secondary">Privacy Policy</a>.
+            {t('auth.login.bySigningIn')}{' '}
+            <a href="#" className="underline hover:text-text-secondary">{t('auth.login.termsOfService')}</a>
+            {' '}{t('auth.login.and')}{' '}
+            <a href="#" className="underline hover:text-text-secondary">{t('auth.login.privacyPolicy')}</a>.
           </p>
         </motion.div>
 
@@ -193,9 +193,9 @@ export default function RegisterPage() {
           transition={{ duration: 0.4, delay: 0.2 }}
           className="mt-5 text-center text-xs text-text-muted"
         >
-          Already have an account?{' '}
+          {t('auth.register.alreadyHaveAccount')}{' '}
           <Link to="/login" className="font-medium text-text-secondary transition-colors hover:text-text-primary">
-            Sign in
+            {t('auth.register.signIn')}
           </Link>
         </motion.p>
       </div>

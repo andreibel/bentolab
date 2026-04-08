@@ -1,5 +1,6 @@
 import {useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState} from 'react'
 import {Link, useParams, useSearchParams} from 'react-router-dom'
+import {useTranslation} from 'react-i18next'
 import {
   closestCenter,
   type CollisionDetection,
@@ -95,6 +96,7 @@ function toColumnId(id: string) {
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function BoardPage() {
+  const { t } = useTranslation()
   const { boardId } = useParams<{ boardId: string }>()
   const [searchParams, setSearchParams] = useSearchParams()
   const queryClient = useQueryClient()
@@ -450,8 +452,8 @@ export default function BoardPage() {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-3">
         <AlertCircle className="h-8 w-8 text-red-500" />
-        <p className="text-sm text-text-secondary">Board not found or failed to load.</p>
-        <Link to="/boards" className="text-sm text-primary underline">Back to boards</Link>
+        <p className="text-sm text-text-secondary">{t('common.boardNotFound')}</p>
+        <Link to="/boards" className="text-sm text-primary underline">{t('common.backToBoards')}</Link>
       </div>
     )
   }
@@ -465,7 +467,7 @@ export default function BoardPage() {
       {/* Board header */}
       <div className="flex shrink-0 items-center justify-between border-b border-surface-border bg-surface px-5 py-3">
         <div className="flex items-center gap-2 text-sm">
-          <Link to="/boards" className="text-text-muted hover:text-text-primary">Boards</Link>
+          <Link to="/boards" className="text-text-muted hover:text-text-primary">{t('nav.boards')}</Link>
           <ChevronRight className="h-3.5 w-3.5 text-text-muted" />
           <div className="flex items-center gap-2">
             <div className="h-4 w-4 rounded" style={{ backgroundColor: bg }} />
@@ -509,7 +511,7 @@ export default function BoardPage() {
             className="flex h-8 items-center gap-1.5 rounded-lg bg-primary px-3 text-xs font-medium text-white transition-colors hover:bg-primary-light"
           >
             <Plus className="h-3.5 w-3.5" />
-            Add issue
+            {t('board.addIssue')}
           </button>
         </div>
       </div>
@@ -518,12 +520,12 @@ export default function BoardPage() {
       {isScrum && !activeSprint && (
         <div className="flex shrink-0 items-center gap-2 border-b border-amber-500/20 bg-amber-500/5 px-5 py-2.5 text-sm text-amber-700 dark:text-amber-400">
           <AlertCircle className="h-4 w-4 shrink-0" />
-          <span>No active sprint — the board is empty.</span>
+          <span>{t('board.noActiveSprint')}</span>
           <Link
             to={`/boards/${boardId}/backlog`}
             className="underline underline-offset-2 hover:no-underline"
           >
-            Go to Backlog to start a sprint
+            {t('board.goToBacklog')}
           </Link>
         </div>
       )}
@@ -556,7 +558,7 @@ export default function BoardPage() {
                   className="flex h-10 items-center gap-2 rounded-lg border border-dashed border-surface-border px-3 text-sm text-text-muted transition-colors hover:border-primary/30 hover:text-primary"
                 >
                   <Plus className="h-4 w-4" />
-                  Add column
+                  {t('board.addColumn')}
                 </button>
               </div>
             </div>

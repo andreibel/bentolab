@@ -5,6 +5,7 @@ import {z} from 'zod'
 import {Link, useNavigate, useSearchParams} from 'react-router-dom'
 import {toast} from 'sonner'
 import {motion, useReducedMotion} from 'framer-motion'
+import {useTranslation} from 'react-i18next'
 import {authApi} from '@/api/auth'
 import {useAuthStore} from '@/stores/authStore'
 import {Button} from '@/components/ui/Button'
@@ -22,6 +23,7 @@ type CredValues = z.infer<typeof credSchema>
 
 function OrgLogin({ orgSlug }: { orgSlug: string }) {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [searchParams] = useSearchParams()
   const redirect = searchParams.get('redirect')
   const setAuth = useAuthStore((s) => s.setAuth)
@@ -35,7 +37,7 @@ function OrgLogin({ orgSlug }: { orgSlug: string }) {
       setAuth(data)
       navigate(redirect ?? (data.user.currentOrgId ? '/boards' : '/org/new'))
     } catch {
-      toast.error('Invalid email or password')
+      toast.error(t('auth.login.invalidCredentials'))
     }
   }
 
@@ -46,13 +48,13 @@ function OrgLogin({ orgSlug }: { orgSlug: string }) {
           <span className="h-2 w-2 rounded-full bg-primary" />
           {orgSlug}
         </div>
-        <h1 className="text-[1.75rem] font-bold tracking-tight text-text-primary">Welcome back</h1>
-        <p className="mt-1.5 text-sm text-text-secondary">Sign in to continue to your workspace</p>
+        <h1 className="text-[1.75rem] font-bold tracking-tight text-text-primary">{t('auth.login.welcomeBack')}</h1>
+        <p className="mt-1.5 text-sm text-text-secondary">{t('auth.login.continueWorkspace')}</p>
       </div>
 
       <form noValidate onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
         <Input
-          label="Email"
+          label={t('auth.login.email')}
           type="email"
           autoFocus
           autoComplete="email"
@@ -63,10 +65,10 @@ function OrgLogin({ orgSlug }: { orgSlug: string }) {
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center justify-between">
             <label className="text-sm font-medium text-text-primary" htmlFor="password">
-              Password
+              {t('auth.login.password')}
             </label>
             <Link to="/forgot-password" className="text-xs text-text-muted transition-colors hover:text-primary">
-              Forgot password?
+              {t('auth.login.forgotPassword')}
             </Link>
           </div>
           <Input
@@ -80,15 +82,15 @@ function OrgLogin({ orgSlug }: { orgSlug: string }) {
         </div>
 
         <Button type="submit" size="lg" loading={isSubmitting} className="mt-1 w-full">
-          Sign in
+          {t('auth.login.signIn')}
         </Button>
       </form>
 
       <p className="mt-6 text-center text-xs text-text-muted">
-        By signing in you agree to our{' '}
-        <a href="#" className="underline hover:text-text-secondary">Terms of Service</a>
-        {' '}and{' '}
-        <a href="#" className="underline hover:text-text-secondary">Privacy Policy</a>.
+        {t('auth.login.bySigningIn')}{' '}
+        <a href="#" className="underline hover:text-text-secondary">{t('auth.login.termsOfService')}</a>
+        {' '}{t('auth.login.and')}{' '}
+        <a href="#" className="underline hover:text-text-secondary">{t('auth.login.privacyPolicy')}</a>.
       </p>
     </>
   )
@@ -107,6 +109,7 @@ type SlugValues = z.infer<typeof slugSchema>
 
 function WorkspaceEntry() {
   const [submitting, setSubmitting] = useState(false)
+  const { t } = useTranslation()
   const APP_DOMAIN = (import.meta.env.VITE_APP_DOMAIN as string | undefined) ?? 'localhost'
 
   const { register, handleSubmit, formState: { errors } } =
@@ -120,13 +123,13 @@ function WorkspaceEntry() {
   return (
     <>
       <div className="mb-6 text-center">
-        <h1 className="text-[1.75rem] font-bold tracking-tight text-text-primary">Sign in to Bento</h1>
-        <p className="mt-1.5 text-sm text-text-secondary">Enter your workspace URL to continue</p>
+        <h1 className="text-[1.75rem] font-bold tracking-tight text-text-primary">{t('auth.login.signInToBento')}</h1>
+        <p className="mt-1.5 text-sm text-text-secondary">{t('auth.login.enterWorkspaceUrl')}</p>
       </div>
 
       <form noValidate onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-text-primary">Workspace URL</label>
+          <label className="text-sm font-medium text-text-primary">{t('auth.login.workspaceUrl')}</label>
           <div className="flex items-center rounded-lg border border-surface-border bg-surface-muted px-3 py-2 text-sm transition-colors focus-within:border-primary focus-within:ring-2 focus-within:ring-primary">
             <input
               autoFocus
@@ -143,15 +146,15 @@ function WorkspaceEntry() {
         </div>
 
         <Button type="submit" size="lg" loading={submitting} className="mt-1 w-full">
-          Continue
+          {t('auth.login.continue')}
           <ArrowRight className="h-4 w-4" />
         </Button>
       </form>
 
       <div className="mt-6 text-center text-sm text-text-secondary">
-        No workspace?{' '}
+        {t('auth.login.noWorkspace')}{' '}
         <Link to="/register" className="font-medium text-primary transition-colors hover:text-primary-light">
-          Create one for free
+          {t('auth.login.createForFree')}
         </Link>
       </div>
     </>
@@ -163,6 +166,7 @@ function WorkspaceEntry() {
 export default function LoginPage() {
   const orgSlug = getOrgSlug()
   const reduceMotion = useReducedMotion()
+  const { t: tPage } = useTranslation()
 
   // Spotlight glow — tracks cursor position relative to the card
   const cardRef = useRef<HTMLDivElement>(null)
@@ -252,9 +256,9 @@ export default function LoginPage() {
             transition={{ duration: 0.4, delay: 0.2 }}
             className="mt-5 text-center text-xs text-text-muted"
           >
-            Already have a workspace?{' '}
+            {tPage('auth.login.alreadyHaveWorkspace')}{' '}
             <Link to="/login" className="font-medium text-text-secondary transition-colors hover:text-text-primary">
-              Sign in with URL
+              {tPage('auth.login.signInWithUrl')}
             </Link>
           </motion.p>
         )}

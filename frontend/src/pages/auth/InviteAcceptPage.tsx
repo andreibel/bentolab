@@ -5,18 +5,13 @@ import {z} from 'zod'
 import {Link, useNavigate, useSearchParams} from 'react-router-dom'
 import {CheckCircle2, Loader2, Users, XCircle} from 'lucide-react'
 import {motion, useReducedMotion} from 'framer-motion'
+import {useTranslation} from 'react-i18next'
 import {orgsApi} from '@/api/orgs'
 import {authApi} from '@/api/auth'
 import {useAuthStore} from '@/stores/authStore'
 import {Button} from '@/components/ui/Button'
 import {Input} from '@/components/ui/Input'
 import type {InvitationPreview} from '@/types/org'
-
-const ROLE_LABELS: Record<string, string> = {
-  ORG_MEMBER: 'Member',
-  ORG_ADMIN:  'Admin',
-  ORG_OWNER:  'Owner',
-}
 
 const loginSchema = z.object({
   email:    z.string().email('Enter a valid email'),
@@ -34,6 +29,7 @@ function InviteLoginForm({
   isEmailProtected: boolean
   onSuccess: () => void
 }) {
+  const { t } = useTranslation()
   const setAuth = useAuthStore((s) => s.setAuth)
   const [loginError, setLoginError] = useState<string | null>(null)
   const { register, handleSubmit, formState: { errors, isSubmitting } } =
@@ -48,8 +44,8 @@ function InviteLoginForm({
     } catch {
       setLoginError(
         isEmailProtected
-          ? "Invalid credentials. Make sure you're signing in with the email this invite was sent to."
-          : 'Invalid email or password.'
+          ? t('auth.invite.wrongEmail')
+          : t('auth.invite.invalidCredentials')
       )
     }
   }
@@ -57,7 +53,7 @@ function InviteLoginForm({
   return (
     <form noValidate onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3">
       <Input
-        label="Email"
+        label={t('auth.invite.email')}
         type="email"
         autoFocus
         autoComplete="email"
@@ -66,7 +62,7 @@ function InviteLoginForm({
         {...register('email')}
       />
       <Input
-        label="Password"
+        label={t('auth.invite.password')}
         type="password"
         autoComplete="current-password"
         placeholder="••••••••"
@@ -77,7 +73,7 @@ function InviteLoginForm({
         <p className="text-xs text-red-500">{loginError}</p>
       )}
       <Button type="submit" size="lg" loading={isSubmitting} className="mt-1 w-full">
-        Sign in &amp; accept
+        {t('auth.invite.signIn')}
       </Button>
     </form>
   )
@@ -85,6 +81,7 @@ function InviteLoginForm({
 
 // ── Page ───────────────────────────────────────────────────────────────────────
 export default function InviteAcceptPage() {
+  const { t } = useTranslation()
   const [params] = useSearchParams()
   const navigate  = useNavigate()
   const { accessToken, setOrgContext, logout } = useAuthStore()
@@ -116,13 +113,13 @@ export default function InviteAcceptPage() {
   // ── Load preview ────────────────────────────────────────────────────────
   useEffect(() => {
     if (!token) {
-      setLoadError('Missing invitation token.')
+      setLoadError(t('auth.invite.missingToken'))
       return
     }
     orgsApi.previewInvitation(token)
       .then(setPreview)
       .catch((err: unknown) => {
-        setLoadError(err instanceof Error ? err.message : 'Invitation not found or has expired.')
+        setLoadError(err instanceof Error ? err.message : t('auth.invite.notFound'))
       })
   }, [token])
 
@@ -143,7 +140,7 @@ export default function InviteAcceptPage() {
       setAccepted(true)
       setTimeout(() => navigate('/boards'), 1500)
     } catch (err: unknown) {
-      setAcceptError(err instanceof Error ? err.message : 'Could not accept invitation.')
+      setAcceptError(err instanceof Error ? err.message : t('auth.invite.failed'))
       setAccepting(false)
     }
   }
@@ -211,7 +208,7 @@ export default function InviteAcceptPage() {
           {!preview && !loadError && (
             <div className="flex flex-col items-center gap-3 py-6 text-center">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <p className="text-sm text-text-muted">Loading invitation…</p>
+              <p className="text-sm text-text-muted">{t('auth.invite.loading')}</p>
             </div>
           )}
 
@@ -222,11 +219,11 @@ export default function InviteAcceptPage() {
                 <XCircle className="h-7 w-7 text-red-400" />
               </div>
               <div className="flex flex-col gap-1.5">
-                <p className="font-semibold text-text-primary">Invitation unavailable</p>
+                <p className="font-semibold text-text-primary">{t('auth.invite.unavailableTitle')}</p>
                 <p className="text-sm text-text-secondary">{loadError}</p>
               </div>
               <Button variant="secondary" size="sm" onClick={() => navigate('/')}>
-                Go to Bento
+                {t('auth.invite.goToBento')}
               </Button>
             </div>
           )}
@@ -240,17 +237,17 @@ export default function InviteAcceptPage() {
                   <Users className="h-6 w-6 text-primary" />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <p className="text-sm font-medium text-text-muted">You've been invited to join</p>
+                  <p className="text-sm font-medium text-text-muted">{t('auth.invite.invitedToJoin')}</p>
                   <h1 className="text-[1.75rem] font-bold tracking-tight text-text-primary">
                     {preview.orgName}
                   </h1>
                   <span className="mt-0.5 inline-block rounded-full bg-primary-subtle px-2.5 py-0.5 text-xs font-semibold text-primary">
-                    {ROLE_LABELS[preview.role] ?? preview.role}
+                    {t(`settings.members.roles.${preview.role}`, preview.role)}
                   </span>
                 </div>
                 {preview.isEmailProtected && (
                   <p className="text-xs text-text-muted">
-                    This invite is for a specific email address. Sign in with that email to accept.
+                    {t('auth.invite.emailProtectedNote')}
                   </p>
                 )}
               </div>
@@ -269,13 +266,13 @@ export default function InviteAcceptPage() {
                           className="text-xs text-text-muted underline hover:text-text-secondary"
                           onClick={() => logout()}
                         >
-                          Sign in with a different account
+                          {t('auth.invite.signInDifferent')}
                         </button>
                       )}
                     </>
                   )}
                   <Button onClick={handleAccept} loading={accepting} className="w-full">
-                    {accepting ? 'Joining…' : acceptError ? 'Try again' : 'Accept invitation'}
+                    {accepting ? t('auth.invite.joining') : acceptError ? t('auth.invite.tryAgain') : t('auth.invite.accept')}
                   </Button>
                 </div>
               ) : (
@@ -283,7 +280,7 @@ export default function InviteAcceptPage() {
                 <>
                   <div className="mb-4 border-t border-surface-border pt-5">
                     <p className="mb-4 text-center text-sm font-medium text-text-secondary">
-                      Sign in to accept
+                      {t('auth.invite.loginToAccept')}
                     </p>
                     <InviteLoginForm
                       orgSlug={preview.orgSlug}
@@ -292,12 +289,12 @@ export default function InviteAcceptPage() {
                     />
                   </div>
                   <p className="mt-4 text-center text-xs text-text-muted">
-                    No account?{' '}
+                    {t('auth.invite.noAccount')}{' '}
                     <Link
                       to={registerUrl}
                       className="font-medium text-primary transition-colors hover:text-primary-light"
                     >
-                      Create one for free
+                      {t('auth.invite.createAccount')}
                     </Link>
                   </p>
                 </>
@@ -312,9 +309,9 @@ export default function InviteAcceptPage() {
                 <CheckCircle2 className="h-7 w-7 text-emerald-500" />
               </div>
               <div className="flex flex-col gap-1.5">
-                <p className="text-[1.75rem] font-bold tracking-tight text-text-primary">You're in!</p>
+                <p className="text-[1.75rem] font-bold tracking-tight text-text-primary">{t('auth.invite.successTitle')}</p>
                 <p className="text-sm text-text-secondary">
-                  Taking you to <span className="font-medium">{preview?.orgName}</span>…
+                  {t('auth.invite.redirecting', { org: preview?.orgName })}
                 </p>
               </div>
             </div>
