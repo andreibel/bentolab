@@ -47,6 +47,12 @@ export const issuesApi = {
       })
       .then((r) => r.data),
 
+  addDependency: (issueId: string, depId: string) =>
+    client.post<Issue>(`/api/issues/${issueId}/dependencies/${depId}`).then((r) => r.data),
+
+  removeDependency: (issueId: string, depId: string) =>
+    client.delete<Issue>(`/api/issues/${issueId}/dependencies/${depId}`).then((r) => r.data),
+
   close: (issueId: string) =>
     client.patch<Issue>(`/api/issues/${issueId}/close`).then((r) => r.data),
 

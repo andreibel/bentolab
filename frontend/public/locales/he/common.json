@@ -119,13 +119,26 @@
       "storyPoints": "נקודות סיפור",
       "startDate":   "תאריך התחלה",
       "dueDate":     "תאריך יעד",
-      "labels":      "תוויות"
+      "labels":      "תוויות",
+      "status":      "סטטוס",
+      "type":        "סוג",
+      "assignee":    "מוקצה ל",
+      "reporter":    "מדווח",
+      "created":     "נוצר",
+      "milestone":   "אבן דרך"
     },
+    "noActiveSprints":     "אין ספרינטים פעילים",
+    "noMilestones":        "אין אבני דרך",
+    "noLabels":            "אין תוויות מוגדרות עדיין.",
+    "unassigned":          "לא מוקצה",
+    "noMatches":           "אין תוצאות.",
+    "removeParent":        "הסר הורה",
+    "parentBlockedWarning":"תאריך ההתחלה לפני תאריך היעד של הבעיית ההורה ({{date}}). הבעיה חסומה עד שההורה יסתיים.",
     "types": {
       "STORY":   "סיפור",
       "TASK":    "משימה",
       "BUG":     "באג",
-      "SUBTASK": "תת"
+      "SUBTASK": "תת-משימה"
     },
     "priorities": {
       "CRITICAL": "קריטי",
@@ -298,20 +311,6 @@
       "failedToStart":       "הפעלת הספרינט נכשלה — בדוק שאין ספרינט פעיל אחר",
       "sprintCompleted":     "הספרינט הושלם",
       "failedToComplete":    "השלמת הספרינט נכשלה"
-    }
-  },
-  "issues": {
-    "types": {
-      "STORY":   "סיפור",
-      "TASK":    "משימה",
-      "BUG":     "באג",
-      "SUBTASK": "תת-משימה"
-    },
-    "priorities": {
-      "CRITICAL": "קריטי",
-      "HIGH":     "גבוה",
-      "MEDIUM":   "בינוני",
-      "LOW":      "נמוך"
     }
   },
   "myIssues": {
@@ -755,6 +754,7 @@
       "issues":     "בעיות",
       "milestones": "אבני דרך"
     },
+    "noDates":      "אין תאריכים",
     "addMilestone": "אבן דרך",
     "milestone": {
       "editTitle":     "עריכת אבן דרך",
@@ -798,6 +798,70 @@
       "BUG_TRACKING": "באגים",
       "CUSTOM":       "מותאם"
     }
+  },
+  "issueDetail": {
+    "dependencies":          "תלויות",
+    "searchIssues":          "חפש בעיות…",
+    "noDepsMatches":         "אין תוצאות.",
+    "allDepsAdded":          "כל הבעיות כבר נוספו.",
+    "closed":                "סגור",
+    "copyLink":              "העתק קישור",
+    "linkCopied":            "הקישור הועתק",
+    "exitFullScreen":        "יציאה ממסך מלא",
+    "reopen":                "פתח מחדש",
+    "reopenIssue":           "פתח מחדש",
+    "closeIssue":            "סגור בעיה",
+    "description":           "תיאור",
+    "subTasks":              "תת-משימות",
+    "done":                  "הושלם",
+    "failedToLoad":          "טעינת הבעיה נכשלה.",
+    "failedToUpdate":        "עדכון הבעיה נכשל",
+    "failedToUpdateStatus":  "עדכון סטטוס הבעיה נכשל",
+    "failedToMove":          "העברת הבעיה נכשלה",
+    "failedToUpdateAssignee":"עדכון המשתמש המוקצה נכשל",
+    "failedToAddDep":        "הוספת תלות נכשלה",
+    "failedToRemoveDep":     "הסרת תלות נכשלה",
+    "issueClosed":           "הבעיה נסגרה",
+    "issueReopened":         "הבעיה נפתחה מחדש"
+  },
+  "timeTracking": {
+    "title":         "מעקב זמן",
+    "estimate":      "הערכה",
+    "logged":        "מתועד",
+    "remaining":     "נותר",
+    "logTime":       "תעד זמן",
+    "setEstimate":   "קבע הערכה",
+    "hours":         "שעות",
+    "date":          "תאריך",
+    "note":          "הערה (אופציונלי)",
+    "noteWhatWorked":"על מה עבדת?",
+    "log":           "תעד",
+    "saving":        "שומר…",
+    "timeLogged":    "הזמן תועד",
+    "failedToLog":   "תיעוד הזמן נכשל",
+    "failedToDelete":"מחיקת הרשומה נכשלה",
+    "noTimeLogged":  "לא תועד זמן עדיין."
+  },
+  "boardSettings": {
+    "title":          "הגדרות לוח",
+    "boardKey":       "מפתח לוח",
+    "boardKeyNote":   "לא ניתן לשנות את המפתח לאחר יצירתו.",
+    "name":           "שם *",
+    "namePlaceholder":"שם הלוח",
+    "description":    "תיאור",
+    "descPlaceholder":"מהי מטרת הלוח?",
+    "color":          "צבע",
+    "dangerZone":     "אזור סכנה",
+    "processing":     "מעבד…",
+    "archiveBoard":   "ארכב לוח",
+    "unarchiveBoard": "שחזר לוח מארכיון",
+    "deleteBoard":    "מחק לוח לצמיתות",
+    "saveChanges":    "שמור שינויים",
+    "boardUpdated":   "הלוח עודכן",
+    "failedToUpdate": "עדכון הלוח נכשל",
+    "failedToArchive":"ארכוב הלוח נכשל",
+    "boardArchived":  "הלוח עבר לארכיון",
+    "boardUnarchived":"הלוח שוחזר מהארכיון"
   },
   "summary": {
     "title":           "סיכום",

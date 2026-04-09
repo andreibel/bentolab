@@ -146,6 +146,27 @@ public class IssueController {
         return ResponseEntity.ok(issueService.reopenIssue(orgId, userId, issueId));
     }
 
+    // Any org member can manage dependencies
+    @PostMapping("/{issueId}/dependencies/{depId}")
+    public ResponseEntity<Issue> addDependency(
+            @RequestHeader("X-Org-Id") String orgId,
+            @RequestHeader("X-Org-Role") String orgRole,
+            @PathVariable String issueId,
+            @PathVariable String depId) {
+        accessService.requireOrgMember(orgRole);
+        return ResponseEntity.ok(issueService.addDependency(orgId, issueId, depId));
+    }
+
+    @DeleteMapping("/{issueId}/dependencies/{depId}")
+    public ResponseEntity<Issue> removeDependency(
+            @RequestHeader("X-Org-Id") String orgId,
+            @RequestHeader("X-Org-Role") String orgRole,
+            @PathVariable String issueId,
+            @PathVariable String depId) {
+        accessService.requireOrgMember(orgRole);
+        return ResponseEntity.ok(issueService.removeDependency(orgId, issueId, depId));
+    }
+
     // Any org member can assign issues
     @PatchMapping("/{issueId}/assign")
     public ResponseEntity<Issue> assignIssue(

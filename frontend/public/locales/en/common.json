@@ -119,8 +119,21 @@
       "storyPoints": "Story points",
       "startDate":   "Start date",
       "dueDate":     "Due date",
-      "labels":      "Labels"
+      "labels":      "Labels",
+      "status":      "Status",
+      "type":        "Type",
+      "assignee":    "Assignee",
+      "reporter":    "Reporter",
+      "created":     "Created",
+      "milestone":   "Milestone"
     },
+    "noActiveSprints":     "No active sprints",
+    "noMilestones":        "No milestones",
+    "noLabels":            "No labels defined yet.",
+    "unassigned":          "Unassigned",
+    "noMatches":           "No matches.",
+    "removeParent":        "Remove parent",
+    "parentBlockedWarning":"Start date is before parent issue due date ({{date}}). This issue is blocked until the parent finishes.",
     "types": {
       "STORY":   "Story",
       "TASK":    "Task",
@@ -298,20 +311,6 @@
       "failedToStart":       "Failed to start sprint — make sure no other sprint is active",
       "sprintCompleted":     "Sprint completed",
       "failedToComplete":    "Failed to complete sprint"
-    }
-  },
-  "issues": {
-    "types": {
-      "STORY":   "Story",
-      "TASK":    "Task",
-      "BUG":     "Bug",
-      "SUBTASK": "Sub"
-    },
-    "priorities": {
-      "CRITICAL": "Critical",
-      "HIGH":     "High",
-      "MEDIUM":   "Medium",
-      "LOW":      "Low"
     }
   },
   "myIssues": {
@@ -755,6 +754,7 @@
       "issues":     "Issues",
       "milestones": "Milestones"
     },
+    "noDates":      "No dates",
     "addMilestone": "Milestone",
     "milestone": {
       "editTitle":     "Edit Milestone",
@@ -798,6 +798,70 @@
       "BUG_TRACKING": "Bugs",
       "CUSTOM":       "Custom"
     }
+  },
+  "issueDetail": {
+    "dependencies":          "Dependencies",
+    "searchIssues":          "Search issues…",
+    "noDepsMatches":         "No matches.",
+    "allDepsAdded":          "All issues already added.",
+    "closed":                "Closed",
+    "copyLink":              "Copy link",
+    "linkCopied":            "Link copied",
+    "exitFullScreen":        "Exit full screen",
+    "reopen":                "Reopen",
+    "reopenIssue":           "Reopen issue",
+    "closeIssue":            "Close issue",
+    "description":           "Description",
+    "subTasks":              "Sub-tasks",
+    "done":                  "Done",
+    "failedToLoad":          "Failed to load issue.",
+    "failedToUpdate":        "Failed to update issue",
+    "failedToUpdateStatus":  "Failed to update issue status",
+    "failedToMove":          "Failed to move issue",
+    "failedToUpdateAssignee":"Failed to update assignee",
+    "failedToAddDep":        "Failed to add dependency",
+    "failedToRemoveDep":     "Failed to remove dependency",
+    "issueClosed":           "Issue closed",
+    "issueReopened":         "Issue reopened"
+  },
+  "timeTracking": {
+    "title":         "Time Tracking",
+    "estimate":      "Estimate",
+    "logged":        "Logged",
+    "remaining":     "Remaining",
+    "logTime":       "Log time",
+    "setEstimate":   "Set estimate",
+    "hours":         "Hours",
+    "date":          "Date",
+    "note":          "Note (optional)",
+    "noteWhatWorked":"What did you work on?",
+    "log":           "Log",
+    "saving":        "Saving…",
+    "timeLogged":    "Time logged",
+    "failedToLog":   "Failed to log time",
+    "failedToDelete":"Failed to delete log",
+    "noTimeLogged":  "No time logged yet."
+  },
+  "boardSettings": {
+    "title":          "Board Settings",
+    "boardKey":       "Board key",
+    "boardKeyNote":   "The key cannot be changed after creation.",
+    "name":           "Name *",
+    "namePlaceholder":"Board name",
+    "description":    "Description",
+    "descPlaceholder":"What is this board for?",
+    "color":          "Color",
+    "dangerZone":     "Danger zone",
+    "processing":     "Processing…",
+    "archiveBoard":   "Archive board",
+    "unarchiveBoard": "Unarchive board",
+    "deleteBoard":    "Delete board permanently",
+    "saveChanges":    "Save changes",
+    "boardUpdated":   "Board updated",
+    "failedToUpdate": "Failed to update board",
+    "failedToArchive":"Failed to archive board",
+    "boardArchived":  "Board archived",
+    "boardUnarchived":"Board unarchived"
   },
   "summary": {
     "title":           "Summary",

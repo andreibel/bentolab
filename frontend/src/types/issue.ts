@@ -57,6 +57,7 @@ export interface Issue {
   epicId: string | null
   parentIssueId: string | null
   milestoneId: string | null
+  dependencyIds: string[] | null
   labelIds: string[]
   components: string[]
   attachmentIds: string[]

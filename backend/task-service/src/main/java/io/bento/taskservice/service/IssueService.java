@@ -171,7 +171,8 @@ public class IssueService {
         if (request.sprintId() != null) issue.setSprintId(request.sprintId());
         if (Boolean.TRUE.equals(request.clearEpicId())) issue.setEpicId(null);
         else if (request.epicId() != null) issue.setEpicId(request.epicId());
-        if (request.parentIssueId() != null) issue.setParentIssueId(request.parentIssueId());
+        if (Boolean.TRUE.equals(request.clearParentIssueId())) issue.setParentIssueId(null);
+        else if (request.parentIssueId() != null) issue.setParentIssueId(request.parentIssueId());
         if (Boolean.TRUE.equals(request.clearMilestoneId())) issue.setMilestoneId(null);
         else if (request.milestoneId() != null) issue.setMilestoneId(request.milestoneId());
         if (request.storyPoints() != null) issue.setStoryPoints(request.storyPoints());
@@ -429,6 +430,32 @@ public class IssueService {
         if (start > 0)         snippet = "…" + snippet;
         if (end < text.length()) snippet = snippet + "…";
         return snippet;
+    }
+
+    // ── Dependencies ──────────────────────────────────────────────────────────
+
+    public Issue addDependency(String orgId, String issueId, String depId) {
+        if (issueId.equals(depId)) throw new IllegalArgumentException("An issue cannot depend on itself");
+        Issue issue = getIssue(orgId, issueId);
+        // Verify the dependency issue exists in the same org
+        getIssue(orgId, depId);
+        List<String> deps = new ArrayList<>(issue.getDependencyIds() != null ? issue.getDependencyIds() : List.of());
+        if (!deps.contains(depId)) {
+            deps.add(depId);
+            issue.setDependencyIds(deps);
+            issue.setUpdatedAt(Instant.now());
+            issue = issueRepository.save(issue);
+        }
+        return issue;
+    }
+
+    public Issue removeDependency(String orgId, String issueId, String depId) {
+        Issue issue = getIssue(orgId, issueId);
+        List<String> deps = new ArrayList<>(issue.getDependencyIds() != null ? issue.getDependencyIds() : List.of());
+        deps.remove(depId);
+        issue.setDependencyIds(deps);
+        issue.setUpdatedAt(Instant.now());
+        return issueRepository.save(issue);
     }
 
     private String generateIssueKey(String boardId, String boardKey) {

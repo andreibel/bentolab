@@ -51,7 +51,7 @@ type GanttRow =
   | { kind: 'milestone';    id: string; milestone: Milestone }
   | { kind: 'epic';         id: string; epic: Epic;       collapsed: boolean }
   | { kind: 'sprint-track'; id: '__sprints__'; sprints: Sprint[] }
-  | { kind: 'issue';        id: string; issue: Issue;     indent: number }
+  | { kind: 'issue';        id: string; issue: Issue;     indent: number; hasChildren: boolean; collapsed: boolean }
   | { kind: 'divider';      id: string; label: string;    collapsed: boolean }
 
 // ── Date helpers ───────────────────────────────────────────────────────────────
@@ -184,6 +184,38 @@ function computeRange(
 
 // ── Row building ───────────────────────────────────────────────────────────────
 
+/**
+ * Recursively add issues as a collapsible file-tree within a group.
+ * Root issues = those whose parent is null or not in this group.
+ */
+function addIssueTree(
+  groupIssues: Issue[],
+  collapsed: Set<string>,
+  rows: GanttRow[],
+  baseIndent: number,
+) {
+  const groupIdSet = new Set(groupIssues.map(i => i.id))
+
+  function addWithChildren(parentId: string | null, indent: number) {
+    const children = parentId === null
+      ? groupIssues.filter(i => !i.parentIssueId || !groupIdSet.has(i.parentIssueId))
+      : groupIssues.filter(i => i.parentIssueId === parentId)
+    children
+      .sort((a, b) => (a.startDate ?? a.createdAt).localeCompare(b.startDate ?? b.createdAt))
+      .forEach(issue => {
+        const issueChildren = groupIssues.filter(i => i.parentIssueId === issue.id)
+        const hasChildren   = issueChildren.length > 0
+        const isCollapsed   = hasChildren && collapsed.has(issue.id)
+        rows.push({ kind: 'issue', id: issue.id, issue, indent, hasChildren, collapsed: isCollapsed })
+        if (hasChildren && !isCollapsed) {
+          addWithChildren(issue.id, indent + 1)
+        }
+      })
+  }
+
+  addWithChildren(null, baseIndent)
+}
+
 function buildRows(
   issues: Issue[],
   epics:  Epic[],
@@ -210,7 +242,7 @@ function buildRows(
   }
 
   if (groupBy === 'epic') {
-    // Epics as collapsible groups
+    // Epics as collapsible groups; issues nested as parent-child tree
     if (show.epics) {
       ;[...epics]
         .sort((a, b) => (a.startDate ?? '').localeCompare(b.startDate ?? ''))
@@ -218,10 +250,8 @@ function buildRows(
           const isCollapsed = collapsed.has(e.id)
           rows.push({ kind: 'epic', id: e.id, epic: e, collapsed: isCollapsed })
           if (!isCollapsed && show.issues) {
-            ;[...issues]
-              .filter(i => i.epicId === e.id)
-              .sort((a, b) => (a.startDate ?? a.createdAt).localeCompare(b.startDate ?? b.createdAt))
-              .forEach(i => rows.push({ kind: 'issue', id: i.id, issue: i, indent: 1 }))
+            const epicIssues = issues.filter(i => i.epicId === e.id)
+            addIssueTree(epicIssues, collapsed, rows, 1)
           }
         })
     }
@@ -234,9 +264,7 @@ function buildRows(
         const isCollapsed = collapsed.has(divId)
         rows.push({ kind: 'divider', id: divId, label: 'No Epic', collapsed: isCollapsed })
         if (!isCollapsed) {
-          ;[...orphans]
-            .sort((a, b) => (a.startDate ?? a.createdAt).localeCompare(b.startDate ?? b.createdAt))
-            .forEach(i => rows.push({ kind: 'issue', id: i.id, issue: i, indent: 0 }))
+          addIssueTree(orphans, collapsed, rows, 0)
         }
       }
     }
@@ -250,18 +278,16 @@ function buildRows(
         .forEach(e => rows.push({ kind: 'epic', id: e.id, epic: e, collapsed: false }))
     }
 
-    // Issues grouped under sprint dividers
+    // Issues grouped under sprint dividers; nested as parent-child tree
     if (show.sprints && show.issues) {
       sortedSprints.forEach(s => {
-        const sprintIssues = [...issues].filter(i => i.sprintId === s.id)
+        const sprintIssues = issues.filter(i => i.sprintId === s.id)
         if (sprintIssues.length === 0) return
         const divId = `sprint-div-${s.id}`
         const isCollapsed = collapsed.has(divId)
         rows.push({ kind: 'divider', id: divId, label: s.name, collapsed: isCollapsed })
         if (!isCollapsed) {
-          sprintIssues
-            .sort((a, b) => (a.startDate ?? a.createdAt).localeCompare(b.startDate ?? b.createdAt))
-            .forEach(i => rows.push({ kind: 'issue', id: i.id, issue: i, indent: 1 }))
+          addIssueTree(sprintIssues, collapsed, rows, 1)
         }
       })
     }
@@ -274,25 +300,21 @@ function buildRows(
         const isCollapsed = collapsed.has(divId)
         rows.push({ kind: 'divider', id: divId, label: 'Backlog', collapsed: isCollapsed })
         if (!isCollapsed) {
-          ;[...backlog]
-            .sort((a, b) => (a.startDate ?? a.createdAt).localeCompare(b.startDate ?? b.createdAt))
-            .forEach(i => rows.push({ kind: 'issue', id: i.id, issue: i, indent: 0 }))
+          addIssueTree(backlog, collapsed, rows, 0)
         }
       }
     }
   }
 
   else {
-    // none — flat list
+    // none — flat list with parent-child tree
     if (show.epics) {
       ;[...epics]
         .sort((a, b) => (a.startDate ?? '').localeCompare(b.startDate ?? ''))
         .forEach(e => rows.push({ kind: 'epic', id: e.id, epic: e, collapsed: false }))
     }
     if (show.issues) {
-      ;[...issues]
-        .sort((a, b) => (a.startDate ?? a.createdAt).localeCompare(b.startDate ?? b.createdAt))
-        .forEach(i => rows.push({ kind: 'issue', id: i.id, issue: i, indent: 0 }))
+      addIssueTree(issues, collapsed, rows, 0)
     }
   }
 
@@ -514,12 +536,13 @@ export default function TimelinePage() {
   const columns    = board?.columns         ?? []
 
   // ── UI state ─────────────────────────────────────────────────────────────
-  const [zoom,      setZoom]      = useState<Zoom>('month')
+  const [zoom,      setZoom]      = useState<Zoom>('week')
   const [groupBy,   setGroupBy]   = useState<GroupBy>('epic')
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
   const [show,      setShow]      = useState({ epics: true, sprints: true, issues: true, milestones: true })
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null)
   const [milestoneModal, setMilestoneModal]   = useState<{ open: boolean; milestone: Milestone | null }>({ open: false, milestone: null })
+  const [hoveredId, setHoveredId] = useState<string | null>(null)
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const dw = DAY_WIDTH[zoom]
@@ -600,7 +623,46 @@ export default function TimelinePage() {
     return map
   }, [rows, viewStart, dw])
 
+  // ── Epic color per issue ──────────────────────────────────────────────────
+  const epicColorMap = useMemo(() => {
+    const map = new Map<string, string>()
+    const epicById = new Map(epics.map(e => [e.id, e.color]))
+    issues.forEach(i => {
+      if (i.epicId) {
+        const color = epicById.get(i.epicId)
+        if (color) map.set(i.id, color)
+      }
+    })
+    return map
+  }, [issues, epics])
+
+  // ── Hover-based highlights ────────────────────────────────────────────────
+  // hoveredId = epic.id or issue.id currently under the mouse
+  // highlightedIds = all IDs that should glow; empty = nothing hovered
+  const highlightedIds = useMemo<Set<string>>(() => {
+    if (!hoveredId) return new Set()
+    const set = new Set<string>()
+
+    const hoveredEpic = epics.find(e => e.id === hoveredId)
+    if (hoveredEpic) {
+      set.add(hoveredEpic.id)
+      issues.forEach(i => { if (i.epicId === hoveredId) set.add(i.id) })
+      return set
+    }
+
+    const hoveredIssue = issues.find(i => i.id === hoveredId)
+    if (hoveredIssue?.epicId) {
+      set.add(hoveredIssue.epicId)
+      issues.forEach(i => { if (i.epicId === hoveredIssue.epicId) set.add(i.id) })
+    } else if (hoveredIssue) {
+      set.add(hoveredIssue.id)
+    }
+    return set
+  }, [hoveredId, epics, issues])
+
   // ── Dependency arrows ─────────────────────────────────────────────────────
+  // Arrows show explicit dependency links (issue.dependencyIds) and milestone connections.
+  // Parent-child hierarchy is shown as a collapsible tree in the left panel, NOT with arrows.
   interface Arrow { x1: number; y1: number; x2: number; y2: number; color: string }
 
   const arrows = useMemo<Arrow[]>(() => {
@@ -612,13 +674,15 @@ export default function TimelinePage() {
       const issueY = rowYMap.get(issue.id)
       if (!issuePos || issueY === undefined) return
 
-      // Parent → child: parent must finish before child starts
-      if (issue.parentIssueId) {
-        const parentPos = barXMap.get(issue.parentIssueId)
-        const parentY = rowYMap.get(issue.parentIssueId)
-        if (parentPos && parentY !== undefined) {
-          result.push({ x1: LEFT_W + parentPos.x2, y1: parentY, x2: LEFT_W + issuePos.x1, y2: issueY, color: '#8b5cf6' })
-        }
+      // Dependency arrows: each dep must finish before this issue starts
+      if (issue.dependencyIds?.length) {
+        issue.dependencyIds.forEach(depId => {
+          const depPos = barXMap.get(depId)
+          const depY   = rowYMap.get(depId)
+          if (depPos && depY !== undefined) {
+            result.push({ x1: LEFT_W + depPos.x2, y1: depY, x2: LEFT_W + issuePos.x1, y2: issueY, color: '#8b5cf6' })
+          }
+        })
       }
 
       // Milestone ↔ Issue: direction determined by dates
@@ -723,15 +787,31 @@ export default function TimelinePage() {
     if (row.kind === 'issue') {
       const i = row.issue
       return (
-        <button
-          onClick={() => setSelectedIssueId(i.id)}
-          className="flex w-full items-center gap-1.5 text-start hover:bg-surface-muted"
-          style={{ paddingLeft: `${12 + row.indent * 20}px`, paddingRight: '12px' }}
+        <div
+          className="flex w-full items-center gap-1 hover:bg-surface-muted"
+          style={{ paddingLeft: `${8 + row.indent * 16}px`, paddingRight: '8px', height: '100%' }}
         >
-          <IssueTypeIcon type={i.type} />
-          <span className="shrink-0 font-mono text-[10px] text-text-muted">{i.issueKey}</span>
-          <span className="truncate text-xs text-text-primary">{i.title}</span>
-        </button>
+          {row.hasChildren ? (
+            <button
+              onClick={() => toggleCollapse(i.id)}
+              className="shrink-0 rounded p-0.5 text-text-muted hover:bg-surface-border hover:text-text-primary"
+            >
+              {row.collapsed
+                ? <ChevronRight className="h-3 w-3" />
+                : <ChevronDown  className="h-3 w-3" />}
+            </button>
+          ) : (
+            <span className="h-4 w-4 shrink-0" />
+          )}
+          <button
+            onClick={() => setSelectedIssueId(i.id)}
+            className="flex flex-1 min-w-0 items-center gap-1.5 text-start"
+          >
+            <IssueTypeIcon type={i.type} />
+            <span className="shrink-0 font-mono text-[10px] text-text-muted">{i.issueKey}</span>
+            <span className="truncate text-xs text-text-primary">{i.title}</span>
+          </button>
+        </div>
       )
     }
 
@@ -782,15 +862,21 @@ export default function TimelinePage() {
       const e      = row.epic
       const start  = pd(e.startDate)
       const end    = pd(e.endDate)
-      if (!start && !end) return <span className="absolute inset-0 flex items-center ps-2 text-[10px] italic text-text-muted">No dates</span>
+      if (!start && !end) return <span className="absolute inset-0 flex items-center ps-2 text-[10px] italic text-text-muted">{t('timeline.noDates')}</span>
       const s = start ?? end!
       const f = end   ?? start!
       const left  = xOf(viewStart, s, dw)
       const width = wOf(s, f, dw)
+      const isHighlighted = highlightedIds.has(e.id)
       return (
         <div
-          className="absolute top-1/2 flex h-6 -translate-y-1/2 cursor-pointer items-center overflow-hidden rounded-md opacity-90 hover:opacity-100 transition-opacity"
-          style={{ left, width, backgroundColor: e.color + '40', border: `2px solid ${e.color}` }}
+          className="absolute top-1/2 flex h-6 -translate-y-1/2 cursor-pointer items-center overflow-hidden rounded-md transition-all duration-150"
+          style={{
+            left, width,
+            backgroundColor: e.color + (isHighlighted ? '60' : '40'),
+            border: `2px solid ${e.color}`,
+            boxShadow: isHighlighted ? `0 0 12px 3px ${e.color}55` : undefined,
+          }}
           title={e.title}
         >
           <span className="truncate px-2 text-[11px] font-semibold" style={{ color: e.color }}>
@@ -858,17 +944,38 @@ export default function TimelinePage() {
       const to   = end   ?? (start ? addDays(start, 1) : end!)
       const left  = xOf(viewStart, from, dw)
       const width = wOf(from, to, dw)
-      const barColor = PRIORITY_COLORS[i.priority] ?? '#6b7280'
+      const barWidth   = Math.max(width, 6)
+      // Use epic color when available; fall back to priority color
+      const barColor   = epicColorMap.get(i.id) ?? PRIORITY_COLORS[i.priority] ?? '#6b7280'
+      const isNarrow   = width <= 44
+      const isHighlighted = highlightedIds.has(i.id)
       return (
         <button
           onClick={() => setSelectedIssueId(i.id)}
-          className="absolute top-1/2 flex h-5 -translate-y-1/2 cursor-pointer items-center overflow-hidden rounded transition-opacity hover:opacity-80"
-          style={{ left, width: Math.max(width, 6), backgroundColor: barColor + '30', border: `1.5px solid ${barColor}` }}
+          className={cn(
+            'absolute top-1/2 flex h-5 -translate-y-1/2 cursor-pointer items-center rounded transition-all duration-150',
+            !isNarrow && 'overflow-hidden',
+          )}
+          style={{
+            left, width: barWidth,
+            backgroundColor: barColor + (isHighlighted ? '50' : '30'),
+            border: `1.5px solid ${barColor}`,
+            boxShadow: isHighlighted ? `0 0 8px 2px ${barColor}60` : undefined,
+          }}
           title={`${i.issueKey}: ${i.title}`}
         >
-          <span className="truncate px-1.5 text-[10px] font-medium" style={{ color: barColor }}>
-            {width > 60 ? i.issueKey : ''}
-          </span>
+          {isNarrow ? (
+            <span
+              className="pointer-events-none absolute whitespace-nowrap text-[10px] font-medium"
+              style={{ color: barColor, left: barWidth + 4 }}
+            >
+              {i.issueKey}
+            </span>
+          ) : (
+            <span className="truncate px-1.5 text-[10px] font-medium" style={{ color: barColor }}>
+              {i.issueKey}
+            </span>
+          )}
         </button>
       )
     }
@@ -1024,9 +1131,61 @@ export default function TimelinePage() {
             No items to display. Add dates to your epics, sprints, or issues.
           </div>
         ) : (
-          <div className="relative" style={{ minWidth: LEFT_W + totalWidth }}>
+          <div className="relative" style={{ minWidth: LEFT_W + totalWidth, isolation: 'isolate' }}>
+            {/* SVG arrows — rendered at z-index 0 so bars (z-index 1) appear above */}
+            {arrows.length > 0 && (
+              <svg
+                className="pointer-events-none absolute left-0 top-0"
+                width={LEFT_W + totalWidth}
+                height={totalRowsHeight}
+                style={{ overflow: 'visible', zIndex: 0 }}
+              >
+                <defs>
+                  {arrowColors.map(color => (
+                    <marker
+                      key={color}
+                      id={`ah-${color.replace('#', '')}`}
+                      markerWidth="8" markerHeight="8"
+                      refX="7" refY="3.5" orient="auto"
+                    >
+                      <path d="M 0 0 L 7 3.5 L 0 7 z" fill={color} opacity="0.85" />
+                    </marker>
+                  ))}
+                </defs>
+                {arrows.map((a, i) => {
+                  const sdx    = a.x2 - a.x1
+                  const adx    = Math.abs(sdx)
+                  const cpOff  = Math.max(adx * 0.45, 40)
+                  const pathD = sdx >= 0
+                    ? `M ${a.x1},${a.y1} C ${a.x1 + cpOff},${a.y1} ${a.x2 - cpOff},${a.y2} ${a.x2},${a.y2}`
+                    : (() => {
+                        const bow = Math.min(Math.abs(a.y2 - a.y1) * 0.35 + 18, 32)
+                        return `M ${a.x1},${a.y1} C ${a.x1},${a.y1 + bow} ${a.x2},${a.y2 + bow} ${a.x2},${a.y2}`
+                      })()
+                  return (
+                    <path
+                      key={i}
+                      d={pathD}
+                      stroke={a.color}
+                      strokeWidth="1.5"
+                      strokeOpacity="0.6"
+                      fill="none"
+                      strokeLinecap="round"
+                      markerEnd={`url(#ah-${a.color.replace('#', '')})`}
+                    />
+                  )
+                })}
+              </svg>
+            )}
+
+            {/* Rows wrapper — z-index 1 so bars appear above the SVG arrows */}
+            <div className="relative" style={{ zIndex: 1 }}>
             {rows.map(row => {
               const rowH = rowHeight(row)
+              const rowHoverId = row.kind === 'epic' ? row.epic.id : row.kind === 'issue' ? row.issue.id : null
+              // Highlight: subtle left-panel background tint for related rows
+              const epicColor = row.kind === 'issue' ? epicColorMap.get(row.issue.id) : row.kind === 'epic' ? row.epic.color : null
+              const isHighlightedRow = highlightedIds.size > 0 && rowHoverId !== null && highlightedIds.has(rowHoverId)
               return (
                 <div
                   key={row.id}
@@ -1037,11 +1196,18 @@ export default function TimelinePage() {
                     row.kind === 'divider'       && 'bg-surface-muted/50',
                   )}
                   style={{ height: rowH, minWidth: LEFT_W + totalWidth }}
+                  onMouseEnter={() => rowHoverId && setHoveredId(rowHoverId)}
+                  onMouseLeave={() => setHoveredId(null)}
                 >
                   {/* Left label — sticky */}
                   <div
-                    className="sticky left-0 z-10 flex shrink-0 items-center border-e border-surface-border/60 bg-inherit"
-                    style={{ width: LEFT_W, height: rowH }}
+                    className="sticky left-0 z-10 flex shrink-0 items-center border-e border-surface-border/60 bg-inherit transition-colors duration-150"
+                    style={{
+                      width: LEFT_W, height: rowH,
+                      ...(isHighlightedRow && epicColor
+                        ? { backgroundColor: epicColor + '18' }
+                        : {}),
+                    }}
                   >
                     {renderLabel(row)}
                   </div>
@@ -1080,54 +1246,7 @@ export default function TimelinePage() {
                 </div>
               )
             })}
-
-            {/* ── SVG dependency arrows overlay ───────────────────────────── */}
-            {arrows.length > 0 && (
-              <svg
-                className="pointer-events-none absolute left-0 top-0"
-                width={LEFT_W + totalWidth}
-                height={totalRowsHeight}
-                style={{ overflow: 'visible' }}
-              >
-                <defs>
-                  {arrowColors.map(color => (
-                    <marker
-                      key={color}
-                      id={`ah-${color.replace('#', '')}`}
-                      markerWidth="8" markerHeight="8"
-                      refX="7" refY="3.5" orient="auto"
-                    >
-                      <path d="M 0 0 L 7 3.5 L 0 7 z" fill={color} opacity="0.85" />
-                    </marker>
-                  ))}
-                </defs>
-                {arrows.map((a, i) => {
-                  const sdx    = a.x2 - a.x1   // signed dx
-                  const adx    = Math.abs(sdx)
-                  const cpOff  = Math.max(adx * 0.45, 40)
-                  // For backward arrows (right → left) bow the path downward so it
-                  // doesn't cut through bars; for forward arrows use a classic S-curve.
-                  const pathD = sdx >= 0
-                    ? `M ${a.x1},${a.y1} C ${a.x1 + cpOff},${a.y1} ${a.x2 - cpOff},${a.y2} ${a.x2},${a.y2}`
-                    : (() => {
-                        const bow = Math.min(Math.abs(a.y2 - a.y1) * 0.35 + 18, 32)
-                        return `M ${a.x1},${a.y1} C ${a.x1},${a.y1 + bow} ${a.x2},${a.y2 + bow} ${a.x2},${a.y2}`
-                      })()
-                  return (
-                    <path
-                      key={i}
-                      d={pathD}
-                      stroke={a.color}
-                      strokeWidth="2"
-                      strokeOpacity="0.75"
-                      fill="none"
-                      strokeLinecap="round"
-                      markerEnd={`url(#ah-${a.color.replace('#', '')})`}
-                    />
-                  )
-                })}
-              </svg>
-            )}
+            </div>{/* end rows wrapper */}
           </div>
         )}
 

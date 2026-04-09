@@ -1,5 +1,6 @@
 import {useState} from 'react'
 import {useQuery, useQueryClient} from '@tanstack/react-query'
+import {useTranslation} from 'react-i18next'
 import {toast} from 'sonner'
 import {AlertTriangle, Archive, Lock, Trash2, X} from 'lucide-react'
 import {boardsApi} from '@/api/boards'
@@ -20,6 +21,7 @@ interface Props {
 }
 
 export function BoardSettingsPanel({ board, onClose }: Props) {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
   const { user, orgRole } = useAuthStore()
 
@@ -62,10 +64,10 @@ export function BoardSettingsPanel({ board, onClose }: Props) {
       })
       await queryClient.invalidateQueries({ queryKey: queryKeys.boards.detail(board.id) })
       await queryClient.invalidateQueries({ queryKey: queryKeys.boards.all('') })
-      toast.success('Board updated')
+      toast.success(t('boardSettings.boardUpdated'))
       onClose()
     } catch {
-      toast.error('Failed to update board')
+      toast.error(t('boardSettings.failedToUpdate'))
     } finally {
       setSaving(false)
     }
@@ -77,10 +79,10 @@ export function BoardSettingsPanel({ board, onClose }: Props) {
       await boardsApi.archive(board.id)
       await queryClient.invalidateQueries({ queryKey: queryKeys.boards.all('') })
       await queryClient.invalidateQueries({ queryKey: queryKeys.boards.detail(board.id) })
-      toast.success(board.isArchived ? 'Board unarchived' : 'Board archived')
+      toast.success(board.isArchived ? t('boardSettings.boardUnarchived') : t('boardSettings.boardArchived'))
       onClose()
     } catch {
-      toast.error('Failed to archive board')
+      toast.error(t('boardSettings.failedToArchive'))
     } finally {
       setArchiving(false)
     }
@@ -91,7 +93,7 @@ export function BoardSettingsPanel({ board, onClose }: Props) {
       <div className="flex h-full w-80 shrink-0 flex-col border-s border-surface-border bg-surface">
         {/* Header */}
         <div className="flex shrink-0 items-center justify-between border-b border-surface-border px-5 py-4">
-          <h2 className="text-sm font-semibold text-text-primary">Board Settings</h2>
+          <h2 className="text-sm font-semibold text-text-primary">{t('boardSettings.title')}</h2>
           <button
             onClick={onClose}
             className="rounded p-1 text-text-muted transition-colors hover:bg-surface-muted hover:text-text-primary"
@@ -106,40 +108,40 @@ export function BoardSettingsPanel({ board, onClose }: Props) {
           <div>
             <label className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-text-muted">
               <Lock className="h-3 w-3" />
-              Board key
+              {t('boardSettings.boardKey')}
             </label>
             <div className="flex h-9 items-center rounded-lg border border-surface-border bg-surface-muted px-3 font-mono text-sm text-text-muted">
               {board.boardKey}
             </div>
-            <p className="mt-1 text-[11px] text-text-muted">The key cannot be changed after creation.</p>
+            <p className="mt-1 text-[11px] text-text-muted">{t('boardSettings.boardKeyNote')}</p>
           </div>
 
           {/* Name */}
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-text-muted">Name *</label>
+            <label className="mb-1.5 block text-xs font-medium text-text-muted">{t('boardSettings.name')}</label>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Board name"
+              placeholder={t('boardSettings.namePlaceholder')}
               className="w-full rounded-lg border border-surface-border bg-surface-muted px-3 py-2 text-sm text-text-primary outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary/20"
             />
           </div>
 
           {/* Description */}
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-text-muted">Description</label>
+            <label className="mb-1.5 block text-xs font-medium text-text-muted">{t('boardSettings.description')}</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
-              placeholder="What is this board for?"
+              placeholder={t('boardSettings.descPlaceholder')}
               className="w-full resize-none rounded-lg border border-surface-border bg-surface-muted px-3 py-2 text-sm text-text-primary outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary/20"
             />
           </div>
 
           {/* Background color */}
           <div>
-            <label className="mb-2 block text-xs font-medium text-text-muted">Color</label>
+            <label className="mb-2 block text-xs font-medium text-text-muted">{t('boardSettings.color')}</label>
             <div className="flex flex-wrap gap-2">
               {BOARD_COLORS.map((c) => (
                 <button
@@ -176,7 +178,7 @@ export function BoardSettingsPanel({ board, onClose }: Props) {
             <div className="rounded-lg border border-red-500/20 bg-red-500/5 p-4">
               <div className="mb-3 flex items-center gap-2">
                 <AlertTriangle className="h-3.5 w-3.5 text-red-500" />
-                <span className="text-xs font-semibold text-red-500">Danger zone</span>
+                <span className="text-xs font-semibold text-red-500">{t('boardSettings.dangerZone')}</span>
               </div>
 
               <div className="flex flex-col gap-2">
@@ -188,10 +190,10 @@ export function BoardSettingsPanel({ board, onClose }: Props) {
                   >
                     <Archive className="h-3.5 w-3.5" />
                     {archiving
-                      ? 'Processing…'
+                      ? t('boardSettings.processing')
                       : board.isArchived
-                        ? 'Unarchive board'
-                        : 'Archive board'}
+                        ? t('boardSettings.unarchiveBoard')
+                        : t('boardSettings.archiveBoard')}
                   </button>
                 )}
 
@@ -201,7 +203,7 @@ export function BoardSettingsPanel({ board, onClose }: Props) {
                     className="flex items-center gap-2 rounded-lg border border-red-500/20 px-3 py-2 text-xs font-medium text-red-400 transition-colors hover:bg-red-500/10"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
-                    Delete board permanently
+                    {t('boardSettings.deleteBoard')}
                   </button>
                 )}
               </div>
@@ -216,7 +218,7 @@ export function BoardSettingsPanel({ board, onClose }: Props) {
             disabled={!isDirty || !name.trim() || saving}
             className="w-full rounded-lg bg-primary py-2 text-sm font-medium text-white transition-colors hover:bg-primary-light disabled:opacity-40"
           >
-            {saving ? 'Saving…' : 'Save changes'}
+            {saving ? t('actions.saving') : t('boardSettings.saveChanges')}
           </button>
         </div>
       </div>

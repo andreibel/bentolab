@@ -78,6 +78,9 @@ public class Issue {
     private List<String> labelIds;
     private List<String> components;
 
+    // Dependencies: list of issue IDs that must be completed before this issue starts
+    private List<String> dependencyIds;
+
     // Attachments (IDs referencing attacment-service)
     private List<String> attachmentIds;
 

@@ -1,6 +1,7 @@
 import {useEffect, useMemo, useRef, useState} from 'react'
 import {useQuery} from '@tanstack/react-query'
-import {AlertTriangle, Check, ChevronDown, Search, Tag} from 'lucide-react'
+import {useTranslation} from 'react-i18next'
+import {AlertTriangle, Check, ChevronDown, Search, Tag, X} from 'lucide-react'
 import Fuse from 'fuse.js'
 import {Avatar} from '@/components/ui/Avatar'
 import {IssueTypeBadge, PriorityBadge} from '@/components/ui/Badge'
@@ -90,6 +91,7 @@ function InlineSelect<T extends string>({
 }
 
 function EpicSelect({ value, epics, onSave }: { value: string | null; epics: Epic[]; onSave: (id: string | null) => void }) {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const current = epics.find((e) => e.id === value)
@@ -115,7 +117,7 @@ function EpicSelect({ value, epics, onSave }: { value: string | null; epics: Epi
             <span className="max-w-[120px] truncate text-text-primary">{current.title}</span>
           </span>
         ) : (
-          <span className="text-text-muted">None</span>
+          <span className="text-text-muted">{t('issues.noneOption')}</span>
         )}
         <ChevronDown className="h-3 w-3 shrink-0 text-text-muted" />
       </button>
@@ -126,7 +128,7 @@ function EpicSelect({ value, epics, onSave }: { value: string | null; epics: Epi
             className="flex w-full items-center gap-2 px-3 py-2 text-sm text-text-muted hover:bg-surface-muted"
           >
             {!value ? <Check className="h-3 w-3 shrink-0 text-primary" /> : <span className="h-3 w-3 shrink-0" />}
-            None
+            {t('issues.noneOption')}
           </button>
           {epics.map((e) => (
             <button
@@ -146,6 +148,7 @@ function EpicSelect({ value, epics, onSave }: { value: string | null; epics: Epi
 }
 
 function SprintSelect({ value, sprints, onSave }: { value: string | null; sprints: Sprint[]; onSave: (id: string | null) => void }) {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const current = sprints.find((s) => s.id === value)
@@ -172,7 +175,7 @@ function SprintSelect({ value, sprints, onSave }: { value: string | null; sprint
             <span className="max-w-[120px] truncate text-text-primary">{current.name}</span>
           </span>
         ) : (
-          <span className="text-text-muted">Backlog</span>
+          <span className="text-text-muted">{t('issues.backlog')}</span>
         )}
         <ChevronDown className="h-3 w-3 shrink-0 text-text-muted" />
       </button>
@@ -183,7 +186,7 @@ function SprintSelect({ value, sprints, onSave }: { value: string | null; sprint
             className="flex w-full items-center gap-2 px-3 py-2 text-sm text-text-muted hover:bg-surface-muted"
           >
             {!value ? <Check className="h-3 w-3 shrink-0 text-primary" /> : <span className="h-3 w-3 shrink-0" />}
-            Backlog
+            {t('issues.backlog')}
           </button>
           {eligible.map((s) => (
             <button
@@ -197,7 +200,7 @@ function SprintSelect({ value, sprints, onSave }: { value: string | null; sprint
             </button>
           ))}
           {eligible.length === 0 && (
-            <div className="px-3 py-2 text-xs text-text-muted">No active sprints</div>
+            <div className="px-3 py-2 text-xs text-text-muted">{t('issues.noActiveSprints')}</div>
           )}
         </div>
       )}
@@ -206,6 +209,7 @@ function SprintSelect({ value, sprints, onSave }: { value: string | null; sprint
 }
 
 function MilestoneSelect({ value, milestones, onSave }: { value: string | null; milestones: Milestone[]; onSave: (id: string | null) => void }) {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const current = milestones.find((m) => m.id === value)
@@ -231,7 +235,7 @@ function MilestoneSelect({ value, milestones, onSave }: { value: string | null; 
             <span className="max-w-[120px] truncate text-text-primary">{current.title}</span>
           </span>
         ) : (
-          <span className="text-text-muted">None</span>
+          <span className="text-text-muted">{t('issues.noneOption')}</span>
         )}
         <ChevronDown className="h-3 w-3 shrink-0 text-text-muted" />
       </button>
@@ -242,7 +246,7 @@ function MilestoneSelect({ value, milestones, onSave }: { value: string | null; 
             className="flex w-full items-center gap-2 px-3 py-2 text-sm text-text-muted hover:bg-surface-muted"
           >
             {!value ? <Check className="h-3 w-3 shrink-0 text-primary" /> : <span className="h-3 w-3 shrink-0" />}
-            None
+            {t('issues.noneOption')}
           </button>
           {milestones.map((m) => (
             <button
@@ -256,7 +260,7 @@ function MilestoneSelect({ value, milestones, onSave }: { value: string | null; 
             </button>
           ))}
           {milestones.length === 0 && (
-            <div className="px-3 py-2 text-xs text-text-muted">No milestones</div>
+            <div className="px-3 py-2 text-xs text-text-muted">{t('issues.noMilestones')}</div>
           )}
         </div>
       )}
@@ -265,6 +269,7 @@ function MilestoneSelect({ value, milestones, onSave }: { value: string | null; 
 }
 
 function LabelMultiSelect({ value, onSave }: { value: string[]; onSave: (ids: string[]) => void }) {
+  const { t } = useTranslation()
   const { currentOrgId } = useAuthStore()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -299,7 +304,7 @@ function LabelMultiSelect({ value, onSave }: { value: string[]; onSave: (ids: st
         {selected.length === 0 ? (
           <span className="flex items-center gap-1 text-text-muted">
             <Tag className="h-3 w-3" />
-            None
+            {t('issues.noneOption')}
           </span>
         ) : (
           selected.map((l) => (
@@ -317,7 +322,7 @@ function LabelMultiSelect({ value, onSave }: { value: string[]; onSave: (ids: st
       {open && (
         <div className="absolute start-0 top-full z-50 mt-1 min-w-[180px] rounded-lg border border-surface-border bg-surface shadow-xl">
           {allLabels.length === 0 ? (
-            <div className="px-3 py-2 text-xs text-text-muted">No labels defined yet.</div>
+            <div className="px-3 py-2 text-xs text-text-muted">{t('issues.noLabels')}</div>
           ) : (
             allLabels.map((l) => (
               <button
@@ -384,6 +389,7 @@ function AssigneeSelect({
   profileMap: Map<string, UserProfile>
   onSave: (id: string | null) => void
 }) {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
   const ref = useRef<HTMLDivElement>(null)
@@ -439,7 +445,7 @@ function AssigneeSelect({
             <span className="max-w-[120px] truncate text-text-primary">{currentName || currentProfile.email}</span>
           </>
         ) : (
-          <span className="text-text-muted">Unassigned</span>
+          <span className="text-text-muted">{t('issues.unassigned')}</span>
         )}
         <ChevronDown className="h-3 w-3 shrink-0 text-text-muted" />
       </button>
@@ -463,7 +469,7 @@ function AssigneeSelect({
               className="flex w-full items-center gap-2 px-3 py-1.5 text-sm hover:bg-surface-muted"
             >
               {!value ? <Check className="h-3 w-3 shrink-0 text-primary" /> : <span className="h-3 w-3 shrink-0" />}
-              <span className="text-text-muted">Unassigned</span>
+              <span className="text-text-muted">{t('issues.unassigned')}</span>
             </button>
             {filtered.map(({ userId, profile, fullName }) => (
               <button
@@ -477,7 +483,7 @@ function AssigneeSelect({
               </button>
             ))}
             {filtered.length === 0 && search && (
-              <p className="px-3 py-2 text-xs text-text-muted">No matches.</p>
+              <p className="px-3 py-2 text-xs text-text-muted">{t('issues.noMatches')}</p>
             )}
           </div>
         </div>
@@ -505,6 +511,7 @@ interface IssueMetaPanelProps {
 }
 
 export function IssueMetaPanel({ issue, boardId, boardType, columns, epics, sprints, milestones = [], parentIssue, onUpdate }: IssueMetaPanelProps) {
+  const { t } = useTranslation()
   const isKanban = boardType === 'KANBAN'
   const { data: boardMembers = [] } = useQuery({
     queryKey: ['board-members', boardId],
@@ -561,13 +568,13 @@ export function IssueMetaPanel({ issue, boardId, boardType, columns, epics, spri
       <div className="flex items-center gap-2 rounded-lg border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-400">
         <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
         <span>
-          Start date is before parent issue due date ({fmtDate(parentIssue!.dueDate!)}). This issue is blocked until the parent finishes.
+          {t('issues.parentBlockedWarning', { date: fmtDate(parentIssue!.dueDate!) })}
         </span>
       </div>
     )}
     <div className="grid grid-cols-3 gap-x-4 gap-y-4 rounded-xl border border-surface-border bg-surface-muted/40 p-4">
 
-      <MetaCell label="Status">
+      <MetaCell label={t('issues.fields.status')}>
         <InlineSelect
           value={issue.columnId}
           options={columns.map((c) => c.id)}
@@ -593,7 +600,7 @@ export function IssueMetaPanel({ issue, boardId, boardType, columns, epics, spri
         />
       </MetaCell>
 
-      <MetaCell label="Priority">
+      <MetaCell label={t('issues.fields.priority')}>
         <InlineSelect
           value={issue.priority}
           options={PRIORITIES as unknown as Issue['priority'][]}
@@ -603,7 +610,7 @@ export function IssueMetaPanel({ issue, boardId, boardType, columns, epics, spri
         />
       </MetaCell>
 
-      <MetaCell label="Type">
+      <MetaCell label={t('issues.fields.type')}>
         <InlineSelect
           value={issue.type}
           options={ISSUE_TYPES as unknown as Issue['type'][]}
@@ -614,7 +621,7 @@ export function IssueMetaPanel({ issue, boardId, boardType, columns, epics, spri
       </MetaCell>
 
       {!isKanban && (
-        <MetaCell label="Epic">
+        <MetaCell label={t('issues.fields.epic')}>
           <EpicSelect
             value={issue.epicId ?? null}
             epics={epics}
@@ -627,7 +634,7 @@ export function IssueMetaPanel({ issue, boardId, boardType, columns, epics, spri
       )}
 
       {!isKanban && (
-        <MetaCell label="Sprint">
+        <MetaCell label={t('issues.fields.sprint')}>
           <SprintSelect
             value={issue.sprintId ?? null}
             sprints={sprints}
@@ -636,7 +643,7 @@ export function IssueMetaPanel({ issue, boardId, boardType, columns, epics, spri
         </MetaCell>
       )}
 
-      <MetaCell label="Assignee">
+      <MetaCell label={t('issues.fields.assignee')}>
         <AssigneeSelect
           value={issue.assigneeId ?? null}
           boardMembers={boardMembers}
@@ -646,45 +653,45 @@ export function IssueMetaPanel({ issue, boardId, boardType, columns, epics, spri
       </MetaCell>
 
       {!isKanban && (
-        <MetaCell label="Story points">
+        <MetaCell label={t('issues.fields.storyPoints')}>
           <StoryPointsField value={issue.storyPoints} onSave={(n) => onUpdate({ storyPoints: n } as Partial<Issue>)} />
         </MetaCell>
       )}
 
-      <MetaCell label="Reporter">
+      <MetaCell label={t('issues.fields.reporter')}>
         <div className="flex items-center gap-1.5 px-1.5 py-1">
           <Avatar userId={issue.reporterId} name={reporterName ?? undefined} size="sm" className="shrink-0" />
           <span className="truncate text-sm text-text-primary">{reporterName ?? issue.reporterId.slice(0, 8) + '…'}</span>
         </div>
       </MetaCell>
 
-      <MetaCell label="Start date">
+      <MetaCell label={t('issues.fields.startDate')}>
         <DatePicker
           value={issue.startDate ? toDatePart(issue.startDate) : ''}
           onChange={(v) => onUpdate({ startDate: v ? new Date(v + 'T12:00:00').toISOString() : null } as Partial<Issue>)}
-          placeholder="No start date"
+          placeholder={t('issues.noStartDate')}
           minDate={startMin}
           maxDate={startMax}
           className={cn(isBlockedByParent && 'border-amber-400')}
         />
       </MetaCell>
 
-      <MetaCell label="Due date">
+      <MetaCell label={t('issues.fields.dueDate')}>
         <DatePicker
           value={issue.dueDate ? toDatePart(issue.dueDate) : ''}
           onChange={(v) => onUpdate({ dueDate: v ? new Date(v + 'T12:00:00').toISOString() : null } as Partial<Issue>)}
-          placeholder="No due date"
+          placeholder={t('issues.noDueDate')}
           minDate={dueMin}
           maxDate={sprintMax}
           className={cn(issue.dueDate && new Date(issue.dueDate) < new Date() && 'border-red-400')}
         />
       </MetaCell>
 
-      <MetaCell label="Created">
+      <MetaCell label={t('issues.fields.created')}>
         <span className="px-1.5 py-1 text-xs text-text-muted">{fmtDate(issue.createdAt)}</span>
       </MetaCell>
 
-      <MetaCell label="Milestone">
+      <MetaCell label={t('issues.fields.milestone')}>
         <MilestoneSelect
           value={issue.milestoneId ?? null}
           milestones={milestones}
@@ -696,15 +703,22 @@ export function IssueMetaPanel({ issue, boardId, boardType, columns, epics, spri
       </MetaCell>
 
       {issue.parentIssueId && parentIssue && (
-        <MetaCell label="Parent">
-          <span className="flex items-center gap-1.5 px-1.5 py-1 text-xs text-text-secondary">
-            <span className="font-mono text-text-muted">{parentIssue.issueKey}</span>
-            <span className="truncate">{parentIssue.title}</span>
-          </span>
+        <MetaCell label={t('issues.fields.parent')}>
+          <div className="group flex items-center gap-1 px-1.5 py-1">
+            <span className="font-mono text-[10px] text-text-muted">{parentIssue.issueKey}</span>
+            <span className="truncate text-xs text-text-secondary">{parentIssue.title}</span>
+            <button
+              onClick={() => onUpdate({ clearParentIssueId: true } as unknown as Partial<Issue>)}
+              title={t('issues.removeParent')}
+              className="ms-auto shrink-0 rounded p-0.5 text-text-muted opacity-0 transition-opacity hover:bg-surface-border hover:text-text-primary group-hover:opacity-100"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </div>
         </MetaCell>
       )}
 
-      <MetaCell label="Labels">
+      <MetaCell label={t('issues.fields.labels')}>
         <LabelMultiSelect
           value={issue.labelIds ?? []}
           onSave={(labelIds) => onUpdate({ labelIds } as Partial<Issue>)}

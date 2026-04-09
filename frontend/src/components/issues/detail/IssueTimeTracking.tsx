@@ -1,5 +1,6 @@
 import {useMemo, useState} from 'react'
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query'
+import {useTranslation} from 'react-i18next'
 import {Clock, Plus, Trash2} from 'lucide-react'
 import {toast} from 'sonner'
 import {issuesApi} from '@/api/issues'
@@ -29,6 +30,7 @@ function todayIso() {
 // ─── Inline estimate editor ────────────────────────────────────────────────────
 
 function EstimateField({ value, onSave }: { value: number | null | undefined; onSave: (n: number | null) => void }) {
+  const { t } = useTranslation()
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(value?.toString() ?? '')
 
@@ -60,7 +62,7 @@ function EstimateField({ value, onSave }: { value: number | null | undefined; on
     <button onClick={startEdit} className="rounded px-1 py-0.5 text-xs hover:bg-surface-muted">
       {value != null
         ? <span className="font-semibold text-text-primary">{fmtHours(value)}</span>
-        : <span className="text-text-muted">Set estimate</span>}
+        : <span className="text-text-muted">{t('timeTracking.setEstimate')}</span>}
     </button>
   )
 }
@@ -68,6 +70,7 @@ function EstimateField({ value, onSave }: { value: number | null | undefined; on
 // ─── Log time form ─────────────────────────────────────────────────────────────
 
 function LogTimeForm({ issueId, onDone }: { issueId: string; onDone: () => void }) {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
   const [hours, setHours] = useState('')
   const [date, setDate] = useState(todayIso())
@@ -82,10 +85,10 @@ function LogTimeForm({ issueId, onDone }: { issueId: string; onDone: () => void 
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.issues.timelogs(issueId) })
       void queryClient.invalidateQueries({ queryKey: queryKeys.issues.detail(issueId) })
-      toast.success('Time logged')
+      toast.success(t('timeTracking.timeLogged'))
       onDone()
     },
-    onError: () => toast.error('Failed to log time'),
+    onError: () => toast.error(t('timeTracking.failedToLog')),
   })
 
   const valid = !!hours && parseFloat(hours) > 0
@@ -94,7 +97,7 @@ function LogTimeForm({ issueId, onDone }: { issueId: string; onDone: () => void 
     <div className="mt-3 rounded-lg border border-surface-border bg-surface p-3">
       <div className="flex flex-wrap items-end gap-2">
         <div className="flex flex-col gap-1">
-          <label className="text-[10px] font-semibold uppercase tracking-wide text-text-muted">Hours</label>
+          <label className="text-[10px] font-semibold uppercase tracking-wide text-text-muted">{t('timeTracking.hours')}</label>
           <input
             autoFocus
             type="number" min={0.1} step={0.5} placeholder="1.5"
@@ -104,17 +107,17 @@ function LogTimeForm({ issueId, onDone }: { issueId: string; onDone: () => void 
           />
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-[10px] font-semibold uppercase tracking-wide text-text-muted">Date</label>
+          <label className="text-[10px] font-semibold uppercase tracking-wide text-text-muted">{t('timeTracking.date')}</label>
           <DatePicker
             value={date}
             onChange={(v) => setDate(v || todayIso())}
-            placeholder="Today"
+            placeholder={t('timeTracking.date')}
           />
         </div>
         <div className="flex flex-1 flex-col gap-1 min-w-30">
-          <label className="text-[10px] font-semibold uppercase tracking-wide text-text-muted">Note (optional)</label>
+          <label className="text-[10px] font-semibold uppercase tracking-wide text-text-muted">{t('timeTracking.note')}</label>
           <input
-            type="text" placeholder="What did you work on?"
+            type="text" placeholder={t('timeTracking.noteWhatWorked')}
             value={desc}
             onChange={(e) => setDesc(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter' && valid) mutation.mutate() }}
@@ -127,13 +130,13 @@ function LogTimeForm({ issueId, onDone }: { issueId: string; onDone: () => void 
             disabled={!valid || mutation.isPending}
             className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-light disabled:opacity-50"
           >
-            {mutation.isPending ? 'Saving…' : 'Log'}
+            {mutation.isPending ? t('timeTracking.saving') : t('timeTracking.log')}
           </button>
           <button
             onClick={onDone}
             className="rounded-md px-3 py-1.5 text-xs text-text-muted hover:text-text-primary"
           >
-            Cancel
+            {t('actions.cancel')}
           </button>
         </div>
       </div>
@@ -144,6 +147,7 @@ function LogTimeForm({ issueId, onDone }: { issueId: string; onDone: () => void 
 // ─── Public export ─────────────────────────────────────────────────────────────
 
 export function IssueTimeTracking({ issue, onUpdate }: { issue: Issue; onUpdate: (data: Partial<Issue>) => void }) {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
   const { user } = useAuthStore()
   const [logging, setLogging] = useState(false)
@@ -178,13 +182,13 @@ export function IssueTimeTracking({ issue, onUpdate }: { issue: Issue; onUpdate:
       void queryClient.invalidateQueries({ queryKey: queryKeys.issues.timelogs(issue.id) })
       void queryClient.invalidateQueries({ queryKey: queryKeys.issues.detail(issue.id) })
     },
-    onError: () => toast.error('Failed to delete log'),
+    onError: () => toast.error(t('timeTracking.failedToDelete')),
   })
 
   return (
     <section className="mb-6">
       <div className="mb-3 flex items-center gap-3">
-        <h2 className="text-xs font-semibold uppercase tracking-widest text-text-muted">Time Tracking</h2>
+        <h2 className="text-xs font-semibold uppercase tracking-widest text-text-muted">{t('timeTracking.title')}</h2>
         <div className="h-px flex-1 bg-surface-border" />
       </div>
 
@@ -192,18 +196,18 @@ export function IssueTimeTracking({ issue, onUpdate }: { issue: Issue; onUpdate:
       <div className="mb-3 flex items-center gap-4 rounded-lg border border-surface-border bg-surface-muted/40 px-4 py-3">
         <div className="flex items-center gap-1.5 text-xs text-text-secondary">
           <Clock className="h-3.5 w-3.5 text-text-muted" />
-          <span>Estimate:</span>
+          <span>{t('timeTracking.estimate')}:</span>
           <EstimateField
             value={issue.estimatedHours}
             onSave={(n) => onUpdate({ estimatedHours: n } as Partial<Issue>)}
           />
         </div>
         <div className="text-xs text-text-secondary">
-          Logged: <span className={cn('font-semibold', overBudget ? 'text-red-500' : 'text-text-primary')}>{fmtHours(totalSpent)}</span>
+          {t('timeTracking.logged')}: <span className={cn('font-semibold', overBudget ? 'text-red-500' : 'text-text-primary')}>{fmtHours(totalSpent)}</span>
         </div>
         {estimated != null && (
           <div className="text-xs text-text-secondary">
-            Remaining: <span className="font-semibold text-text-primary">{fmtHours(Math.max(0, estimated - totalSpent))}</span>
+            {t('timeTracking.remaining')}: <span className="font-semibold text-text-primary">{fmtHours(Math.max(0, estimated - totalSpent))}</span>
           </div>
         )}
         <button
@@ -211,7 +215,7 @@ export function IssueTimeTracking({ issue, onUpdate }: { issue: Issue; onUpdate:
           className="ms-auto flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
         >
           <Plus className="h-3 w-3" />
-          Log time
+          {t('timeTracking.logTime')}
         </button>
       </div>
 
@@ -264,7 +268,7 @@ export function IssueTimeTracking({ issue, onUpdate }: { issue: Issue; onUpdate:
       )}
 
       {timelogs.length === 0 && !logging && (
-        <p className="text-xs text-text-muted">No time logged yet.</p>
+        <p className="text-xs text-text-muted">{t('timeTracking.noTimeLogged')}</p>
       )}
     </section>
   )

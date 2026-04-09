@@ -50,8 +50,8 @@ const TORCH_STYLE: React.CSSProperties = {
 const TORCH_POS: React.CSSProperties = {
   left: 0,
   top: '50%',
-  width: '12rem',
-  height: '12rem',
+  width: '18rem',
+  height: '18rem',
   marginLeft: '-6rem',
   marginTop: '-6rem',
 }

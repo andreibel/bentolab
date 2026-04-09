@@ -1,6 +1,7 @@
 import {useCallback, useEffect, useRef, useState} from 'react'
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query'
-import {AlertCircle, Link2, Loader2, Maximize2, Minimize2, Pencil, RotateCcw, X, XCircle} from 'lucide-react'
+import {useTranslation} from 'react-i18next'
+import {AlertCircle, GitMerge, Link2, Loader2, Maximize2, Minimize2, Pencil, Plus, RotateCcw, Search, X, XCircle} from 'lucide-react'
 import {toast} from 'sonner'
 import {issuesApi, useIssues} from '@/api/issues'
 import {useBoard} from '@/api/boards'
@@ -63,6 +64,109 @@ function TitleEditor({ value, onSave }: { value: string; onSave: (v: string) => 
   )
 }
 
+// ─── Dependencies section ─────────────────────────────────────────────────────
+
+function DependenciesSection({ issue, boardIssues, onAdd, onRemove }: {
+  issue: Issue
+  boardIssues: Issue[]
+  onAdd: (depId: string) => void
+  onRemove: (depId: string) => void
+}) {
+  const { t } = useTranslation()
+  const [open, setOpen] = useState(false)
+  const [q, setQ] = useState('')
+  const ref = useRef<HTMLDivElement>(null)
+
+  const depIds = issue.dependencyIds ?? []
+  const depIssues = boardIssues.filter(i => depIds.includes(i.id))
+
+  // Issues eligible to be added as dependency (not self, not already a dep)
+  const candidates = boardIssues.filter(
+    i => i.id !== issue.id && !depIds.includes(i.id),
+  )
+  const filtered = q.trim()
+    ? candidates.filter(i =>
+        i.issueKey.toLowerCase().includes(q.toLowerCase()) ||
+        i.title.toLowerCase().includes(q.toLowerCase()),
+      )
+    : candidates.slice(0, 10)
+
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: MouseEvent) => {
+      if (!ref.current?.contains(e.target as Node)) { setOpen(false); setQ('') }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  return (
+    <section className="mb-6">
+      <div className="mb-2 flex items-center gap-2">
+        <GitMerge className="h-3.5 w-3.5 text-text-muted" />
+        <h2 className="text-xs font-semibold uppercase tracking-widest text-text-muted">
+          {t('issueDetail.dependencies')} · {depIds.length}
+        </h2>
+        <div ref={ref} className="relative ms-auto">
+          <button
+            onClick={() => setOpen(v => !v)}
+            className="flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-text-muted hover:bg-surface-muted hover:text-text-primary"
+          >
+            <Plus className="h-3 w-3" />
+            {t('actions.add')}
+          </button>
+          {open && (
+            <div className="absolute end-0 top-full z-50 mt-1 w-72 rounded-lg border border-surface-border bg-surface shadow-xl">
+              <div className="relative border-b border-surface-border p-2">
+                <Search className="absolute start-4 top-1/2 h-3 w-3 -translate-y-1/2 text-text-muted" />
+                <input
+                  autoFocus
+                  value={q}
+                  onChange={e => setQ(e.target.value)}
+                  placeholder={t('issueDetail.searchIssues')}
+                  className="w-full rounded border border-surface-border bg-surface-muted py-1 ps-6 pe-2 text-xs text-text-primary outline-none focus:border-primary"
+                />
+              </div>
+              <div className="max-h-48 overflow-y-auto py-1">
+                {filtered.length === 0 ? (
+                  <p className="px-3 py-2 text-xs text-text-muted">{q ? t('issueDetail.noDepsMatches') : t('issueDetail.allDepsAdded')}</p>
+                ) : filtered.map(i => (
+                  <button
+                    key={i.id}
+                    onClick={() => { onAdd(i.id); setOpen(false); setQ('') }}
+                    className="flex w-full items-center gap-2 px-3 py-1.5 text-xs hover:bg-surface-muted"
+                  >
+                    <span className="shrink-0 font-mono text-text-muted">{i.issueKey}</span>
+                    <span className="truncate text-text-primary">{i.title}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {depIssues.length > 0 && (
+        <div className="divide-y divide-surface-border/50 rounded-lg border border-surface-border">
+          {depIssues.map(dep => (
+            <div key={dep.id} className="group flex items-center gap-2 px-3 py-2 text-sm first:rounded-t-lg last:rounded-b-lg hover:bg-surface-muted/50">
+              <span className="shrink-0 font-mono text-[11px] text-text-muted">{dep.issueKey}</span>
+              <span className="flex-1 truncate text-text-primary">{dep.title}</span>
+              <button
+                onClick={() => onRemove(dep.id)}
+                className="shrink-0 rounded p-0.5 text-text-muted opacity-0 transition-opacity hover:bg-surface-border hover:text-text-primary group-hover:opacity-100"
+                title={t('actions.remove')}
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  )
+}
+
 // ─── Main panel ───────────────────────────────────────────────────────────────
 
 export function IssueDetailPanel({
@@ -78,6 +182,7 @@ export function IssueDetailPanel({
   onClose: () => void
   defaultFullScreen?: boolean
 }) {
+  const { t }          = useTranslation()
   const queryClient    = useQueryClient()
   const { user }       = useAuthStore()
   const [visible, setVisible] = useState(false)
@@ -110,9 +215,9 @@ export function IssueDetailPanel({
       if (effectiveBoardId) {
         void queryClient.invalidateQueries({ queryKey: ['issues', effectiveBoardId], exact: false })
       }
-      toast.success(updated.closed ? 'Issue closed' : 'Issue reopened')
+      toast.success(updated.closed ? t('issueDetail.issueClosed') : t('issueDetail.issueReopened'))
     },
-    onError: () => toast.error('Failed to update issue status'),
+    onError: () => toast.error(t('issueDetail.failedToUpdateStatus')),
   })
 
   const mutation = useMutation({
@@ -125,7 +230,7 @@ export function IssueDetailPanel({
     },
     onError: (_e, _vars, ctx) => {
       if (ctx?.prev) queryClient.setQueryData(queryKeys.issues.detail(issueId), ctx.prev)
-      toast.error('Failed to update issue')
+      toast.error(t('issueDetail.failedToUpdate'))
     },
     onSettled: (_data, _err, variables) => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.issues.detail(issueId) })
@@ -145,7 +250,7 @@ export function IssueDetailPanel({
         if (effectiveBoardId) {
           void queryClient.invalidateQueries({ queryKey: ['issues', effectiveBoardId], exact: false })
         }
-      }).catch(() => toast.error('Failed to move issue'))
+      }).catch(() => toast.error(t('issueDetail.failedToMove')))
       return
     }
     if ('assigneeId' in data) {
@@ -155,7 +260,7 @@ export function IssueDetailPanel({
         if (effectiveBoardId) {
           void queryClient.invalidateQueries({ queryKey: ['issues', effectiveBoardId], exact: false })
         }
-      }).catch(() => toast.error('Failed to update assignee'))
+      }).catch(() => toast.error(t('issueDetail.failedToUpdateAssignee')))
       return
     }
     mutation.mutate(data)
@@ -166,6 +271,25 @@ export function IssueDetailPanel({
     ? boardIssues?.content.find((i) => i.id === issue.parentIssueId) ?? null
     : null
   const childIssues = boardIssues?.content.filter((i) => i.parentIssueId === issue?.id) ?? []
+  const allBoardIssues = boardIssues?.content ?? []
+
+  const addDepMutation = useMutation({
+    mutationFn: (depId: string) => issuesApi.addDependency(issueId, depId),
+    onSuccess: (updated) => {
+      queryClient.setQueryData<Issue>(queryKeys.issues.detail(issueId), updated)
+      void queryClient.invalidateQueries({ queryKey: queryKeys.issues.detail(issueId) })
+    },
+    onError: () => toast.error(t('issueDetail.failedToAddDep')),
+  })
+
+  const removeDepMutation = useMutation({
+    mutationFn: (depId: string) => issuesApi.removeDependency(issueId, depId),
+    onSuccess: (updated) => {
+      queryClient.setQueryData<Issue>(queryKeys.issues.detail(issueId), updated)
+      void queryClient.invalidateQueries({ queryKey: queryKeys.issues.detail(issueId) })
+    },
+    onError: () => toast.error(t('issueDetail.failedToRemoveDep')),
+  })
 
   return (
     <>
@@ -195,7 +319,7 @@ export function IssueDetailPanel({
       {isError && (
         <div className="flex flex-1 flex-col items-center justify-center gap-3">
           <AlertCircle className="h-8 w-8 text-red-400" />
-          <p className="text-sm text-text-secondary">Failed to load issue.</p>
+          <p className="text-sm text-text-secondary">{t('issueDetail.failedToLoad')}</p>
         </div>
       )}
 
@@ -207,7 +331,7 @@ export function IssueDetailPanel({
             <IssueTypeBadge type={issue.type} />
             {issue.closed && (
               <span className="rounded-full bg-surface-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-text-muted">
-                Closed
+                {t('issueDetail.closed')}
               </span>
             )}
             <div className="ms-auto flex items-center gap-1">
@@ -215,16 +339,16 @@ export function IssueDetailPanel({
                 onClick={() => {
                   const boardPath = effectiveBoardId ? `/boards/${effectiveBoardId}` : window.location.pathname
                   void navigator.clipboard.writeText(`${window.location.origin}${boardPath}?issue=${issueId}`)
-                  toast.success('Link copied')
+                  toast.success(t('issueDetail.linkCopied'))
                 }}
-                title="Copy link"
+                title={t('issueDetail.copyLink')}
                 className="rounded-md p-1.5 text-text-muted transition-colors hover:bg-surface-muted hover:text-text-primary"
               >
                 <Link2 className="h-4 w-4" />
               </button>
               <button
                 onClick={() => setIsFullScreen(v => !v)}
-                title={isFullScreen ? 'Exit full screen' : 'Full screen'}
+                title={isFullScreen ? t('issueDetail.exitFullScreen') : t('issues.fullScreen')}
                 className="rounded-md p-1.5 text-text-muted transition-colors hover:bg-surface-muted hover:text-text-primary"
               >
                 {isFullScreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
@@ -233,27 +357,27 @@ export function IssueDetailPanel({
                 <button
                   onClick={() => closeMutation.mutate('reopen')}
                   disabled={closeMutation.isPending}
-                  title="Reopen issue"
+                  title={t('issueDetail.reopenIssue')}
                   className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-green-600 transition-colors hover:bg-green-500/10 disabled:opacity-50"
                 >
                   {closeMutation.isPending
                     ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
                     : <RotateCcw className="h-3.5 w-3.5" />
                   }
-                  Reopen
+                  {t('issueDetail.reopen')}
                 </button>
               ) : (
                 <button
                   onClick={() => closeMutation.mutate('close')}
                   disabled={closeMutation.isPending}
-                  title="Close issue"
+                  title={t('issueDetail.closeIssue')}
                   className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-text-muted transition-colors hover:bg-surface-muted hover:text-text-primary disabled:opacity-50"
                 >
                   {closeMutation.isPending
                     ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
                     : <XCircle className="h-3.5 w-3.5" />
                   }
-                  Close issue
+                  {t('issueDetail.closeIssue')}
                 </button>
               )}
               <button
@@ -287,7 +411,7 @@ export function IssueDetailPanel({
               />
 
               <section className="mb-6">
-                <h2 className="mb-2 text-xs font-semibold uppercase tracking-widest text-text-muted">Description</h2>
+                <h2 className="mb-2 text-xs font-semibold uppercase tracking-widest text-text-muted">{t('issueDetail.description')}</h2>
                 <DescriptionEditor
                   value={issue.description ?? ''}
                   onSave={(description) => handleUpdate({ description })}
@@ -301,7 +425,7 @@ export function IssueDetailPanel({
               {childIssues.length > 0 && (
                 <section className="mb-6">
                   <h2 className="mb-2 text-xs font-semibold uppercase tracking-widest text-text-muted">
-                    Sub-tasks · {childIssues.length}
+                    {t('issueDetail.subTasks')} · {childIssues.length}
                   </h2>
                   <div className="divide-y divide-surface-border/50 rounded-lg border border-surface-border">
                     {childIssues.map((child) => (
@@ -312,13 +436,20 @@ export function IssueDetailPanel({
                         <span className="font-mono text-[11px] text-text-muted">{child.issueKey}</span>
                         <span className="flex-1 truncate text-text-primary">{child.title}</span>
                         {child.completedAt && (
-                          <span className="shrink-0 rounded-full bg-green-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-green-600">Done</span>
+                          <span className="shrink-0 rounded-full bg-green-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-green-600">{t('issueDetail.done')}</span>
                         )}
                       </div>
                     ))}
                   </div>
                 </section>
               )}
+
+              <DependenciesSection
+                issue={issue}
+                boardIssues={allBoardIssues}
+                onAdd={(depId) => addDepMutation.mutate(depId)}
+                onRemove={(depId) => removeDepMutation.mutate(depId)}
+              />
 
               <IssueActivity issueId={issueId} currentUser={user} columns={columns} epics={epics} sprints={sprints} />
 

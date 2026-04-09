@@ -22,6 +22,7 @@ public record UpdateIssueRequest(
         String epicId,
         Boolean clearEpicId,
         String parentIssueId,
+        Boolean clearParentIssueId,
         String milestoneId,
         Boolean clearMilestoneId,
 
