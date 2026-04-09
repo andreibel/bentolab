@@ -18,6 +18,60 @@
 
 ---
 
+## Screenshots
+
+### Scrum Board
+
+<p align="center">
+  <img src="docs/assets/board_screenshot.png" alt="Bento Board View" width="100%" />
+</p>
+
+### Sprint Planning
+
+<p align="center">
+  <img src="docs/assets/sprint_screenshot.png" alt="Bento Sprint View" width="100%" />
+</p>
+
+### Timeline — Gantt Chart
+
+<p align="center">
+  <img src="docs/assets/timeLine_screenshot.png" alt="Bento Timeline View" width="100%" />
+</p>
+
+---
+
+## Architecture
+
+<p align="center">
+  <img src="docs/assets/architecture.png" alt="Bento Architecture" width="100%" />
+</p>
+
+| Service | Port | Responsibility |
+|---|---|---|
+| API Gateway | 8080 | JWT validation, rate limiting, routing |
+| Auth Service | 8081 | Login, registration, token refresh, email verification |
+| Org Service | 8082 | Organizations, members, roles |
+| Board Service | 8083 | Boards, columns, labels |
+| Task Service | 8084 | Issues, sprints, comments |
+| Notification Service | 8085 | Email, in-app, Discord alerts |
+| Realtime Service | 8086 | Live board updates via WebSocket/STOMP |
+| Attachment Service | 8087 | File uploads via MinIO |
+
+**Infrastructure:** PostgreSQL 17 · MongoDB 8 · Redis 7 · Kafka 3 (KRaft)
+
+---
+
+## Tech Stack
+
+- **Backend:** Spring Boot 4.0, Java 25, Gradle 9
+- **Frontend:** React 19, Vite, TypeScript, TailwindCSS
+- **Realtime:** WebSocket / STOMP
+- **Storage:** MinIO (S3-compatible)
+- **Messaging:** Apache Kafka 3 (KRaft, no ZooKeeper)
+
+
+---
+
 ## Deploy the Beta
 
 No build tools or source code required. All images are pre-built for **linux/amd64** and **linux/arm64** on Docker Hub.
@@ -90,59 +144,6 @@ docker compose -f docker-compose.beta.yml down
 # Stop and delete all data (full reset)
 docker compose -f docker-compose.beta.yml down -v
 ```
-
----
-
-## Screenshots
-
-### Scrum Board
-
-<p align="center">
-  <img src="docs/assets/board_screenshot.png" alt="Bento Board View" width="100%" />
-</p>
-
-### Sprint Planning
-
-<p align="center">
-  <img src="docs/assets/sprint_screenshot.png" alt="Bento Sprint View" width="100%" />
-</p>
-
-### Timeline — Gantt Chart
-
-<p align="center">
-  <img src="docs/assets/timeLine_screenshot.png" alt="Bento Timeline View" width="100%" />
-</p>
-
----
-
-## Architecture
-
-<p align="center">
-  <img src="docs/assets/architecture.png" alt="Bento Architecture" width="100%" />
-</p>
-
-| Service | Port | Responsibility |
-|---|---|---|
-| API Gateway | 8080 | JWT validation, rate limiting, routing |
-| Auth Service | 8081 | Login, registration, token refresh, email verification |
-| Org Service | 8082 | Organizations, members, roles |
-| Board Service | 8083 | Boards, columns, labels |
-| Task Service | 8084 | Issues, sprints, comments |
-| Notification Service | 8085 | Email, in-app, Discord alerts |
-| Realtime Service | 8086 | Live board updates via WebSocket/STOMP |
-| Attachment Service | 8087 | File uploads via MinIO |
-
-**Infrastructure:** PostgreSQL 17 · MongoDB 8 · Redis 7 · Kafka 3 (KRaft)
-
----
-
-## Tech Stack
-
-- **Backend:** Spring Boot 4.0, Java 25, Gradle 9
-- **Frontend:** React 19, Vite, TypeScript, TailwindCSS
-- **Realtime:** WebSocket / STOMP
-- **Storage:** MinIO (S3-compatible)
-- **Messaging:** Apache Kafka 3 (KRaft, no ZooKeeper)
 
 ---
 
