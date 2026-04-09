@@ -8,7 +8,7 @@
 #   2. docker compose -f docker-compose.beta.yml up -d
 #   3. Open http://localhost:3000
 #
-# Tag: v0.1.1-beta-2
+# Tag: v0.1.1-beta-4
 # Platforms: linux/amd64, linux/arm64 (Raspberry Pi 4/5, Apple Silicon via Docker Desktop)
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -90,13 +90,13 @@ services:
       KAFKA_PROCESS_ROLES: controller,broker
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_LISTENERS: PLAINTEXT://kafka:29092,CONTROLLER://kafka:9093
+      KAFKA_LISTENERS: PLAINTEXT://:29092,CONTROLLER://:9093
     healthcheck:
-      test: kafka-topics --bootstrap-server localhost:29092 --list
+      test: ["CMD-SHELL", "kafka-topics --bootstrap-server localhost:29092 --list >/dev/null 2>&1 || exit 1"]
       interval: 10s
       timeout: 5s
-      start_period: 30s
-      retries: 5
+      start_period: 40s
+      retries: 10
 
   mongo:
     image: mongo:8
@@ -141,7 +141,7 @@ services:
   # ── APPLICATION SERVICES ─────────────────────────────────────────────────
 
   api-gateway:
-    image: andreinw12/bento-api-gateway:v0.1.1-beta-2
+    image: andreinw12/bento-api-gateway:v0.1.1-beta-4
     restart: unless-stopped
     ports:
       - "8080:8080"
@@ -156,7 +156,7 @@ services:
         condition: service_healthy
 
   auth-service:
-    image: andreinw12/bento-auth-service:v0.1.1-beta-2
+    image: andreinw12/bento-auth-service:v0.1.1-beta-4
     restart: unless-stopped
     environment:
       SPRING_PROFILES_ACTIVE: docker
@@ -174,7 +174,7 @@ services:
         condition: service_healthy
 
   org-service:
-    image: andreinw12/bento-org-service:v0.1.1-beta-2
+    image: andreinw12/bento-org-service:v0.1.1-beta-4
     restart: unless-stopped
     environment:
       SPRING_PROFILES_ACTIVE: docker
@@ -190,7 +190,7 @@ services:
         condition: service_healthy
 
   board-service:
-    image: andreinw12/bento-board-service:v0.1.1-beta-2
+    image: andreinw12/bento-board-service:v0.1.1-beta-4
     restart: unless-stopped
     environment:
       SPRING_PROFILES_ACTIVE: docker
@@ -206,7 +206,7 @@ services:
         condition: service_healthy
 
   task-service:
-    image: andreinw12/bento-task-service:v0.1.1-beta-2
+    image: andreinw12/bento-task-service:v0.1.1-beta-4
     restart: unless-stopped
     environment:
       SPRING_PROFILES_ACTIVE: docker
@@ -222,7 +222,7 @@ services:
         condition: service_healthy
 
   notification-service:
-    image: andreinw12/bento-notification-service:v0.1.1-beta-2
+    image: andreinw12/bento-notification-service:v0.1.1-beta-4
     restart: unless-stopped
     environment:
       SPRING_PROFILES_ACTIVE: docker
@@ -243,7 +243,7 @@ services:
         condition: service_started
 
   realtime-service:
-    image: andreinw12/bento-realtime-service:v0.1.1-beta-2
+    image: andreinw12/bento-realtime-service:v0.1.1-beta-4
     restart: unless-stopped
     environment:
       SPRING_PROFILES_ACTIVE: docker
@@ -255,7 +255,7 @@ services:
         condition: service_healthy
 
   attachment-service:
-    image: andreinw12/bento-attachment-service:v0.1.1-beta-2
+    image: andreinw12/bento-attachment-service:v0.1.1-beta-4
     restart: unless-stopped
     environment:
       SPRING_PROFILES_ACTIVE: docker
@@ -271,7 +271,7 @@ services:
         condition: service_healthy
 
   frontend:
-    image: andreinw12/bento-frontend:v0.1.1-beta-2
+    image: andreinw12/bento-frontend:v0.1.1-beta-4
     restart: unless-stopped
     ports:
       - "${FRONTEND_PORT:-3000}:80"

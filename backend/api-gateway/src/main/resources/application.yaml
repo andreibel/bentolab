@@ -135,8 +135,8 @@ spring:
                           predicates:
                               - Path=/ws, /ws/**
 
-                        - id: attacment-service
-                          uri: http://attacment-service:8087
+                        - id: attachment-service
+                          uri: http://attachment-service:8087
                           predicates:
                               - Path=/api/attachments, /api/attachments/**
 

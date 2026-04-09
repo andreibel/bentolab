@@ -6,7 +6,7 @@ server:
     port: 8084
 
 internal:
-    gateway-secret: dktxrevDkto3aZUvUD6REkn+x2x0foPhAvXBueFO4rs=
+    gateway-secret: ${GATEWAY_INTERNAL_SECRET:dktxrevDkto3aZUvUD6REkn+x2x0foPhAvXBueFO4rs=}
 
 ---
 spring:
@@ -49,8 +49,8 @@ spring:
         host: mongo
         port: 27017
         database: task_db
-        username: root
-        password: root
+        username: ${MONGO_USERNAME:root}
+        password: ${MONGO_PASSWORD:root}
         authentication-database: admin
     data:
         redis:

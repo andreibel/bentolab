@@ -105,13 +105,13 @@ services:
       KAFKA_PROCESS_ROLES: controller,broker
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://0.0.0.0:9092,CONTROLLER://kafka:9093
+      KAFKA_LISTENERS: PLAINTEXT://:29092,PLAINTEXT_HOST://0.0.0.0:9092,CONTROLLER://:9093
     healthcheck:
-      test: kafka-topics --bootstrap-server localhost:9092 --list
+      test: ["CMD-SHELL", "kafka-topics --bootstrap-server localhost:9092 --list >/dev/null 2>&1 || exit 1"]
       interval: 10s
       timeout: 5s
-      start_period: 30s
-      retries: 5
+      start_period: 40s
+      retries: 10
 
   # ── MongoDB ──────────────────────────────────────────────────────────────
   mongo:
@@ -329,10 +329,10 @@ services:
         condition: service_healthy
 
   # ── Attachment Service ───────────────────────────────────────────────────
-  attacment-service:
+  attachment-service:
     build:
       context: ./backend
-      dockerfile: attacment-service/Dockerfile
+      dockerfile: attachment-service/Dockerfile
     restart: unless-stopped
     ports:
       - "8087:8087"

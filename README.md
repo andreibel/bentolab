@@ -131,7 +131,7 @@ docker compose -f docker-compose.beta.yml pull
 docker compose -f docker-compose.beta.yml up -d
 ```
 
-Current version: **v0.1.1-beta-2**
+Current version: **v0.1.1-beta-4**
 
 Data volumes are preserved across updates.
 
