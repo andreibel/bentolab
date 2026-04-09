@@ -12,6 +12,7 @@ import ForgotPasswordPage from '@/pages/auth/ForgotPasswordPage'
 import ResetPasswordPage from '@/pages/auth/ResetPasswordPage'
 import VerifyEmailPage from '@/pages/auth/VerifyEmailPage'
 import InviteAcceptPage from '@/pages/auth/InviteAcceptPage'
+import CheckEmailPage from '@/pages/auth/CheckEmailPage'
 import CreateOrgPage from '@/pages/org/CreateOrgPage'
 import BoardListPage from '@/pages/board/BoardListPage'
 import BoardPage from '@/pages/board/BoardPage'
@@ -82,6 +83,7 @@ export default function App() {
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/verify-email" element={<VerifyEmailPage />} />
         <Route path="/invite" element={<InviteAcceptPage />} />
+        <Route path="/check-email" element={<CheckEmailPage />} />
 
         {/* Onboarding */}
         <Route path="/org/new" element={<ProtectedRoute><CreateOrgPage /></ProtectedRoute>} />

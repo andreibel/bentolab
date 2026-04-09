@@ -4,7 +4,6 @@ import {zodResolver} from '@hookform/resolvers/zod'
 import {z} from 'zod'
 import {Link, useNavigate} from 'react-router-dom'
 import {toast} from 'sonner'
-import {MailCheck} from 'lucide-react'
 import {motion, useReducedMotion} from 'framer-motion'
 import {useTranslation} from 'react-i18next'
 import {authApi} from '@/api/auth'
@@ -25,7 +24,6 @@ export default function RegisterPage() {
   const navigate = useNavigate()
   const { t } = useTranslation()
   const setAuth = useAuthStore((s) => s.setAuth)
-  const [verifyEmail, setVerifyEmail] = useState<string | null>(null)
   const reduceMotion = useReducedMotion()
 
   const cardRef = useRef<HTMLDivElement>(null)
@@ -51,7 +49,10 @@ export default function RegisterPage() {
     try {
       const data = await authApi.register(values)
       setAuth(data)
-      if (!data.user.emailVerified) setVerifyEmail(data.user.email)
+      if (!data.user.emailVerified) {
+        navigate(`/check-email?email=${encodeURIComponent(data.user.email)}`)
+        return
+      }
       navigate(data.user.currentOrgId ? '/boards' : '/org/new')
     } catch (err: unknown) {
       const msg =
@@ -123,15 +124,6 @@ export default function RegisterPage() {
               background: `radial-gradient(circle 220px at ${glow.x}% ${glow.y}%, color-mix(in srgb, var(--color-primary) 9%, transparent), transparent 75%)`,
             }}
           />
-
-          {verifyEmail && (
-            <div className="mb-5 flex items-start gap-3 rounded-lg border border-primary/20 bg-primary-subtle px-4 py-3">
-              <MailCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-              <p className="text-sm text-text-secondary">
-                {t('auth.register.verifyEmailDesc', { email: verifyEmail })}
-              </p>
-            </div>
-          )}
 
           <div className="mb-6 text-center">
             <h1 className="text-[1.75rem] font-bold tracking-tight text-text-primary">{t('auth.register.title')}</h1>

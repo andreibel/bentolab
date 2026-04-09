@@ -1,22 +1,37 @@
 import {useEffect, useRef, useState} from 'react'
-import {Link, useSearchParams} from 'react-router-dom'
-import {AlertCircle, ArrowLeft, CheckCircle2, Loader2} from 'lucide-react'
+import {Link, useNavigate, useSearchParams} from 'react-router-dom'
+import {AlertCircle, ArrowLeft, Building2, CheckCircle2, Link2, Loader2} from 'lucide-react'
 import {motion, useReducedMotion} from 'framer-motion'
 import {useTranslation} from 'react-i18next'
 import {authApi} from '@/api/auth'
+import {useAuthStore} from '@/stores/authStore'
 import {Button} from '@/components/ui/Button'
 import {Input} from '@/components/ui/Input'
 
 type State = 'loading' | 'success' | 'error'
 
+function extractInviteToken(raw: string): string | null {
+  try {
+    const url = new URL(raw.trim())
+    return url.searchParams.get('token')
+  } catch {
+    const trimmed = raw.trim()
+    return trimmed.length > 0 ? trimmed : null
+  }
+}
+
 export default function VerifyEmailPage() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const token = searchParams.get('token')
   const [state, setState] = useState<State>(token ? 'loading' : 'error')
   const [resending, setResending] = useState(false)
   const [resendEmail, setResendEmail] = useState('')
   const [resendSent, setResendSent] = useState(false)
+  const [inviteLink, setInviteLink] = useState('')
+  const { accessToken, refreshToken } = useAuthStore()
+  const isLoggedIn = !!(accessToken || refreshToken)
   const reduceMotion = useReducedMotion()
 
   const cardRef = useRef<HTMLDivElement>(null)
@@ -113,19 +128,81 @@ export default function VerifyEmailPage() {
           )}
 
           {state === 'success' && (
-            <div className="flex flex-col items-center gap-4 text-center">
+            <div className="flex flex-col items-center gap-5 text-center">
               <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/10">
                 <CheckCircle2 className="h-7 w-7 text-emerald-500" />
               </div>
               <div className="flex flex-col gap-1.5">
-                <h1 className="text-[1.75rem] font-bold tracking-tight text-text-primary">{t('auth.verifyEmail.successTitle')}</h1>
+                <h1 className="text-[1.75rem] font-bold tracking-tight text-text-primary">
+                  {t('auth.verifyEmail.successTitle')}
+                </h1>
                 <p className="text-sm text-text-secondary">
                   {t('auth.verifyEmail.successDesc')}
                 </p>
               </div>
-              <Link to="/login" className="mt-1 w-full">
-                <Button size="lg" className="w-full">{t('auth.verifyEmail.signIn')}</Button>
-              </Link>
+
+              <p className="text-xs font-medium uppercase tracking-widest text-text-muted">
+                {t('auth.verifyEmail.getStarted')}
+              </p>
+
+              {/* Choice cards */}
+              <div className="flex w-full flex-col gap-3">
+                {/* Create org */}
+                <button
+                  type="button"
+                  onClick={() => navigate(isLoggedIn ? '/org/new' : '/login')}
+                  className="group flex items-start gap-4 rounded-xl border border-surface-border bg-surface-muted p-4 text-start transition-colors hover:border-primary/40 hover:bg-primary/5"
+                >
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 transition-colors group-hover:bg-primary/15">
+                    <Building2 className="h-4.5 w-4.5 text-primary" />
+                  </div>
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-sm font-semibold text-text-primary">
+                      {t('auth.verifyEmail.createOrg')}
+                    </span>
+                    <span className="text-xs text-text-secondary">
+                      {t('auth.verifyEmail.createOrgDesc')}
+                    </span>
+                  </div>
+                </button>
+
+                {/* Join via invite */}
+                <div className="flex flex-col gap-2 rounded-xl border border-surface-border bg-surface-muted p-4">
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-surface-border">
+                      <Link2 className="h-4.5 w-4.5 text-text-secondary" />
+                    </div>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-sm font-semibold text-text-primary">
+                        {t('auth.verifyEmail.joinOrg')}
+                      </span>
+                      <span className="text-xs text-text-secondary">
+                        {t('auth.verifyEmail.joinOrgDesc')}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 ps-0">
+                    <Input
+                      placeholder={t('auth.verifyEmail.joinOrgPlaceholder')}
+                      value={inviteLink}
+                      onChange={(e) => setInviteLink(e.target.value)}
+                      className="flex-1 text-sm"
+                    />
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      disabled={!inviteLink.trim()}
+                      onClick={() => {
+                        const tok = extractInviteToken(inviteLink)
+                        if (tok) navigate(`/invite?token=${encodeURIComponent(tok)}`)
+                      }}
+                    >
+                      {t('auth.verifyEmail.joinOrgBtn')}
+                    </Button>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 

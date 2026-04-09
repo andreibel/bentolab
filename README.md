@@ -149,7 +149,7 @@ docker compose -f docker-compose.beta.yml down -v
 ## Building from Source
 
 ```bash
-git clone https://github.com/andreibel/bento.git
+git clone https://github.com/andreibel/bentolab.git
 cd bento
 
 # Start with local builds instead of Hub images
