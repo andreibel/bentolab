@@ -141,7 +141,7 @@ services:
   # ── APPLICATION SERVICES ─────────────────────────────────────────────────
 
   api-gateway:
-    image: andreibel/bento-api-gateway:v0.1.1-beta-2
+    image: andreinw12/bento-api-gateway:v0.1.1-beta-2
     restart: unless-stopped
     ports:
       - "8080:8080"
@@ -156,7 +156,7 @@ services:
         condition: service_healthy
 
   auth-service:
-    image: andreibel/bento-auth-service:v0.1.1-beta-2
+    image: andreinw12/bento-auth-service:v0.1.1-beta-2
     restart: unless-stopped
     environment:
       SPRING_PROFILES_ACTIVE: docker
@@ -174,7 +174,7 @@ services:
         condition: service_healthy
 
   org-service:
-    image: andreibel/bento-org-service:v0.1.1-beta-2
+    image: andreinw12/bento-org-service:v0.1.1-beta-2
     restart: unless-stopped
     environment:
       SPRING_PROFILES_ACTIVE: docker
@@ -190,7 +190,7 @@ services:
         condition: service_healthy
 
   board-service:
-    image: andreibel/bento-board-service:v0.1.1-beta-2
+    image: andreinw12/bento-board-service:v0.1.1-beta-2
     restart: unless-stopped
     environment:
       SPRING_PROFILES_ACTIVE: docker
@@ -206,7 +206,7 @@ services:
         condition: service_healthy
 
   task-service:
-    image: andreibel/bento-task-service:v0.1.1-beta-2
+    image: andreinw12/bento-task-service:v0.1.1-beta-2
     restart: unless-stopped
     environment:
       SPRING_PROFILES_ACTIVE: docker
@@ -222,7 +222,7 @@ services:
         condition: service_healthy
 
   notification-service:
-    image: andreibel/bento-notification-service:v0.1.1-beta-2
+    image: andreinw12/bento-notification-service:v0.1.1-beta-2
     restart: unless-stopped
     environment:
       SPRING_PROFILES_ACTIVE: docker
@@ -243,7 +243,7 @@ services:
         condition: service_started
 
   realtime-service:
-    image: andreibel/bento-realtime-service:v0.1.1-beta-2
+    image: andreinw12/bento-realtime-service:v0.1.1-beta-2
     restart: unless-stopped
     environment:
       SPRING_PROFILES_ACTIVE: docker
@@ -255,7 +255,7 @@ services:
         condition: service_healthy
 
   attachment-service:
-    image: andreibel/bento-attachment-service:v0.1.1-beta-2
+    image: andreinw12/bento-attachment-service:v0.1.1-beta-2
     restart: unless-stopped
     environment:
       SPRING_PROFILES_ACTIVE: docker
@@ -271,7 +271,7 @@ services:
         condition: service_healthy
 
   frontend:
-    image: andreibel/bento-frontend:v0.1.1-beta-2
+    image: andreinw12/bento-frontend:v0.1.1-beta-2
     restart: unless-stopped
     ports:
       - "${FRONTEND_PORT:-3000}:80"
