@@ -7,7 +7,7 @@
 build/
 */build/
 **/build/
-
+graphify-out/
 
 # Logs
 logs
