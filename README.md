@@ -79,8 +79,9 @@ No build tools or source code required. All images are pre-built for **linux/amd
 ### 1. Download the compose file
 
 ```bash
-curl -O https://raw.githubusercontent.com/andreibel/bento/main/docker-compose.beta.yml
-curl -O https://raw.githubusercontent.com/andreibel/bento/main/.env.example
+curl -O https://raw.githubusercontent.com/andreibel/bentolab/main/docker-compose.beta.yml
+curl -O https://raw.githubusercontent.com/andreibel/bentolab/main/.env.example
+
 ```
 
 ### 2. Configure secrets
