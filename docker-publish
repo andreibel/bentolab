@@ -1,0 +1,19 @@
+TAG=v0.1.1-beta-4
+                                                                              
+docker buildx build --platform linux/amd64,linux/arm64 --tag andreinw12/bento-api-gateway:$TAG --push -f backend/api-gateway/Dockerfile backend/                                
+                                                                              
+docker buildx build --platform linux/amd64,linux/arm64 --tag andreinw12/bento-auth-service:$TAG --push -f backend/auth-service/Dockerfile backend/             
+                                                                              
+docker buildx build --platform linux/amd64,linux/arm64 --tag andreinw12/bento-org-service:$TAG --push -f backend/org-service/Dockerfile backend/              
+                                                                              
+docker buildx build --platform linux/amd64,linux/arm64 --tag andreinw12/bento-board-service:$TAG --push -f backend/board-service/Dockerfile backend/            
+                                                                            
+docker buildx build --platform linux/amd64,linux/arm64 --tag andreinw12/bento-task-service:$TAG --push -f backend/task-service/Dockerfile backend/                               
+                                                            
+docker buildx build --platform linux/amd64,linux/arm64 --tag andreinw12/bento-notification-service:$TAG --push -f backend/notification-service/Dockerfile backend/                       
+   
+docker buildx build --platform linux/amd64,linux/arm64 --tag andreinw12/bento-realtime-service:$TAG --push -f backend/realtime-service/Dockerfile backend/                           
+   
+docker buildx build --platform linux/amd64,linux/arm64 --tag andreinw12/bento-attachment-service:$TAG --push -f backend/attachment-service/Dockerfile backend/                       
+                                                                              
+docker buildx build --platform linux/amd64,linux/arm64 --build-arg VITE_API_URL=http://localhost:8080 --build-arg VITE_APP_DOMAIN=localhost --tag andreinw12/bento-frontend:$TAG --push frontend/

@@ -338,7 +338,7 @@ class AuthControllerTest {
 
     private AuthResponse authResponse() {
         UserDto user = new UserDto(USER_ID, "john@example.com", "John", "Doe",
-                null, SystemRole.USER, false, null, null, Instant.now());
+                null, SystemRole.USER, false, null, null, null, Instant.now(), Instant.now());
         UserOrgDto org = new UserOrgDto(ORG_ID, "Acme", "acme", "OWNER", null);
         return new AuthResponse("access-token", "refresh-token", user, List.of(org));
     }

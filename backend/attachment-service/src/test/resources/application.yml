@@ -1,0 +1,25 @@
+spring:
+    application:
+        name: attachment-service
+    mongodb:
+        host: localhost
+        port: 27017
+        database: attachment_db_test
+        username: root
+        password: root
+        authentication-database: admin
+
+internal:
+    gateway-secret: test-secret
+
+storage:
+    endpoint: http://localhost:9000
+    bucket-name: test-bucket
+    region: us-east-1
+    access-key: test-access-key
+    secret-key: test-secret-key
+    path-style-access: true
+    upload-url-expiry-minutes: 10
+    download-url-expiry-minutes: 60
+    cors-origins:
+        - "http://localhost:5173"

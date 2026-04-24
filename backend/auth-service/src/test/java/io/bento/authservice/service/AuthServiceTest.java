@@ -385,6 +385,6 @@ class AuthServiceTest {
 
     private UserDto userDto() {
         return new UserDto(USER_ID, "john@example.com", "John", "Doe",
-                null, SystemRole.USER, false, null, null, Instant.now());
+                null, SystemRole.USER, false, null, null, null, Instant.now(), Instant.now());
     }
 }

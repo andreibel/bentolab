@@ -1,6 +1,19 @@
 import {useEffect, useRef, useState} from 'react'
-import {MotionConfig, motion, useScroll, useTransform} from 'framer-motion'
-import {ArrowRight, BarChart2, Boxes, CheckCircle2, Cpu, Github, Kanban, Moon, ShieldCheck, Sun, Users, Zap} from 'lucide-react'
+import {motion, MotionConfig, useScroll, useTransform} from 'framer-motion'
+import {
+  ArrowRight,
+  BarChart2,
+  Boxes,
+  CheckCircle2,
+  Cpu,
+  Github,
+  Kanban,
+  Moon,
+  ShieldCheck,
+  Sun,
+  Users,
+  Zap
+} from 'lucide-react'
 import {Link} from 'react-router-dom'
 import {useUIStore} from '@/stores/uiStore'
 import {HeroBoardMockup} from '@/components/landing/HeroBoardMockup'
@@ -11,17 +24,17 @@ const easeOutExpo: [number, number, number, number] = [0.22, 1, 0.36, 1]
 const easeOutQuart: [number, number, number, number] = [0.25, 1, 0.5, 1]
 
 const fadeUp = {
-  hidden: { opacity: 0, y: 24 },
+  hidden: {opacity: 0, y: 24},
   visible: (delay = 0) => ({
     opacity: 1,
     y: 0,
-    transition: { duration: 0.5, delay, ease: easeOutExpo },
+    transition: {duration: 0.5, delay, ease: easeOutExpo},
   }),
 }
 
 const stagger = {
   hidden: {},
-  visible: { transition: { staggerChildren: 0.08 } },
+  visible: {transition: {staggerChildren: 0.08}},
 }
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
@@ -89,38 +102,54 @@ const workflows = [
 ]
 
 const steps = [
-  { number: '01', title: 'Create an org', description: 'Set up your organization and invite teammates in seconds.' },
-  { number: '02', title: 'Build a board', description: 'Choose Scrum or Kanban. Default columns are created automatically.' },
-  { number: '03', title: 'Track issues', description: 'Create, assign, and move issues. Log time, add comments, link relations.' },
-  { number: '04', title: 'Ship faster', description: 'Run sprints, track velocity, and retrospect — all in one place.' },
+  {number: '01', title: 'Create an org', description: 'Set up your organization and invite teammates in seconds.'},
+  {
+    number: '02',
+    title: 'Build a board',
+    description: 'Choose Scrum or Kanban. Default columns are created automatically.'
+  },
+  {
+    number: '03',
+    title: 'Track issues',
+    description: 'Create, assign, and move issues. Log time, add comments, link relations.'
+  },
+  {number: '04', title: 'Ship faster', description: 'Run sprints, track velocity, and retrospect — all in one place.'},
 ]
 
 // ─── Animated background orbs ─────────────────────────────────────────────────
 
-function AnimatedOrbs({ dark = false }: { dark?: boolean }) {
+function AnimatedOrbs({dark = false}: { dark?: boolean }) {
   const base = dark ? 'bg-white' : 'bg-primary'
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
       {/* Orb 1 — large, top-left */}
       <motion.div
         className={`absolute rounded-full ${base}`}
-        style={{ width: 700, height: 700, left: '-18%', top: '-30%', opacity: dark ? 0.03 : 0.055, filter: 'blur(100px)' }}
-        animate={{ x: [0, 55, -25, 0], y: [0, -45, 30, 0] }}
-        transition={{ duration: 28, repeat: Infinity, ease: 'easeInOut', repeatType: 'mirror' }}
+        style={{
+          width: 700,
+          height: 700,
+          left: '-18%',
+          top: '-30%',
+          opacity: dark ? 0.03 : 0.055,
+          filter: 'blur(100px)',
+          willChange: 'transform',
+        }}
+        animate={{x: [0, 55, -25, 0], y: [0, -45, 30, 0]}}
+        transition={{duration: 28, repeat: Infinity, ease: 'easeInOut', repeatType: 'mirror'}}
       />
       {/* Orb 2 — medium, top-right */}
       <motion.div
         className={`absolute rounded-full ${base}`}
-        style={{ width: 480, height: 480, right: '-8%', top: '-10%', opacity: dark ? 0.025 : 0.04, filter: 'blur(80px)' }}
-        animate={{ x: [0, -40, 18, 0], y: [0, 32, -22, 0] }}
-        transition={{ duration: 22, repeat: Infinity, ease: 'easeInOut', repeatType: 'mirror', delay: 5 }}
+        style={{width: 480, height: 480, right: '-8%', top: '-10%', opacity: dark ? 0.025 : 0.04, filter: 'blur(80px)', willChange: 'transform'}}
+        animate={{x: [0, -40, 18, 0], y: [0, 32, -22, 0]}}
+        transition={{duration: 22, repeat: Infinity, ease: 'easeInOut', repeatType: 'mirror', delay: 5}}
       />
       {/* Orb 3 — small, center-bottom */}
       <motion.div
         className={`absolute rounded-full ${base}`}
-        style={{ width: 280, height: 280, left: '38%', bottom: '6%', opacity: dark ? 0.04 : 0.07, filter: 'blur(70px)' }}
-        animate={{ x: [0, 30, -28, 0], y: [0, -28, 18, 0] }}
-        transition={{ duration: 19, repeat: Infinity, ease: 'easeInOut', repeatType: 'mirror', delay: 9 }}
+        style={{width: 280, height: 280, left: '38%', bottom: '6%', opacity: dark ? 0.04 : 0.07, filter: 'blur(70px)', willChange: 'transform'}}
+        animate={{x: [0, 30, -28, 0], y: [0, -28, 18, 0]}}
+        transition={{duration: 19, repeat: Infinity, ease: 'easeInOut', repeatType: 'mirror', delay: 9}}
       />
     </div>
   )
@@ -129,12 +158,12 @@ function AnimatedOrbs({ dark = false }: { dark?: boolean }) {
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function Nav() {
-  const { theme, toggleTheme } = useUIStore()
+  const {theme, toggleTheme} = useUIStore()
   const [scrolled, setScrolled] = useState(false)
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 24)
-    window.addEventListener('scroll', handleScroll, { passive: true })
+    window.addEventListener('scroll', handleScroll, {passive: true})
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
@@ -144,7 +173,7 @@ function Nav() {
     >
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
         <Link to="/" className="flex items-center gap-2.5">
-          <img src="/logo.svg" alt="Bento" className="h-7 w-7" />
+          <img src="/logo.svg" alt="Bento" className="h-7 w-7"/>
           <span className="text-[1.1rem] font-bold tracking-[-0.5px] text-text-primary">
             bento
           </span>
@@ -172,7 +201,7 @@ function Nav() {
             aria-label="Toggle theme"
             className="flex h-8 w-8 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-surface-muted hover:text-text-primary"
           >
-            {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            {theme === 'dark' ? <Sun className="h-4 w-4"/> : <Moon className="h-4 w-4"/>}
           </button>
           <Link
             to="/login"
@@ -185,7 +214,7 @@ function Nav() {
             className="inline-flex h-8 items-center gap-1.5 rounded-md bg-primary px-3.5 text-sm font-medium text-white transition-all duration-150 hover:scale-[1.03] hover:bg-primary-light active:scale-[0.97]"
           >
             Get started
-            <ArrowRight className="h-3.5 w-3.5" />
+            <ArrowRight className="h-3.5 w-3.5"/>
           </Link>
         </div>
       </div>
@@ -195,13 +224,14 @@ function Nav() {
 
 function Hero() {
   const heroRef = useRef<HTMLElement>(null)
-  const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] })
+  const {scrollYProgress} = useScroll({target: heroRef, offset: ['start start', 'end start']})
   const mockupY = useTransform(scrollYProgress, [0, 1], [0, 38])
 
   return (
-    <section ref={heroRef} className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-6 pt-14 text-center">
+    <section ref={heroRef}
+             className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-6 pt-14 text-center">
       {/* Animated background orbs */}
-      <AnimatedOrbs />
+      <AnimatedOrbs/>
 
       {/* Subtle grid background */}
       <div
@@ -222,8 +252,8 @@ function Hero() {
         <motion.div variants={fadeUp} custom={0}>
           <motion.span
             className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary-subtle px-3.5 py-1 text-xs font-semibold text-primary"
-            whileHover={{ scale: 1.04 }}
-            transition={{ duration: 0.15, ease: easeOutQuart }}
+            whileHover={{scale: 1.04}}
+            transition={{duration: 0.15, ease: easeOutQuart}}
           >
             Open source · Run anywhere
           </motion.span>
@@ -233,10 +263,10 @@ function Hero() {
           variants={fadeUp}
           custom={0.05}
           className="max-w-3xl text-5xl font-bold tracking-tight text-text-primary md:text-6xl lg:text-7xl"
-          style={{ letterSpacing: '-0.02em', lineHeight: 1.05 }}
+          style={{letterSpacing: '-0.02em', lineHeight: 1.05}}
         >
           Project management
-          <br />
+          <br/>
           <span className="text-primary">that stays out of your way</span>
         </motion.h1>
 
@@ -260,7 +290,7 @@ function Hero() {
             className="inline-flex h-11 items-center gap-2 rounded-lg bg-primary px-6 text-sm font-semibold text-white shadow-md transition-all duration-150 hover:scale-[1.03] hover:bg-primary-light hover:shadow-primary/25 hover:shadow-lg active:scale-[0.97]"
           >
             Start for free
-            <ArrowRight className="h-4 w-4" />
+            <ArrowRight className="h-4 w-4"/>
           </Link>
           <a
             href="#how-it-works"
@@ -277,7 +307,7 @@ function Hero() {
         >
           {['No credit card required', 'GNU AGPL-3.0', 'Runs anywhere'].map((t) => (
             <span key={t} className="flex items-center gap-1.5">
-              <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
+              <CheckCircle2 className="h-3.5 w-3.5 text-primary"/>
               {t}
             </span>
           ))}
@@ -286,13 +316,13 @@ function Hero() {
 
       {/* Board mockup with scroll parallax */}
       <motion.div
-        initial={{ opacity: 0, y: 40 }}
-        animate={{ opacity: 1, y: 0 }}
-        style={{ y: mockupY }}
-        transition={{ duration: 0.7, delay: 0.35, ease: easeOutExpo }}
+        initial={{opacity: 0, y: 40}}
+        animate={{opacity: 1, y: 0}}
+        style={{y: mockupY}}
+        transition={{duration: 0.7, delay: 0.35, ease: easeOutExpo}}
         className="relative z-10 mx-auto mt-16 w-full max-w-5xl"
       >
-        <HeroBoardMockup />
+        <HeroBoardMockup/>
       </motion.div>
     </section>
   )
@@ -305,7 +335,7 @@ function WorkflowShowcase() {
         <motion.div
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: '-80px' }}
+          viewport={{once: true, margin: '-80px'}}
           variants={stagger}
           className="mb-14 text-center"
         >
@@ -316,7 +346,7 @@ function WorkflowShowcase() {
             variants={fadeUp}
             custom={0.05}
             className="text-3xl font-bold tracking-tight text-text-primary md:text-4xl"
-            style={{ letterSpacing: '-0.02em' }}
+            style={{letterSpacing: '-0.02em'}}
           >
             Brew your best ideas to life
           </motion.h2>
@@ -329,7 +359,7 @@ function WorkflowShowcase() {
         <motion.div
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: '-80px' }}
+          viewport={{once: true, margin: '-80px'}}
           variants={stagger}
           className="grid grid-cols-1 gap-6 sm:grid-cols-2"
         >
@@ -338,7 +368,7 @@ function WorkflowShowcase() {
               key={w.label}
               variants={fadeUp}
               custom={i * 0.06}
-              whileHover={{ y: -5, transition: { duration: 0.2, ease: easeOutQuart } }}
+              whileHover={{y: -5, transition: {duration: 0.2, ease: easeOutQuart}}}
               className="group overflow-hidden rounded-2xl border border-surface-border bg-surface shadow-sm transition-shadow hover:border-primary/20 hover:shadow-md"
             >
               <div className="overflow-hidden bg-surface-muted">
@@ -346,9 +376,9 @@ function WorkflowShowcase() {
                   src={w.illustration}
                   alt={w.label}
                   className="w-full object-cover"
-                  style={{ aspectRatio: '510/350' }}
-                  whileHover={{ scale: 1.04 }}
-                  transition={{ duration: 0.4, ease: easeOutQuart }}
+                  style={{aspectRatio: '510/350'}}
+                  whileHover={{scale: 1.04}}
+                  transition={{duration: 0.4, ease: easeOutQuart}}
                 />
               </div>
               <div className="px-5 py-4">
@@ -370,14 +400,16 @@ function Features() {
         <motion.div
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: '-80px' }}
+          viewport={{once: true, margin: '-80px'}}
           variants={stagger}
           className="mb-14 text-center"
         >
           <motion.p variants={fadeUp} className="mb-3 text-sm font-semibold uppercase tracking-widest text-primary">
             Features
           </motion.p>
-          <motion.h2 variants={fadeUp} custom={0.05} className="text-3xl font-bold tracking-tight text-text-primary md:text-4xl" style={{ letterSpacing: '-0.02em' }}>
+          <motion.h2 variants={fadeUp} custom={0.05}
+                     className="text-3xl font-bold tracking-tight text-text-primary md:text-4xl"
+                     style={{letterSpacing: '-0.02em'}}>
             Everything your team needs
           </motion.h2>
           <motion.p variants={fadeUp} custom={0.1} className="mt-4 text-text-secondary">
@@ -388,7 +420,7 @@ function Features() {
         <motion.div
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: '-80px' }}
+          viewport={{once: true, margin: '-80px'}}
           variants={stagger}
           className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3"
         >
@@ -396,16 +428,16 @@ function Features() {
             <motion.div
               key={f.title}
               variants={fadeUp}
-              whileHover={{ y: -5, transition: { duration: 0.2, ease: easeOutQuart } }}
-              whileTap={{ scale: 0.99 }}
+              whileHover={{y: -5, transition: {duration: 0.2, ease: easeOutQuart}}}
+              whileTap={{scale: 0.99}}
               className="group rounded-xl border border-surface-border bg-surface p-6 transition-shadow hover:border-primary/20 hover:shadow-md"
             >
               <motion.div
                 className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary-subtle text-primary"
-                whileHover={{ scale: 1.1, rotate: 3 }}
-                transition={{ duration: 0.2, ease: easeOutQuart }}
+                whileHover={{scale: 1.1, rotate: 3}}
+                transition={{duration: 0.2, ease: easeOutQuart}}
               >
-                <f.icon className="h-5 w-5" />
+                <f.icon className="h-5 w-5"/>
               </motion.div>
               <h3 className="mb-2 text-base font-semibold text-text-primary">{f.title}</h3>
               <p className="text-sm leading-relaxed text-text-secondary">{f.description}</p>
@@ -417,21 +449,24 @@ function Features() {
         <motion.div
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: '-80px' }}
+          viewport={{once: true, margin: '-80px'}}
           variants={fadeUp}
-          whileHover={{ y: -3, transition: { duration: 0.2, ease: easeOutQuart } }}
+          whileHover={{y: -3, transition: {duration: 0.2, ease: easeOutQuart}}}
           className="mt-12 flex flex-col items-center gap-4 rounded-2xl border border-primary/20 bg-primary-subtle px-8 py-8 text-center sm:flex-row sm:text-start"
         >
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary text-white">
-            <Boxes className="h-6 w-6" />
+            <Boxes className="h-6 w-6"/>
           </div>
           <div className="flex-1">
             <p className="font-semibold text-text-primary">Run anywhere — forever free</p>
             <p className="mt-1 text-sm text-text-secondary">
               GNU AGPL v3 licensed. Three deployment modes out of the box:
-              <span className="font-medium text-text-primary"> Local</span> — one optimized process on a single machine, no heavy microservice stack;
-              <span className="font-medium text-text-primary"> Self-hosted</span> — full architecture on your own servers;
-              <span className="font-medium text-text-primary"> Cloud</span> — scale with Kubernetes using the Terraform and Ansible configs included in the repo.
+              <span className="font-medium text-text-primary"> Local</span> — one optimized process on a single machine,
+              no heavy microservice stack;
+              <span className="font-medium text-text-primary"> Self-hosted</span> — full architecture on your own
+              servers;
+              <span className="font-medium text-text-primary"> Cloud</span> — scale with Kubernetes using the Terraform
+              and Ansible configs included in the repo.
             </p>
           </div>
           <a
@@ -440,7 +475,7 @@ function Features() {
             rel="noopener noreferrer"
             className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-primary/20 bg-surface px-4 py-2 text-sm font-semibold text-primary transition-all duration-150 hover:scale-[1.03] hover:bg-surface-border active:scale-[0.97]"
           >
-            <Github className="h-4 w-4" />
+            <Github className="h-4 w-4"/>
             View on GitHub
           </a>
         </motion.div>
@@ -456,14 +491,16 @@ function HowItWorks() {
         <motion.div
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: '-80px' }}
+          viewport={{once: true, margin: '-80px'}}
           variants={stagger}
           className="mb-14 text-center"
         >
           <motion.p variants={fadeUp} className="mb-3 text-sm font-semibold uppercase tracking-widest text-primary">
             How it works
           </motion.p>
-          <motion.h2 variants={fadeUp} custom={0.05} className="text-3xl font-bold tracking-tight text-text-primary md:text-4xl" style={{ letterSpacing: '-0.02em' }}>
+          <motion.h2 variants={fadeUp} custom={0.05}
+                     className="text-3xl font-bold tracking-tight text-text-primary md:text-4xl"
+                     style={{letterSpacing: '-0.02em'}}>
             Up and running in minutes
           </motion.h2>
         </motion.div>
@@ -471,7 +508,7 @@ function HowItWorks() {
         <motion.div
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: '-80px' }}
+          viewport={{once: true, margin: '-80px'}}
           variants={stagger}
           className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4"
         >
@@ -480,15 +517,15 @@ function HowItWorks() {
               key={step.number}
               variants={fadeUp}
               custom={i * 0.05}
-              whileHover={{ y: -4, transition: { duration: 0.2, ease: easeOutQuart } }}
+              whileHover={{y: -4, transition: {duration: 0.2, ease: easeOutQuart}}}
               className="relative"
             >
               {i < steps.length - 1 && (
-                <div className="absolute inset-s-full top-5 hidden h-px w-6 bg-surface-border lg:block" />
+                <div className="absolute inset-s-full top-5 hidden h-px w-6 bg-surface-border lg:block"/>
               )}
               <motion.div
                 className="mb-4 text-3xl font-bold text-primary/20"
-                whileHover={{ color: 'var(--color-primary)', opacity: 0.4, transition: { duration: 0.2 } }}
+                whileHover={{color: 'var(--color-primary)', opacity: 0.4, transition: {duration: 0.2}}}
               >
                 {step.number}
               </motion.div>
@@ -504,7 +541,8 @@ function HowItWorks() {
 
 function ComingSoonRibbon() {
   return (
-    <div className="absolute -inset-e-8 top-5 z-10 w-36 rotate-45 bg-red-500 py-1 text-center text-[10px] font-bold uppercase tracking-widest text-white shadow-md">
+    <div
+      className="absolute -right-8 top-5 z-10 w-36 rotate-45 bg-red-500 py-1 text-center text-[10px] font-bold uppercase tracking-widest text-white shadow-md">
       Coming soon
     </div>
   )
@@ -517,14 +555,16 @@ function Pricing() {
         <motion.div
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: '-80px' }}
+          viewport={{once: true, margin: '-80px'}}
           variants={stagger}
           className="mb-14 text-center"
         >
           <motion.p variants={fadeUp} className="mb-3 text-sm font-semibold uppercase tracking-widest text-primary">
             Pricing
           </motion.p>
-          <motion.h2 variants={fadeUp} custom={0.05} className="text-3xl font-bold tracking-tight text-text-primary md:text-4xl" style={{ letterSpacing: '-0.02em' }}>
+          <motion.h2 variants={fadeUp} custom={0.05}
+                     className="text-3xl font-bold tracking-tight text-text-primary md:text-4xl"
+                     style={{letterSpacing: '-0.02em'}}>
             Simple, honest pricing
           </motion.h2>
           <motion.p variants={fadeUp} custom={0.1} className="mt-4 text-text-secondary">
@@ -535,14 +575,14 @@ function Pricing() {
         <motion.div
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: '-80px' }}
+          viewport={{once: true, margin: '-80px'}}
           variants={stagger}
           className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"
         >
           {/* Self-host */}
           <motion.div
             variants={fadeUp}
-            whileHover={{ y: -6, transition: { duration: 0.2, ease: easeOutQuart } }}
+            whileHover={{y: -6, transition: {duration: 0.2, ease: easeOutQuart}}}
             className="rounded-xl border border-surface-border bg-surface p-7 transition-shadow hover:shadow-md"
           >
             <p className="mb-1 text-sm font-semibold text-text-secondary">Self-hosted</p>
@@ -553,7 +593,7 @@ function Pricing() {
             <ul className="mb-8 flex flex-col gap-2.5 text-sm text-text-secondary">
               {['Unlimited users', 'Unlimited boards', 'All features', 'Optimized local build', 'Docker · K8s · Terraform'].map((item) => (
                 <li key={item} className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />
+                  <CheckCircle2 className="h-4 w-4 shrink-0 text-primary"/>
                   {item}
                 </li>
               ))}
@@ -564,7 +604,7 @@ function Pricing() {
               rel="noopener noreferrer"
               className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-surface-border bg-surface-muted px-4 py-2.5 text-sm font-semibold text-text-primary transition-all duration-150 hover:scale-[1.02] hover:bg-surface-border active:scale-[0.98]"
             >
-              <Github className="h-4 w-4" />
+              <Github className="h-4 w-4"/>
               View on GitHub
             </a>
           </motion.div>
@@ -573,10 +613,10 @@ function Pricing() {
           <motion.div
             variants={fadeUp}
             custom={0.05}
-            whileHover={{ y: -6, transition: { duration: 0.2, ease: easeOutQuart } }}
+            whileHover={{y: -6, transition: {duration: 0.2, ease: easeOutQuart}}}
             className="relative overflow-hidden rounded-xl border-2 border-primary bg-surface p-7 shadow-lg shadow-primary/10 transition-shadow hover:shadow-xl hover:shadow-primary/15"
           >
-            <ComingSoonRibbon />
+            <ComingSoonRibbon/>
             <p className="mb-1 text-sm font-semibold text-text-secondary">Cloud</p>
             <p className="mb-4 text-4xl font-bold text-text-primary">
               $9
@@ -588,7 +628,7 @@ function Pricing() {
             <ul className="mb-8 flex flex-col gap-2.5 text-sm text-text-secondary">
               {['Up to 20 users', '10 boards', 'All features', 'Automatic backups', 'Email notifications'].map((item) => (
                 <li key={item} className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />
+                  <CheckCircle2 className="h-4 w-4 shrink-0 text-primary"/>
                   {item}
                 </li>
               ))}
@@ -605,10 +645,10 @@ function Pricing() {
           <motion.div
             variants={fadeUp}
             custom={0.1}
-            whileHover={{ y: -6, transition: { duration: 0.2, ease: easeOutQuart } }}
+            whileHover={{y: -6, transition: {duration: 0.2, ease: easeOutQuart}}}
             className="relative overflow-hidden rounded-xl border border-surface-border bg-surface p-7 transition-shadow hover:shadow-md"
           >
-            <ComingSoonRibbon />
+            <ComingSoonRibbon/>
             <p className="mb-1 text-sm font-semibold text-text-secondary">Enterprise</p>
             <p className="mb-4 text-4xl font-bold text-text-primary">Custom</p>
             <p className="mb-6 text-sm text-text-secondary">
@@ -617,7 +657,7 @@ function Pricing() {
             <ul className="mb-8 flex flex-col gap-2.5 text-sm text-text-secondary">
               {['Unlimited everything', 'SSO / SAML', 'Priority support', 'Custom SLA', 'On-premise'].map((item) => (
                 <li key={item} className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />
+                  <CheckCircle2 className="h-4 w-4 shrink-0 text-primary"/>
                   {item}
                 </li>
               ))}
@@ -642,7 +682,7 @@ function WhyBento() {
         <motion.div
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: '-80px' }}
+          viewport={{once: true, margin: '-80px'}}
           variants={stagger}
           className="grid grid-cols-1 gap-6 md:grid-cols-3"
         >
@@ -666,15 +706,15 @@ function WhyBento() {
             <motion.div
               key={item.title}
               variants={fadeUp}
-              whileHover={{ y: -5, transition: { duration: 0.2, ease: easeOutQuart } }}
+              whileHover={{y: -5, transition: {duration: 0.2, ease: easeOutQuart}}}
               className="flex flex-col gap-3 rounded-xl border border-surface-border bg-surface p-6 transition-shadow hover:border-primary/20 hover:shadow-md"
             >
               <motion.div
                 className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary-subtle text-primary"
-                whileHover={{ scale: 1.1, rotate: 3 }}
-                transition={{ duration: 0.2, ease: easeOutQuart }}
+                whileHover={{scale: 1.1, rotate: 3}}
+                transition={{duration: 0.2, ease: easeOutQuart}}
               >
-                <item.icon className="h-5 w-5" />
+                <item.icon className="h-5 w-5"/>
               </motion.div>
               <h3 className="text-base font-semibold text-text-primary">{item.title}</h3>
               <p className="text-sm leading-relaxed text-text-secondary">{item.description}</p>
@@ -690,20 +730,22 @@ function CTA() {
   return (
     <section className="relative overflow-hidden bg-primary px-6 py-20 text-center">
       {/* Animated orbs for CTA */}
-      <AnimatedOrbs dark />
+      <AnimatedOrbs dark/>
 
       <motion.div
         initial="hidden"
         whileInView="visible"
-        viewport={{ once: true }}
+        viewport={{once: true}}
         variants={stagger}
         className="relative z-10 mx-auto max-w-2xl"
       >
-        <motion.h2 variants={fadeUp} className="mb-4 text-3xl font-bold tracking-tight text-white md:text-4xl" style={{ letterSpacing: '-0.02em' }}>
+        <motion.h2 variants={fadeUp} className="mb-4 text-3xl font-bold tracking-tight text-white md:text-4xl"
+                   style={{letterSpacing: '-0.02em'}}>
           Ready to ship faster?
         </motion.h2>
         <motion.p variants={fadeUp} custom={0.05} className="mb-8 text-primary-light">
-          Local network, your own servers, or the cloud — deploy Bento anywhere with the infrastructure configs included in the repo.
+          Local network, your own servers, or the cloud — deploy Bento anywhere with the infrastructure configs included
+          in the repo.
         </motion.p>
         <motion.div variants={fadeUp} custom={0.1} className="flex flex-wrap items-center justify-center gap-3">
           <Link
@@ -711,7 +753,7 @@ function CTA() {
             className="inline-flex h-11 items-center gap-2 rounded-lg bg-white px-6 text-sm font-semibold text-primary transition-all duration-150 hover:scale-[1.04] hover:bg-primary-subtle active:scale-[0.97]"
           >
             Get started free
-            <ArrowRight className="h-4 w-4" />
+            <ArrowRight className="h-4 w-4"/>
           </Link>
           <a
             href="https://github.com"
@@ -719,7 +761,7 @@ function CTA() {
             rel="noopener noreferrer"
             className="inline-flex h-11 items-center gap-2 rounded-lg border border-white/30 px-6 text-sm font-semibold text-white transition-all duration-150 hover:scale-[1.03] hover:bg-white/10 active:scale-[0.97]"
           >
-            <Github className="h-4 w-4" />
+            <Github className="h-4 w-4"/>
             Star on GitHub
           </a>
         </motion.div>
@@ -733,7 +775,7 @@ function Footer() {
     <footer className="border-t border-surface-border px-6 py-10">
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-6 md:flex-row">
         <div className="flex items-center gap-2.5">
-          <img src="/logo.svg" alt="Bento" className="h-6 w-6" />
+          <img src="/logo.svg" alt="Bento" className="h-6 w-6"/>
           <span className="text-sm font-bold tracking-[-0.5px] text-text-primary">bento</span>
           <span className="text-sm text-text-muted">— GNU AGPL v3</span>
         </div>
@@ -741,7 +783,8 @@ function Footer() {
           <a href="#features" className="transition-colors hover:text-text-primary">Features</a>
           <a href="#workflows" className="transition-colors hover:text-text-primary">Workflows</a>
           <a href="#pricing" className="transition-colors hover:text-text-primary">Pricing</a>
-          <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-text-primary">GitHub</a>
+          <a href="https://github.com" target="_blank" rel="noopener noreferrer"
+             className="transition-colors hover:text-text-primary">GitHub</a>
           <a href="mailto:hello@bentolab.io" className="transition-colors hover:text-text-primary">Contact</a>
         </div>
         <p className="text-xs text-text-muted">© 2026 Bento. All rights reserved.</p>
@@ -756,17 +799,17 @@ export default function LandingPage() {
   return (
     <MotionConfig reducedMotion="user">
       <div className="min-h-screen bg-surface text-text-primary">
-        <Nav />
+        <Nav/>
         <main>
-          <Hero />
-          <WorkflowShowcase />
-          <Features />
-          <WhyBento />
-          <HowItWorks />
-          <Pricing />
-          <CTA />
+          <Hero/>
+          <WorkflowShowcase/>
+          <Features/>
+          <WhyBento/>
+          <HowItWorks/>
+          <Pricing/>
+          <CTA/>
         </main>
-        <Footer />
+        <Footer/>
       </div>
     </MotionConfig>
   )

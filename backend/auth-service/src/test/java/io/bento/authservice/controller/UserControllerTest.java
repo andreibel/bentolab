@@ -78,7 +78,7 @@ class UserControllerTest {
     @Test
     void updateCurrentUser_validRequest_returns200() throws Exception {
         UserDto updated = new UserDto(USER_ID, "john@example.com", "Johnny", "Doe",
-                null, SystemRole.USER, false, null, null, Instant.now());
+                null, SystemRole.USER, false, null, null, null, Instant.now(), Instant.now());
         when(userService.updateCurrentUser(eq(USER_ID), any())).thenReturn(updated);
 
         mockMvc.perform(patch("/api/users/me")
@@ -119,6 +119,6 @@ class UserControllerTest {
 
     private UserDto userDto() {
         return new UserDto(USER_ID, "john@example.com", "John", "Doe",
-                null, SystemRole.USER, false, null, null, Instant.now());
+                null, SystemRole.USER, false, null, null, null, Instant.now(), Instant.now());
     }
 }

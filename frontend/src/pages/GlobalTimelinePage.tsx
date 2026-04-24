@@ -25,10 +25,11 @@ import type { Milestone } from '@/types/milestone'
 type Zoom    = 'week' | 'month' | 'quarter' | 'year'
 
 const DAY_WIDTH: Record<Zoom, number> = { week: 56, month: 30, quarter: 13, year: 5 }
-const LEFT_W   = 280
-const ROW_H    = 40
-const GROUP_H  = 44
-const HEADER_H = 54
+const LEFT_W         = 280
+const ROW_H          = 40
+const GROUP_H        = 44
+const SPRINT_TRACK_H = 36
+const HEADER_H       = 54
 
 const BOARD_COLORS = [
   '#6366f1', '#ec4899', '#10b981', '#f59e0b',
@@ -39,7 +40,7 @@ type GlobalRow =
   | { kind: 'milestone';    id: string; milestone: Milestone; boardName: string; boardColor: string }
   | { kind: 'board-header'; id: string; board: Board;         collapsed: boolean; boardColor: string }
   | { kind: 'epic';         id: string; epic: Epic }
-  | { kind: 'sprint';       id: string; sprint: Sprint }
+  | { kind: 'sprint-track'; id: string; sprints: Sprint[] }
 
 // ── Date utilities (self-contained) ───────────────────────────────────────────
 
@@ -178,10 +179,12 @@ function buildRows(
           .forEach(e => rows.push({ kind: 'epic', id: e.id, epic: e }))
       }
       if (show.sprints) {
-        ;[...(sprintsMap.get(board.id) ?? [])]
+        const sortedSprints = [...(sprintsMap.get(board.id) ?? [])]
           .filter(s => s.status !== 'COMPLETED')
           .sort((a, b) => (a.startDate ?? '').localeCompare(b.startDate ?? ''))
-          .forEach(s => rows.push({ kind: 'sprint', id: s.id, sprint: s }))
+        if (sortedSprints.length > 0) {
+          rows.push({ kind: 'sprint-track', id: `sprints-${board.id}`, sprints: sortedSprints })
+        }
       }
     }
   })
@@ -380,13 +383,12 @@ export default function GlobalTimelinePage() {
       )
     }
 
-    if (row.kind === 'sprint') {
-      const s = row.sprint
-      const statusColor = s.status === 'ACTIVE' ? 'text-emerald-500' : 'text-primary'
+    if (row.kind === 'sprint-track') {
       return (
         <div className="flex w-full items-center gap-1.5 ps-8 pe-3">
-          <Layers className={cn('h-3 w-3 shrink-0', statusColor)} />
-          <span className="truncate text-xs text-text-primary">{s.name}</span>
+          <Layers className="h-3 w-3 shrink-0 text-text-muted" />
+          <span className="text-xs font-semibold text-text-muted">{t('timeline.show.sprints')}</span>
+          <span className="ms-1 text-[10px] text-text-muted opacity-60">{row.sprints.length}</span>
         </div>
       )
     }
@@ -450,30 +452,52 @@ export default function GlobalTimelinePage() {
       )
     }
 
-    if (row.kind === 'sprint') {
-      const s     = row.sprint
-      const start = pd(s.startDate)
-      const end   = pd(s.endDate)
-      if (!start && !end) return null
-      const from     = start ?? end!
-      const to       = end   ?? start!
-      const left     = xOf(viewStart, from, dw)
-      const width    = wOf(from, to, dw)
-      const progress = s.totalIssues > 0 ? (s.completedIssues / s.totalIssues) * 100 : 0
+    if (row.kind === 'sprint-track') {
       return (
-        <div
-          className="absolute top-1/2 flex h-7 -translate-y-1/2 cursor-default items-center overflow-hidden rounded-full"
-          style={{ left, width, backgroundColor: 'color-mix(in srgb, var(--color-primary) 15%, transparent)' }}
-          title={s.name}
-        >
-          <div
-            className="absolute inset-0 rounded-full"
-            style={{ width: `${progress}%`, backgroundColor: 'color-mix(in srgb, var(--color-primary) 35%, transparent)' }}
-          />
-          <span className="relative truncate px-3 text-[11px] font-semibold text-primary">
-            {width > 60 ? s.name : ''}
-          </span>
-        </div>
+        <>
+          {row.sprints.map(s => {
+            const start = pd(s.startDate)
+            const end   = pd(s.endDate)
+            if (!start && !end) return null
+            const from  = start ?? end!
+            const to    = end   ?? start!
+            const left  = xOf(viewStart, from, dw)
+            const width = wOf(from, to, dw)
+            if (left > totalWidth || left + width < 0) return null
+            const progress = s.totalIssues > 0 ? (s.completedIssues / s.totalIssues) * 100 : 0
+            const statusColor = s.status === 'ACTIVE'
+              ? 'var(--color-primary)'
+              : s.status === 'COMPLETED'
+                ? 'var(--color-text-muted)'
+                : 'var(--color-primary)'
+            return (
+              <div
+                key={s.id}
+                className="absolute top-1/2 flex h-6 -translate-y-1/2 cursor-default items-center overflow-hidden rounded-full"
+                style={{
+                  left,
+                  width: Math.max(width, 4),
+                  backgroundColor: `color-mix(in srgb, ${statusColor} 15%, transparent)`,
+                  border: `1.5px solid color-mix(in srgb, ${statusColor} 40%, transparent)`,
+                }}
+                title={`${s.name}${s.totalIssues > 0 ? ` — ${s.completedIssues}/${s.totalIssues} done` : ''}`}
+              >
+                {progress > 0 && (
+                  <div
+                    className="absolute inset-y-0 left-0 rounded-full"
+                    style={{ width: `${progress}%`, backgroundColor: `color-mix(in srgb, ${statusColor} 35%, transparent)` }}
+                  />
+                )}
+                <span
+                  className="relative truncate px-2.5 text-[11px] font-semibold"
+                  style={{ color: statusColor }}
+                >
+                  {width > 50 ? s.name : ''}
+                </span>
+              </div>
+            )
+          })}
+        </>
       )
     }
 
@@ -604,13 +628,14 @@ export default function GlobalTimelinePage() {
             </div>
           ) : rows.map(row => {
             const isGroup = row.kind === 'board-header'
-            const rowH    = isGroup ? GROUP_H : ROW_H
+            const rowH    = isGroup ? GROUP_H : row.kind === 'sprint-track' ? SPRINT_TRACK_H : ROW_H
             return (
               <div
                 key={row.id}
                 className={cn(
                   'group flex border-b border-surface-border/60',
                   row.kind === 'board-header' && 'bg-surface-muted/40',
+                  row.kind === 'sprint-track' && 'bg-primary/[0.03]',
                 )}
                 style={{ height: rowH, minWidth: LEFT_W + totalWidth }}
               >

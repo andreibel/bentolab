@@ -68,7 +68,7 @@ class UserServiceTest {
     @Test
     void updateCurrentUser_allFieldsProvided_updatesAllAndPublishesEvent() {
         User user = user();
-        UpdateUserRequest request = new UpdateUserRequest("Jane", "Smith", "https://img.example.com/avatar.png");
+        UpdateUserRequest request = new UpdateUserRequest("Jane", "Smith", "https://img.example.com/avatar.png", null, null);
 
         when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
         when(userRepository.save(user)).thenReturn(user);
@@ -89,7 +89,7 @@ class UserServiceTest {
     @Test
     void updateCurrentUser_firstNameOnly_onlyFirstNameInChangedFields() {
         User user = user();
-        UpdateUserRequest request = new UpdateUserRequest("Jane", null, null);
+        UpdateUserRequest request = new UpdateUserRequest("Jane", null, null, null, null);
 
         when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
         when(userRepository.save(user)).thenReturn(user);
@@ -108,7 +108,7 @@ class UserServiceTest {
     @Test
     void updateCurrentUser_noFieldsProvided_publishesEventWithEmptyChangedFields() {
         User user = user();
-        UpdateUserRequest request = new UpdateUserRequest(null, null, null);
+        UpdateUserRequest request = new UpdateUserRequest(null, null, null, null, null);
 
         when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
         when(userRepository.save(user)).thenReturn(user);
@@ -127,7 +127,7 @@ class UserServiceTest {
         when(userRepository.findById(USER_ID)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() ->
-                userService.updateCurrentUser(USER_ID, new UpdateUserRequest("Jane", null, null)))
+                userService.updateCurrentUser(USER_ID, new UpdateUserRequest("Jane", null, null, null, null)))
                 .isInstanceOf(UserNotFoundException.class);
 
         verify(userRepository, never()).save(any());
@@ -137,7 +137,7 @@ class UserServiceTest {
     @Test
     void updateCurrentUser_avatarUrlOnly_onlyAvatarInChangedFields() {
         User user = user();
-        UpdateUserRequest request = new UpdateUserRequest(null, null, "https://cdn.example.com/new.png");
+        UpdateUserRequest request = new UpdateUserRequest(null, null, "https://cdn.example.com/new.png", null, null);
 
         when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
         when(userRepository.save(user)).thenReturn(user);
@@ -171,6 +171,6 @@ class UserServiceTest {
 
     private UserDto userDto() {
         return new UserDto(USER_ID, "john@example.com", "John", "Doe",
-                null, SystemRole.USER, false, null, null, Instant.now());
+                null, SystemRole.USER, false, null, null, null, Instant.now(), Instant.now());
     }
 }
