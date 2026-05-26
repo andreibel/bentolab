@@ -32,10 +32,6 @@ export function AppLayout() {
   const [createBoardOpen, setCreateBoardOpen] = useState(false)
   const [commandOpen,     setCommandOpen]     = useState(false)
 
-  if (!currentOrgId) {
-    return <Navigate to="/org/new" replace />
-  }
-
   // Global shortcut: `/` or ⌘K opens the command palette
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -51,6 +47,10 @@ export function AppLayout() {
   }, [])
 
   const labMatch = useMatch({ path: '/boards/:boardId', end: false })
+
+  if (!currentOrgId) {
+    return <Navigate to="/org/new" replace />
+  }
   const isLabRoute  = !!labMatch
   const isBoardList = pathname === '/boards'
 

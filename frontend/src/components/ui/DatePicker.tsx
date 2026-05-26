@@ -2,12 +2,7 @@ import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import {createPortal} from 'react-dom'
 import {CalendarDays, ChevronLeft, ChevronRight, X} from 'lucide-react'
 import {cn} from '@/utils/cn'
-
-// ── Helpers ────────────────────────────────────────────────────────────────────
-
-export function toDatePart(dateStr: string): string {
-  return dateStr.split('T')[0]
-}
+import {toDatePart} from '@/utils/date'
 
 function todayStr(): string {
   return new Date().toISOString().split('T')[0]

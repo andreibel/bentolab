@@ -1,11 +1,12 @@
-import {useEffect, useMemo, useRef, useState} from 'react'
+import {useMemo, useRef, useState} from 'react'
 import {useQuery} from '@tanstack/react-query'
 import {useTranslation} from 'react-i18next'
 import {AlertTriangle, Check, ChevronDown, Search, Tag, X} from 'lucide-react'
 import Fuse from 'fuse.js'
 import {Avatar} from '@/components/ui/Avatar'
 import {IssueTypeBadge, PriorityBadge} from '@/components/ui/Badge'
-import {DatePicker, toDatePart} from '@/components/ui/DatePicker'
+import {DatePicker} from '@/components/ui/DatePicker'
+import {toDatePart} from '@/utils/date'
 import {cn} from '@/utils/cn'
 import {boardsApi} from '@/api/boards'
 import {usersApi} from '@/api/users'
@@ -346,9 +347,9 @@ function LabelMultiSelect({ value, onSave }: { value: string[]; onSave: (ids: st
 
 function StoryPointsField({ value, onSave }: { value: number | null | undefined; onSave: (n: number | null) => void }) {
   const [editing, setEditing] = useState(false)
-  const [draft, setDraft] = useState(value?.toString() ?? '')
+  const [draft, setDraft] = useState('')
 
-  useEffect(() => { if (!editing) setDraft(value?.toString() ?? '') }, [value, editing])
+  const startEditing = () => { setDraft(value?.toString() ?? ''); setEditing(true) }
 
   const commit = () => {
     const n = draft.trim() ? parseInt(draft.trim(), 10) : null
@@ -370,7 +371,7 @@ function StoryPointsField({ value, onSave }: { value: number | null | undefined;
   }
 
   return (
-    <button onClick={() => setEditing(true)} className="rounded-md px-1.5 py-1 text-sm hover:bg-surface-muted">
+    <button onClick={startEditing} className="rounded-md px-1.5 py-1 text-sm hover:bg-surface-muted">
       {value != null
         ? <span className="font-semibold text-text-primary">{value}</span>
         : <span className="text-text-muted">—</span>}

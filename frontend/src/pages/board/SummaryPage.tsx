@@ -54,7 +54,7 @@ interface WidgetMeta {
   icon:        string
 }
 
-export const WIDGET_REGISTRY: Record<WidgetType, WidgetMeta> = {
+const WIDGET_REGISTRY: Record<WidgetType, WidgetMeta> = {
   SPRINT_HEALTH:     { label: 'Sprint Health',       description: 'Current sprint progress and burndown',          minW: 3, minH: 3, defaultW: 12, defaultH: 6, icon: '🏃' },
   ISSUE_BREAKDOWN:   { label: 'Issue Breakdown',      description: 'Issues by type (Story, Task, Bug, Subtask)',    minW: 3, minH: 3, defaultW: 10, defaultH: 6, icon: '📊' },
   WORKLOAD:          { label: 'Team Workload',         description: 'Open issues per team member',                  minW: 3, minH: 3, defaultW: 10, defaultH: 6, icon: '👥' },
@@ -314,6 +314,7 @@ export default function SummaryPage() {
     if (defaultsApplied.current || stored || !board) return
     defaultsApplied.current = true
     if (board.boardType === 'KANBAN') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setWidgets(KANBAN_DEFAULT_WIDGETS)
       setLayout(KANBAN_DEFAULT_LAYOUT)
       saveLayout(bid, { widgets: KANBAN_DEFAULT_WIDGETS, layout: KANBAN_DEFAULT_LAYOUT })

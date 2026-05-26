@@ -1,4 +1,4 @@
-import {useEffect, useRef, useState} from 'react'
+import {useEffect, useLayoutEffect, useRef, useState} from 'react'
 import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query'
 import {useNavigate} from 'react-router-dom'
 import {useAuthStore} from '@/stores/authStore'
@@ -248,7 +248,7 @@ function useNotificationStream(onNotification: () => void) {
   const accessToken  = useAuthStore((s) => s.accessToken)
   const baseUrl      = import.meta.env.VITE_API_URL ?? 'http://localhost:8080'
   const callbackRef  = useRef(onNotification)
-  callbackRef.current = onNotification
+  useLayoutEffect(() => { callbackRef.current = onNotification })
 
   useEffect(() => {
     if (!accessToken) return

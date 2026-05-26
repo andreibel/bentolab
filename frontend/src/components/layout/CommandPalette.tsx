@@ -607,6 +607,7 @@ export function CommandPalette({
   }, [slashState, currentUser, orgMembers, orgLabels, boards, profileMap])
 
   // Reset suggestion index when suggestions change
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setSuggestionIdx(0) }, [suggestions.length])
 
   // ── Issue search (debounced, backend) ─────────────────────────────────────
@@ -631,6 +632,7 @@ export function CommandPalette({
   // Full-text search when user typed something
   useEffect(() => {
     const q = debouncedQuery
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (q.length < 2 || !inIssueCategory) { setSearchResults([]); return }
     let cancelled = false
     setSearchLoading(true)

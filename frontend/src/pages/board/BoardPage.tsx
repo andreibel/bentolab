@@ -190,7 +190,7 @@ export default function BoardPage() {
   const [issueModal,     setIssueModal]     = useState<{ open: boolean; columnId?: string }>({ open: false })
   const urlIssueId = searchParams.get('issue')
   const [detailIssueId,  setDetailIssueId]  = useState<string | null>(urlIssueId)
-  const openedFromUrl = useRef(!!urlIssueId)
+  const [openedFromUrl, setOpenedFromUrl] = useState(!!urlIssueId)
   const [membersOpen,    setMembersOpen]    = useState(false)
   const [settingsOpen,   setSettingsOpen]   = useState(false)
   const MIN_PANEL = 680
@@ -237,15 +237,17 @@ export default function BoardPage() {
   // Sync panel when ?issue= param changes (e.g. navigated here from search)
   useEffect(() => {
     if (urlIssueId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDetailIssueId(urlIssueId)
-      openedFromUrl.current = true
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setOpenedFromUrl(true)
     }
   }, [urlIssueId])
 
   function closeDetail() {
     setDetailIssueId(null)
     setPanelWidth(MIN_PANEL)
-    openedFromUrl.current = false
+    setOpenedFromUrl(false)
     setSearchParams(p => { const n = new URLSearchParams(p); n.delete('issue'); return n }, { replace: true })
   }
 
@@ -547,7 +549,7 @@ export default function BoardPage() {
                   column={col}
                   issues={issuesByColumn.get(col.id) ?? []}
                   epicsMap={epicsMap}
-                  onIssueClick={(issue) => { openedFromUrl.current = false; setDetailIssueId(issue.id) }}
+                  onIssueClick={(issue) => { setOpenedFromUrl(false); setDetailIssueId(issue.id) }}
                   onAddIssue={(columnId) => setIssueModal({ open: true, columnId })}
                 />
               ))}
@@ -610,7 +612,7 @@ export default function BoardPage() {
               issueId={detailIssueId}
               columns={sortedColumns}
               onClose={closeDetail}
-              defaultFullScreen={openedFromUrl.current}
+              defaultFullScreen={openedFromUrl}
             />
           </div>
         </>

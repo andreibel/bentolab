@@ -117,7 +117,7 @@ function WorkspaceEntry() {
 
   const onSubmit = ({ slug }: SlugValues) => {
     setSubmitting(true)
-    window.location.href = buildOrgUrl(slug, '/login')
+    window.location.assign(buildOrgUrl(slug, '/login'))
   }
 
   return (

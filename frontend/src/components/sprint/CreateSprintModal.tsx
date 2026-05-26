@@ -5,7 +5,8 @@ import {Minus, Plus, X, Zap} from 'lucide-react'
 import {sprintsApi} from '@/api/sprints'
 import {queryKeys} from '@/api/queryKeys'
 import {cn} from '@/utils/cn'
-import {MiniCalendar, toDatePart} from '@/components/ui/DatePicker'
+import {MiniCalendar} from '@/components/ui/DatePicker'
+import {toDatePart} from '@/utils/date'
 import type {Sprint} from '@/types/sprint'
 
 // ── Date helpers ───────────────────────────────────────────────────────────────

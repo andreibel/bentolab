@@ -264,7 +264,7 @@ export function IssueDetailPanel({
       return
     }
     mutation.mutate(data)
-  }, [mutation, issueId, effectiveBoardId, queryClient])
+  }, [mutation, issueId, effectiveBoardId, queryClient, t])
 
   // Derived data for meta panel
   const parentIssue = issue?.parentIssueId
