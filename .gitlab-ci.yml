@@ -1,0 +1,112 @@
+stages:
+  - test
+  - docker-build
+
+variables:
+  DOCKER_BUILDKIT: "1"
+  GRADLE_USER_HOME: "$CI_PROJECT_DIR/.gradle"
+  GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.parallel=true"
+  # GitLab Container Registry — images land here automatically
+  REGISTRY: $CI_REGISTRY_IMAGE
+
+# ─── BACKEND UNIT TESTS ───────────────────────────────────────────────────────
+backend-test:
+  stage: test
+  image: bellsoft/liberica-openjdk-alpine:25-cds
+  cache:
+    key: gradle-$CI_COMMIT_REF_SLUG
+    paths:
+      - .gradle/
+  script:
+    - cd backend
+    - chmod +x gradlew
+    - ./gradlew test --no-daemon
+  artifacts:
+    when: always
+    reports:
+      junit:
+        - backend/**/build/test-results/test/TEST-*.xml
+    paths:
+      - backend/**/build/reports/tests/
+      - backend/**/build/reports/jacoco/
+    expire_in: 7 days
+
+# ─── FRONTEND LINT ────────────────────────────────────────────────────────────
+frontend-lint:
+  stage: test
+  image: node:24-alpine
+  cache:
+    key: npm-$CI_COMMIT_REF_SLUG
+    paths:
+      - frontend/node_modules/
+  script:
+    - cd frontend
+    - npm ci
+    - npm run lint
+
+# ─── BACKEND SERVICE IMAGES (all 8 in parallel) ───────────────────────────────
+build-backend-image:
+  stage: docker-build
+  image: docker:27
+  services:
+    - docker:27-dind
+  variables:
+    DOCKER_TLS_CERTDIR: "/certs"
+  cache:
+    key: docker-layer-cache
+    paths:
+      - .docker-cache/
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  parallel:
+    matrix:
+      - SERVICE:
+          - api-gateway
+          - auth-service
+          - org-service
+          - board-service
+          - task-service
+          - notification-service
+          - realtime-service
+          - attachment-service
+  script:
+    - |
+      IMAGE_NAME="$REGISTRY/$SERVICE"
+      docker build \
+        --cache-from "$IMAGE_NAME:latest" \
+        --build-arg BUILDKIT_INLINE_CACHE=1 \
+        -f backend/$SERVICE/Dockerfile \
+        -t "$IMAGE_NAME:$CI_COMMIT_SHORT_SHA" \
+        backend/
+    # Also tag as :latest when on main branch
+    - |
+      if [ "$CI_COMMIT_BRANCH" = "main" ]; then
+        docker tag "$REGISTRY/$SERVICE:$CI_COMMIT_SHORT_SHA" "$REGISTRY/$SERVICE:latest"
+        docker push "$REGISTRY/$SERVICE:latest"
+      fi
+    - docker push "$REGISTRY/$SERVICE:$CI_COMMIT_SHORT_SHA"
+
+# ─── FRONTEND IMAGE ───────────────────────────────────────────────────────────
+build-frontend-image:
+  stage: docker-build
+  image: docker:27
+  services:
+    - docker:27-dind
+  variables:
+    DOCKER_TLS_CERTDIR: "/certs"
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - |
+      IMAGE_NAME="$REGISTRY/frontend"
+      docker build \
+        --cache-from "$IMAGE_NAME:latest" \
+        --build-arg BUILDKIT_INLINE_CACHE=1 \
+        -t "$IMAGE_NAME:$CI_COMMIT_SHORT_SHA" \
+        frontend/
+    - |
+      if [ "$CI_COMMIT_BRANCH" = "main" ]; then
+        docker tag "$REGISTRY/frontend:$CI_COMMIT_SHORT_SHA" "$REGISTRY/frontend:latest"
+        docker push "$REGISTRY/frontend:latest"
+      fi
+    - docker push "$REGISTRY/frontend:$CI_COMMIT_SHORT_SHA"
