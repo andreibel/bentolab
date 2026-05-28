@@ -1,12 +1,16 @@
-# Bento Beta — Docker Compose (Hub images)
+# Bento Beta — Docker Compose
 # ─────────────────────────────────────────────────────────────────────────────
-# This file runs Bento entirely from pre-built images on Docker Hub.
-# No source code or build tools required.
+# Default (standalone): pulls from Docker Hub  →  andreinw12/bento-*
+# CI/CD (Raspberry Pi): uses GitLab registry  →  BENTO_IMAGE_PREFIX + BENTO_TAG
 #
 # Quick start:
 #   1. cp .env.example .env      — fill in your secrets
 #   2. docker compose -f docker-compose.beta.yml up -d
 #   3. Open http://localhost:3000
+#
+# Env vars (optional, set by CI for Pi deploy):
+#   BENTO_IMAGE_PREFIX  e.g. registry.gitlab.com/you/bento/   (default: andreinw12/bento-)
+#   BENTO_TAG           e.g. abc1234                           (default: v0.1.1-beta-4)
 #
 # Tag: v0.1.1-beta-4
 # Platforms: linux/amd64, linux/arm64 (Raspberry Pi 4/5, Apple Silicon via Docker Desktop)
@@ -141,7 +145,7 @@ services:
   # ── APPLICATION SERVICES ─────────────────────────────────────────────────
 
   api-gateway:
-    image: andreinw12/bento-api-gateway:v0.1.1-beta-4
+    image: ${BENTO_IMAGE_PREFIX:-andreinw12/bento-}api-gateway:${BENTO_TAG:-v0.1.1-beta-4}
     restart: unless-stopped
     ports:
       - "8080:8080"
@@ -156,7 +160,7 @@ services:
         condition: service_healthy
 
   auth-service:
-    image: andreinw12/bento-auth-service:v0.1.1-beta-4
+    image: ${BENTO_IMAGE_PREFIX:-andreinw12/bento-}auth-service:${BENTO_TAG:-v0.1.1-beta-4}
     restart: unless-stopped
     environment:
       SPRING_PROFILES_ACTIVE: docker
@@ -174,7 +178,7 @@ services:
         condition: service_healthy
 
   org-service:
-    image: andreinw12/bento-org-service:v0.1.1-beta-4
+    image: ${BENTO_IMAGE_PREFIX:-andreinw12/bento-}org-service:${BENTO_TAG:-v0.1.1-beta-4}
     restart: unless-stopped
     environment:
       SPRING_PROFILES_ACTIVE: docker
@@ -190,7 +194,7 @@ services:
         condition: service_healthy
 
   board-service:
-    image: andreinw12/bento-board-service:v0.1.1-beta-4
+    image: ${BENTO_IMAGE_PREFIX:-andreinw12/bento-}board-service:${BENTO_TAG:-v0.1.1-beta-4}
     restart: unless-stopped
     environment:
       SPRING_PROFILES_ACTIVE: docker
@@ -206,7 +210,7 @@ services:
         condition: service_healthy
 
   task-service:
-    image: andreinw12/bento-task-service:v0.1.1-beta-4
+    image: ${BENTO_IMAGE_PREFIX:-andreinw12/bento-}task-service:${BENTO_TAG:-v0.1.1-beta-4}
     restart: unless-stopped
     environment:
       SPRING_PROFILES_ACTIVE: docker
@@ -222,7 +226,7 @@ services:
         condition: service_healthy
 
   notification-service:
-    image: andreinw12/bento-notification-service:v0.1.1-beta-4
+    image: ${BENTO_IMAGE_PREFIX:-andreinw12/bento-}notification-service:${BENTO_TAG:-v0.1.1-beta-4}
     restart: unless-stopped
     environment:
       SPRING_PROFILES_ACTIVE: docker
@@ -243,7 +247,7 @@ services:
         condition: service_started
 
   realtime-service:
-    image: andreinw12/bento-realtime-service:v0.1.1-beta-4
+    image: ${BENTO_IMAGE_PREFIX:-andreinw12/bento-}realtime-service:${BENTO_TAG:-v0.1.1-beta-4}
     restart: unless-stopped
     environment:
       SPRING_PROFILES_ACTIVE: docker
@@ -255,7 +259,7 @@ services:
         condition: service_healthy
 
   attachment-service:
-    image: andreinw12/bento-attachment-service:v0.1.1-beta-4
+    image: ${BENTO_IMAGE_PREFIX:-andreinw12/bento-}attachment-service:${BENTO_TAG:-v0.1.1-beta-4}
     restart: unless-stopped
     environment:
       SPRING_PROFILES_ACTIVE: docker
@@ -271,7 +275,7 @@ services:
         condition: service_healthy
 
   frontend:
-    image: andreinw12/bento-frontend:v0.1.1-beta-4
+    image: ${BENTO_IMAGE_PREFIX:-andreinw12/bento-}frontend:${BENTO_TAG:-v0.1.1-beta-4}
     restart: unless-stopped
     ports:
       - "${FRONTEND_PORT:-3000}:80"

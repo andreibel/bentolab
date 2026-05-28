@@ -1,18 +1,45 @@
 stages:
   - test
   - docker-build
+  - deploy
 
 variables:
   DOCKER_BUILDKIT: "1"
   GRADLE_USER_HOME: "$CI_PROJECT_DIR/.gradle"
   GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.parallel=true"
-  # GitLab Container Registry — images land here automatically
   REGISTRY: $CI_REGISTRY_IMAGE
 
-# ─── BACKEND UNIT TESTS ───────────────────────────────────────────────────────
+default:
+  interruptible: true
+
+# ─── SHARED DOCKER BASE ───────────────────────────────────────────────────────
+.docker-base: &docker-base
+  image: docker:27
+  services:
+    - docker:27-dind
+  variables:
+    DOCKER_TLS_CERTDIR: "/certs"
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+
+# ─── PATH FILTERS (anchors reused in rules: changes:) ─────────────────────────
+.backend-paths: &backend-paths
+  - backend/**/*
+  - .gitlab-ci.yml
+
+.frontend-paths: &frontend-paths
+  - frontend/**/*
+  - .gitlab-ci.yml
+
+# ─── TEST STAGE ───────────────────────────────────────────────────────────────
 backend-test:
   stage: test
   image: bellsoft/liberica-openjdk-alpine:25-cds
+  rules:
+    - if: $CI_COMMIT_TAG
+      changes: *backend-paths
+    - if: $CI_COMMIT_BRANCH
+      changes: *backend-paths
   cache:
     key: gradle-$CI_COMMIT_REF_SLUG
     paths:
@@ -31,10 +58,14 @@ backend-test:
       - backend/**/build/reports/jacoco/
     expire_in: 7 days
 
-# ─── FRONTEND LINT ────────────────────────────────────────────────────────────
 frontend-lint:
   stage: test
   image: node:24-alpine
+  rules:
+    - if: $CI_COMMIT_TAG
+      changes: *frontend-paths
+    - if: $CI_COMMIT_BRANCH
+      changes: *frontend-paths
   cache:
     key: npm-$CI_COMMIT_REF_SLUG
     paths:
@@ -44,20 +75,19 @@ frontend-lint:
     - npm ci
     - npm run lint
 
-# ─── BACKEND SERVICE IMAGES (all 8 in parallel) ───────────────────────────────
+# ─── DOCKER BUILD STAGE ───────────────────────────────────────────────────────
 build-backend-image:
+  <<: *docker-base
   stage: docker-build
-  image: docker:27
-  services:
-    - docker:27-dind
-  variables:
-    DOCKER_TLS_CERTDIR: "/certs"
+  rules:
+    - if: $CI_COMMIT_TAG
+      changes: *backend-paths
+    - if: $CI_COMMIT_BRANCH
+      changes: *backend-paths
   cache:
     key: docker-layer-cache
     paths:
       - .docker-cache/
-  before_script:
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   parallel:
     matrix:
       - SERVICE:
@@ -78,24 +108,26 @@ build-backend-image:
         -f backend/$SERVICE/Dockerfile \
         -t "$IMAGE_NAME:$CI_COMMIT_SHORT_SHA" \
         backend/
-    # Also tag as :latest when on main branch
+    - docker push "$IMAGE_NAME:$CI_COMMIT_SHORT_SHA"
     - |
-      if [ "$CI_COMMIT_BRANCH" = "main" ]; then
-        docker tag "$REGISTRY/$SERVICE:$CI_COMMIT_SHORT_SHA" "$REGISTRY/$SERVICE:latest"
-        docker push "$REGISTRY/$SERVICE:latest"
+      if [ -n "$CI_COMMIT_TAG" ]; then
+        docker tag "$IMAGE_NAME:$CI_COMMIT_SHORT_SHA" "$IMAGE_NAME:$CI_COMMIT_TAG"
+        docker push "$IMAGE_NAME:$CI_COMMIT_TAG"
+        docker tag "$IMAGE_NAME:$CI_COMMIT_SHORT_SHA" "$IMAGE_NAME:latest"
+        docker push "$IMAGE_NAME:latest"
+      elif [ "$CI_COMMIT_BRANCH" = "main" ]; then
+        docker tag "$IMAGE_NAME:$CI_COMMIT_SHORT_SHA" "$IMAGE_NAME:latest"
+        docker push "$IMAGE_NAME:latest"
       fi
-    - docker push "$REGISTRY/$SERVICE:$CI_COMMIT_SHORT_SHA"
 
-# ─── FRONTEND IMAGE ───────────────────────────────────────────────────────────
 build-frontend-image:
+  <<: *docker-base
   stage: docker-build
-  image: docker:27
-  services:
-    - docker:27-dind
-  variables:
-    DOCKER_TLS_CERTDIR: "/certs"
-  before_script:
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  rules:
+    - if: $CI_COMMIT_TAG
+      changes: *frontend-paths
+    - if: $CI_COMMIT_BRANCH
+      changes: *frontend-paths
   script:
     - |
       IMAGE_NAME="$REGISTRY/frontend"
@@ -104,9 +136,41 @@ build-frontend-image:
         --build-arg BUILDKIT_INLINE_CACHE=1 \
         -t "$IMAGE_NAME:$CI_COMMIT_SHORT_SHA" \
         frontend/
+    - docker push "$IMAGE_NAME:$CI_COMMIT_SHORT_SHA"
     - |
-      if [ "$CI_COMMIT_BRANCH" = "main" ]; then
-        docker tag "$REGISTRY/frontend:$CI_COMMIT_SHORT_SHA" "$REGISTRY/frontend:latest"
-        docker push "$REGISTRY/frontend:latest"
+      if [ -n "$CI_COMMIT_TAG" ]; then
+        docker tag "$IMAGE_NAME:$CI_COMMIT_SHORT_SHA" "$IMAGE_NAME:$CI_COMMIT_TAG"
+        docker push "$IMAGE_NAME:$CI_COMMIT_TAG"
+        docker tag "$IMAGE_NAME:$CI_COMMIT_SHORT_SHA" "$IMAGE_NAME:latest"
+        docker push "$IMAGE_NAME:latest"
+      elif [ "$CI_COMMIT_BRANCH" = "main" ]; then
+        docker tag "$IMAGE_NAME:$CI_COMMIT_SHORT_SHA" "$IMAGE_NAME:latest"
+        docker push "$IMAGE_NAME:latest"
       fi
-    - docker push "$REGISTRY/frontend:$CI_COMMIT_SHORT_SHA"
+
+# ─── DEPLOY STAGE ─────────────────────────────────────────────────────────────
+deploy-pi:
+  <<: *docker-base
+  stage: deploy
+  tags:
+    - pi
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      changes:
+        - backend/**/*
+        - frontend/**/*
+        - .gitlab-ci.yml
+  needs:
+    - job: build-backend-image
+      optional: true
+    - job: build-frontend-image
+      optional: true
+  variables:
+    DOCKER_TLS_CERTDIR: "/certs"
+    BENTO_IMAGE_PREFIX: "$CI_REGISTRY_IMAGE/"
+    BENTO_TAG: "$CI_COMMIT_SHORT_SHA"
+    COMPOSE_FILE: "$CI_PROJECT_DIR/docker-compose.beta.yml"
+  script:
+    - docker compose -f "$COMPOSE_FILE" pull
+    - docker compose -f "$COMPOSE_FILE" up -d --remove-orphans
+    - docker image prune -f
