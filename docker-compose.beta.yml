@@ -3,17 +3,21 @@
 # Default (standalone): pulls from Docker Hub  →  andreinw12/bento-*
 # CI/CD (Raspberry Pi): uses GitLab registry  →  BENTO_IMAGE_PREFIX + BENTO_TAG
 #
-# Quick start:
+# Quick start (manual):
 #   1. cp .env.example .env      — fill in your secrets
-#   2. docker compose -f docker-compose.beta.yml up -d
+#   2. docker compose -f docker-compose.beta.yml --env-file .env up -d
 #   3. Open http://localhost:3000
 #
-# Env vars (optional, set by CI for Pi deploy):
-#   BENTO_IMAGE_PREFIX  e.g. registry.gitlab.com/you/bento/   (default: andreinw12/bento-)
-#   BENTO_TAG           e.g. abc1234                           (default: v0.1.1-beta-4)
+# Email: AWS SES SMTP (MailHog removed). notification-service mail config is
+#        overridden via SPRING_MAIL_* env vars (no image rebuild needed).
+# Storage: MinIO on the Pi for beta. Swap attachment-service to AWS S3 later.
 #
-# Tag: v0.1.1-beta-4
-# Platforms: linux/amd64, linux/arm64 (Raspberry Pi 4/5, Apple Silicon via Docker Desktop)
+# Env vars (set by CI for the Pi deploy):
+#   BENTO_IMAGE_PREFIX  e.g. registry.gitlab.com/andreibel/bentolab/
+#   BENTO_TAG           e.g. abc1234  (the commit short SHA)
+#
+# Tag: v0.1.1-beta-5
+# Platforms: linux/amd64, linux/arm64 (Raspberry Pi 4/5, Apple Silicon)
 # ─────────────────────────────────────────────────────────────────────────────
 
 services:
@@ -118,10 +122,12 @@ services:
       start_period: 10s
       retries: 5
 
+  # MinIO: object storage for attachments (beta). Replace with AWS S3 later.
   minio:
     image: minio/minio:latest
     restart: unless-stopped
     ports:
+      # LAN-only console for debugging attachments. NOT routed through the tunnel.
       - "${MINIO_CONSOLE_PORT:-9001}:9001"
     volumes:
       - minio_data:/data
@@ -136,19 +142,13 @@ services:
       start_period: 15s
       retries: 5
 
-  mailhog:
-    image: mailhog/mailhog:latest
-    restart: unless-stopped
-    ports:
-      - "${MAILHOG_UI_PORT:-8025}:8025"
-
   # ── APPLICATION SERVICES ─────────────────────────────────────────────────
 
   api-gateway:
-    image: ${BENTO_IMAGE_PREFIX:-andreinw12/bento-}api-gateway:${BENTO_TAG:-v0.1.1-beta-4}
+    image: ${BENTO_IMAGE_PREFIX:-andreinw12/bento-}api-gateway:${BENTO_TAG:-v0.1.1-beta-5}
     restart: unless-stopped
     ports:
-      - "8080:8080"
+      - "8080:8080"           # ← tunnel routes  bentolab.app/api  →  here
     environment:
       SPRING_PROFILES_ACTIVE: docker
       JWT_SECRET: ${JWT_SECRET}
@@ -160,7 +160,7 @@ services:
         condition: service_healthy
 
   auth-service:
-    image: ${BENTO_IMAGE_PREFIX:-andreinw12/bento-}auth-service:${BENTO_TAG:-v0.1.1-beta-4}
+    image: ${BENTO_IMAGE_PREFIX:-andreinw12/bento-}auth-service:${BENTO_TAG:-v0.1.1-beta-5}
     restart: unless-stopped
     environment:
       SPRING_PROFILES_ACTIVE: docker
@@ -178,7 +178,7 @@ services:
         condition: service_healthy
 
   org-service:
-    image: ${BENTO_IMAGE_PREFIX:-andreinw12/bento-}org-service:${BENTO_TAG:-v0.1.1-beta-4}
+    image: ${BENTO_IMAGE_PREFIX:-andreinw12/bento-}org-service:${BENTO_TAG:-v0.1.1-beta-5}
     restart: unless-stopped
     environment:
       SPRING_PROFILES_ACTIVE: docker
@@ -194,7 +194,7 @@ services:
         condition: service_healthy
 
   board-service:
-    image: ${BENTO_IMAGE_PREFIX:-andreinw12/bento-}board-service:${BENTO_TAG:-v0.1.1-beta-4}
+    image: ${BENTO_IMAGE_PREFIX:-andreinw12/bento-}board-service:${BENTO_TAG:-v0.1.1-beta-5}
     restart: unless-stopped
     environment:
       SPRING_PROFILES_ACTIVE: docker
@@ -210,7 +210,7 @@ services:
         condition: service_healthy
 
   task-service:
-    image: ${BENTO_IMAGE_PREFIX:-andreinw12/bento-}task-service:${BENTO_TAG:-v0.1.1-beta-4}
+    image: ${BENTO_IMAGE_PREFIX:-andreinw12/bento-}task-service:${BENTO_TAG:-v0.1.1-beta-5}
     restart: unless-stopped
     environment:
       SPRING_PROFILES_ACTIVE: docker
@@ -226,7 +226,7 @@ services:
         condition: service_healthy
 
   notification-service:
-    image: ${BENTO_IMAGE_PREFIX:-andreinw12/bento-}notification-service:${BENTO_TAG:-v0.1.1-beta-4}
+    image: ${BENTO_IMAGE_PREFIX:-andreinw12/bento-}notification-service:${BENTO_TAG:-v0.1.1-beta-5}
     restart: unless-stopped
     environment:
       SPRING_PROFILES_ACTIVE: docker
@@ -236,6 +236,13 @@ services:
       MAIL_FROM: ${MAIL_FROM}
       FRONTEND_URL: ${FRONTEND_URL}
       DISCORD_ENABLED: ${DISCORD_ENABLED:-false}
+      # ── AWS SES SMTP (overrides the docker-profile mail config) ──
+      SPRING_MAIL_HOST: ${MAIL_HOST}
+      SPRING_MAIL_PORT: ${MAIL_PORT:-587}
+      SPRING_MAIL_USERNAME: ${MAIL_USERNAME}
+      SPRING_MAIL_PASSWORD: ${MAIL_PASSWORD}
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH: "true"
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE: "true"
     depends_on:
       mongo:
         condition: service_healthy
@@ -243,11 +250,9 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
-      mailhog:
-        condition: service_started
 
   realtime-service:
-    image: ${BENTO_IMAGE_PREFIX:-andreinw12/bento-}realtime-service:${BENTO_TAG:-v0.1.1-beta-4}
+    image: ${BENTO_IMAGE_PREFIX:-andreinw12/bento-}realtime-service:${BENTO_TAG:-v0.1.1-beta-5}
     restart: unless-stopped
     environment:
       SPRING_PROFILES_ACTIVE: docker
@@ -259,7 +264,7 @@ services:
         condition: service_healthy
 
   attachment-service:
-    image: ${BENTO_IMAGE_PREFIX:-andreinw12/bento-}attachment-service:${BENTO_TAG:-v0.1.1-beta-4}
+    image: ${BENTO_IMAGE_PREFIX:-andreinw12/bento-}attachment-service:${BENTO_TAG:-v0.1.1-beta-5}
     restart: unless-stopped
     environment:
       SPRING_PROFILES_ACTIVE: docker
@@ -275,10 +280,10 @@ services:
         condition: service_healthy
 
   frontend:
-    image: ${BENTO_IMAGE_PREFIX:-andreinw12/bento-}frontend:${BENTO_TAG:-v0.1.1-beta-4}
+    image: ${BENTO_IMAGE_PREFIX:-andreinw12/bento-}frontend:${BENTO_TAG:-v0.1.1-beta-5}
     restart: unless-stopped
     ports:
-      - "${FRONTEND_PORT:-3000}:80"
+      - "${FRONTEND_PORT:-3000}:80"   # ← tunnel routes  bentolab.app  →  here
     depends_on:
       - api-gateway
 

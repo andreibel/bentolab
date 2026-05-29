@@ -12,7 +12,7 @@ variables:
 default:
   interruptible: true
 
-# ─── SHARED DOCKER BASE ───────────────────────────────────────────────────────
+# ─── SHARED DOCKER BASE (used by BUILD jobs only) ─────────────────────────────
 .docker-base: &docker-base
   image: docker:27
   services:
@@ -79,6 +79,10 @@ frontend-lint:
 build-backend-image:
   <<: *docker-base
   stage: docker-build
+  # CHANGE 1: pin builds to the Mac runner so images are built NATIVELY as arm64
+  # (the Pi is arm64). Replace "mac" with your Mac runner's actual tag if different.
+  tags:
+    - local-mac
   rules:
     - if: $CI_COMMIT_TAG
       changes: *backend-paths
@@ -123,6 +127,9 @@ build-backend-image:
 build-frontend-image:
   <<: *docker-base
   stage: docker-build
+  # CHANGE 1 (cont.): same Mac/arm64 pin for the frontend image.
+  tags:
+    - local-mac
   rules:
     - if: $CI_COMMIT_TAG
       changes: *frontend-paths
@@ -150,10 +157,14 @@ build-frontend-image:
 
 # ─── DEPLOY STAGE ─────────────────────────────────────────────────────────────
 deploy-pi:
-  <<: *docker-base
   stage: deploy
+  # CHANGE 2: deploy runs on the Pi's SHELL runner, so it must NOT inherit
+  # .docker-base (the docker:27 image + dind service). A shell runner talks to
+  # the Pi's real Docker directly. We keep ONLY the registry login it needs.
   tags:
     - pi
+  # CHANGE 3: don't let a newer pipeline cancel a deploy mid-flight.
+  interruptible: false
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
       changes:
@@ -166,11 +177,19 @@ deploy-pi:
     - job: build-frontend-image
       optional: true
   variables:
-    DOCKER_TLS_CERTDIR: "/certs"
     BENTO_IMAGE_PREFIX: "$CI_REGISTRY_IMAGE/"
     BENTO_TAG: "$CI_COMMIT_SHORT_SHA"
     COMPOSE_FILE: "$CI_PROJECT_DIR/docker-compose.beta.yml"
+    # Stable project name so containers/volumes are consistent across runs,
+    # regardless of the runner's per-pipeline checkout path.
+    COMPOSE_PROJECT_NAME: "bento"
+    # CHANGE 4: secrets live in a persistent .env ON THE PI (not in git, not in
+    # GitLab variables). Dynamic image vars above come from the job env and
+    # OVERRIDE the file; the file supplies DB/JWT/SES secrets.
+    ENV_FILE: "/opt/bento/.env"
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
   script:
-    - docker compose -f "$COMPOSE_FILE" pull
-    - docker compose -f "$COMPOSE_FILE" up -d --remove-orphans
+    - docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" pull
+    - docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d --remove-orphans
     - docker image prune -f
