@@ -148,7 +148,7 @@ build-frontend-image:
       fi
 
 # ─── DEPLOY STAGE ─────────────────────────────────────────────────────────────
-deploy-pi5:
+deploy-pi:
   stage: deploy
   # CHANGE 2: deploy runs on the Pi's SHELL runner, so it must NOT inherit
   # .docker-base (the docker:27 image + dind service). A shell runner talks to
@@ -185,4 +185,3 @@ deploy-pi5:
     - docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" pull
     - docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d --remove-orphans
     - docker image prune -f
-
